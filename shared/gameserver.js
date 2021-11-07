@@ -1,4 +1,5 @@
-const crypto = require( "crypto" )
+const crypto = require( 'crypto' )
+const pjson = require( './pjson' )
 
 class GameServer
 {
@@ -15,26 +16,29 @@ class GameServer
 	
 	// bool hasPassword
 	// string password
+
+	// object modInfo
+	// object pdiff
 	
-	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "" )
+	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = {} )
 	{
 		if ( nameOrServer instanceof( GameServer ) ) // copy constructor
 		{
 			this.lastHeartbeat = nameOrServer.lastHeartbeat
 			
 			this.id = nameOrServer.id
-			this.updateValues(nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password)
+			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.pdiffs )
 		}
 		else // normal constructor
 		{
 			this.lastHeartbeat = Date.now()
 			
-			this.id = crypto.randomBytes(16).toString("hex")
-			this.updateValues(nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password)
+			this.id = crypto.randomBytes(16).toString( "hex" )
+			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, pdiffs )
 		}
 	}
 
-	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "" )
+	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, pdiffs )
 	{
 		this.name = name
 		this.description = description
@@ -48,11 +52,19 @@ class GameServer
 		this.authPort = authPort
 		
 		this.hasPassword = false
-		if ( password != "" )
+		
+		if ( !!password )
 		{
 			this.password = password
 			this.hasPassword = true
 		}
+
+		// restrict modinfo keys
+		this.modInfo = { Mods:[] }
+		for ( let mod of modInfo.Mods )
+			this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0" } )
+		
+		this.pdiffs = pdiffs
 	}
 }
 

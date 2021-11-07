@@ -7,6 +7,33 @@ const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 module.exports = ( fastify, opts, done ) => {
 	// exported routes
 	
+	// POST /client/origin_auth
+	// used to authenticate a user on northstar, so we know the person using their uid is really them
+	// returns the user's northstar session token
+	fastify.get( '/client/origin_auth', 
+	{
+		schema: {
+			querystring: {
+				uid: { type: "string" },
+				token: { type: "string" }
+			}
+		}
+	},
+	async ( request, reply ) => {
+		let authResponse = await asyncHttp.request( {
+			method: "GET",
+			host: "https://r2-pc.stryder.respawn.com",
+			port: 443,
+			path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${request.query.token}&forceTrial=0&proto=0&json=1&&env=production&userId=${parseInt(request.query.uid).toString(16).toUpperCase()}`
+		} )
+
+		let authJson = JSON.parse( authResponse.toString() )
+
+		return {
+			success: ( !!authResponse.length && !!authJson.hasOnlineAccess && authJson.storeUri.includes( "titanfall-2" ) )
+		}
+	})
+
 	// POST /client/auth_with_server
 	// attempts to authenticate a client with a gameserver, so they can connect
 	fastify.post( '/client/auth_with_server', 

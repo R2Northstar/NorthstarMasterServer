@@ -5,6 +5,8 @@ const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const VERIFY_STRING = "I am a northstar server!"
 
 module.exports = ( fastify, opts, done ) => {
+	fastify.register( require( "fastify-multipart" ) )
+
 	// exported routes
 	
 	// POST /server/add_server
@@ -27,6 +29,20 @@ module.exports = ( fastify, opts, done ) => {
 	async ( request, reply ) => {
 		// check server's verify endpoint on their auth server, make sure it's fine
 		// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
+
+		let hasValidModInfo = true
+		let modInfo
+		
+		if ( request.isMultipart() )
+		{
+			try
+			{
+				modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+				hasValidModInfo = Array.isArray( modInfo.Mods )
+			}
+			catch ( ex ) {}
+		}
+
 		let authServerResponse = await asyncHttp.request( {
 			method: "GET",
 			host: request.ip,
@@ -37,7 +53,8 @@ module.exports = ( fastify, opts, done ) => {
 		if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
 			return { success: false }
 		
-		let newServer = new GameServer( request.query.name, request.query.description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password )
+		let newServer = new GameServer( request.query.name, request.query.description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+
 		AddGameServer( newServer )
 		
 		return {

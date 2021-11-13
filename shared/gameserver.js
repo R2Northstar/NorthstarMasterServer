@@ -1,5 +1,4 @@
 const crypto = require( 'crypto' )
-const pjson = require( './pjson' )
 
 class GameServer
 {
@@ -34,11 +33,11 @@ class GameServer
 			this.lastHeartbeat = Date.now()
 			
 			this.id = crypto.randomBytes(16).toString( "hex" )
-			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, pdiffs )
+			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
 		}
 	}
 
-	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, pdiffs )
+	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
 	{
 		this.name = name
 		this.description = description
@@ -63,8 +62,6 @@ class GameServer
 		this.modInfo = { Mods:[] }
 		for ( let mod of modInfo.Mods )
 			this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0" } )
-		
-		this.pdiffs = pdiffs
 	}
 }
 

@@ -1,22 +1,46 @@
 const sqlite = require( "sqlite3" ).verbose()
+const fs = require( "fs" )
+const TOKEN_EXPIRATION_TIME = 3600 * 24 // 24 hours
+
+const DEFAULT_PDATA_BASELINE = fs.readFileSync( "pdata/default.pdata" )
+
 let playerDB = new sqlite.Database( 'db/temp_pdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
 	if ( ex )
 		console.error( ex )
 	else
-		console.log( "Connected to temporary persistent data database successfully" )
+		console.log( "Connected to player database successfully" )
 	
-	// create table
+	// create account table
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
 	CREATE TABLE IF NOT EXISTS accounts (
-		id TEXT PRIMARY KEY,
-		persistentData BLOB
-	 )
+		id TEXT PRIMARY KEY NOT NULL,
+		currentAuthToken TEXT,
+		currentAuthTokenExpirationTime INTEGER,
+		currentServerId TEXT,
+		persistentDataBaseline BLOB NOT NULL
+	)
 	`, ex => {
 		if ( ex )
 			console.error( ex )
 		else
 			console.log( "Created player account table successfully" )
+	})
+
+	// create custom persistent data table
+	// this should mirror the PlayerAccount class's	properties
+	playerDB.run( `
+	CREATE TABLE IF NOT EXISTS customPersistentData (
+		id TEXT NOT NULL,
+		pdiffHash INTEGER NOT NULL,
+		data TEXT NOT NULL,
+		PRIMARY KEY ( id, pdiffHash )
+	)
+	`, ex => {
+		if ( ex )
+			console.error( ex )
+		else
+			console.log( "Created custom persistent data table successfully" )
 	})
 })
 
@@ -30,9 +54,7 @@ function asyncDBGet( sql, params = [] )
 				reject( ex )
 			}
 			else 
-			{
 				resolve( row )
-			}
 		})
 	})
 }
@@ -46,47 +68,55 @@ function asyncDBRun( sql, params = [] )
 				console.error( "Encountered error querying player database: " + ex )
 				reject( ex )
 			}
-			
-			resolve()
+			else
+				resolve()
 		})
 	})
 }
 
 class PlayerAccount
 {
-	// this will be updated later when more account stuff is done, super simple for now tho
-	// todo: in the future, this needs an account token string and either the time it was last generated, or a hash of the ip it was last used from
-	// should probably also include the server they're currently authenticated with
-	
+	// mirrors account struct in db
+
 	// string id
-	// Buffer persistentData
+	// string currentAuthToken
+	// int currentAuthTokenExpirationTime
+	// string currentServerId
+	// Buffer persistentDataBaseline
 	
-	constructor ( id, persistentData )
+	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline )
 	{
 		this.id = id
-		this.persistentData = persistentData
+		this.currentAuthToken = currentAuthToken
+		this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
+		this.currentServerId = currentServerId
+		this.persistentDataBaseline = persistentDataBaseline
 	}
 }
 
-// temp
-const fs = require( "fs" )
-
 module.exports = {
 	AsyncGetPlayerByID: async function ( id ) {
-		let row = await asyncDBGet( "SELECT id, persistentData FROM accounts WHERE id = ?", [ id ] )
+		let row = await asyncDBGet( "SELECT * FROM accounts WHERE id = ?", [ id ] )
 		
 		if ( !row )
 			return null
 		
-		return new PlayerAccount( row.id, row.persistentData )
+		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
 	},
 	
 	AsyncCreateAccountForID: async function ( id ) {
-		let pdata = fs.readFileSync( "pdata/default.pdata" )
-		await asyncDBRun( "INSERT INTO accounts (id, persistentData) VALUES (?,?)", [ id, pdata ] )
+		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
+	},
+
+	AsyncUpdateCurrentPlayerAuthToken: async function( id, token ) {
+		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
+	},
+
+	AsyncUpdatePlayerCurrentServer: async function( id, serverId ) {
+		await asyncDBRun( "UPDATE accounts SET currentServerId = ? WHERE id = ?", [ serverId, id ] )
 	},
 	
-	AsyncWritePlayerPersistence: async function ( id, persistentData ) {
-		await asyncDBRun( "UPDATE accounts SET persistentData = ? WHERE id = ?", [ persistentData, id ] )
+	AsyncWritePlayerPersistenceBaseline: async function ( id, persistentDataBaseline ) {
+		await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ? WHERE id = ?", [ persistentDataBaseline, id ] )
 	}
 }

@@ -1,6 +1,7 @@
 const path = require( "path" )
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
+const pjson = require( path.join( __dirname, "../shared/pjson.js" ) ) 
 
 const VERIFY_STRING = "I am a northstar server!"
 
@@ -53,8 +54,26 @@ module.exports = ( fastify, opts, done ) => {
 		if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
 			return { success: false }
 		
+		// pdiff stuff
+		if ( modInfo )
+		{
+			for ( let mod of modInfo )
+			{
+				if ( !!mod.pdiff )
+				{
+					try
+					{
+						mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
+					}
+					catch ( ex ) 
+					{
+						mod.pdiff = null
+					}
+				}
+			}
+		}
+		
 		let newServer = new GameServer( request.query.name, request.query.description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
-
 		AddGameServer( newServer )
 		
 		return {

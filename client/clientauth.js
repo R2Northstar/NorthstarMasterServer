@@ -14,8 +14,8 @@ module.exports = ( fastify, opts, done ) => {
 	{
 		schema: {
 			querystring: {
-				uid: { type: "string" },
-				token: { type: "string" }
+				id: { type: "string" }, // the authing player's id
+				token: { type: "string" } // the authing player's origin token
 			}
 		}
 	},
@@ -24,13 +24,31 @@ module.exports = ( fastify, opts, done ) => {
 			method: "GET",
 			host: "https://r2-pc.stryder.respawn.com",
 			port: 443,
-			path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${request.query.token}&forceTrial=0&proto=0&json=1&&env=production&userId=${parseInt(request.query.uid).toString(16).toUpperCase()}`
+			path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString(16).toUpperCase() }`
 		} )
 
-		let authJson = JSON.parse( authResponse.toString() )
+		let authJson
+		try {
+			authJson = JSON.parse( authResponse.toString() )
+		} catch (error) {
+			return { success: false }
+		}
+
+		// check origin auth was fine
+		// unsure if we can check the exact value of storeUri? doing an includes check just in case
+		if ( !authResponse.length || !authJson.hasOnlineAccess || !authJson.storeUri.includes( "titanfall-2" ) )
+			return { success: false }
+		
+		let account = await accounts.AsyncGetPlayerByID( request.query.id )
+		if ( !account ) // create account for user
+			account = await accounts.AsyncCreateAccountForID( request.query.id )
+
+		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
+		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
 		return {
-			success: ( !!authResponse.length && !!authJson.hasOnlineAccess && authJson.storeUri.includes( "titanfall-2" ) )
+			success: true,
+			token: authToken
 		}
 	})
 
@@ -41,7 +59,7 @@ module.exports = ( fastify, opts, done ) => {
 		schema: {
 			querystring: {
 				id: { type: "string" }, // id of the player trying to auth
-				//playerToken: { type: "string" }, // not implemented yet: the authing player's account token
+				playerToken: { type: "string" }, // not implemented yet: the authing player's account token
 				server: { type: "string" },
 				password: { type: "string" } // the password the player is using to connect to the server
 			}
@@ -57,15 +75,23 @@ module.exports = ( fastify, opts, done ) => {
 		if ( !account )
 			return { success: false }
 		
-		// game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
-		let authToken = crypto.randomBytes( 16 ).toString("hex").substr( 0, 31 )
+		// check token
+		if ( request.query.playerToken != account.currentAuthToken )
+			return { success: false }
+
+		// check expired token
+		if ( account.currentAuthTokenExpirationTime < Date.now() )
+			return { success: false }
+
+		// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
+		let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 		
 		let authResponse = await asyncHttp.request( { 
 			method: "POST", 
 			host: server.ip, 
 			port: server.authPort, 
 			path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}`
-		}, account.persistentData )
+		}, account.persistentDataBaseline )
 		
 		if ( !authResponse )
 			return { success: false }
@@ -91,24 +117,24 @@ module.exports = ( fastify, opts, done ) => {
 		schema: {
 			querystring: {
 				id: { type: "string" }, // id of the player trying to auth
-				//playerToken: { type: "string" }, // not implemented yet: the authing player's account token
+				playerToken: { type: "string" }, // not implemented yet: the authing player's account token
 			}
 		}
 	},
 	async ( request, reply ) => {
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
 		if ( !account )
-		{
-			// temp: autocreate accounts
-			await accounts.AsyncCreateAccountForID( request.query.id )
-			
-			account = await accounts.AsyncGetPlayerByID( request.query.id )
-			
-			if ( !account )
-				return { success: false }
-		}
+			return { success: false }
 		
-		// game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
+		// check token
+		if ( request.query.playerToken != account.currentAuthToken )
+			return { success: false }
+
+		// check expired token
+		if ( account.currentAuthTokenExpirationTime < Date.now() )
+			return { success: false }
+
+		// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 		let authToken = crypto.randomBytes( 16 ).toString("hex").substr( 0, 31 )
 				
 		return {
@@ -117,7 +143,7 @@ module.exports = ( fastify, opts, done ) => {
 			id: account.id,
 			authToken: authToken,
 			// this fucking sucks, but i couldn't get game to behave if i sent it as an ascii string, so using this for now
-			persistentData: Array.from( new Uint8Array( account.persistentData ) ) 
+			persistentData: Array.from( new Uint8Array( account.persistentDataBaseline ) ) 
 		}
 	})
 	

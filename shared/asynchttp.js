@@ -2,7 +2,6 @@ const http = require( "http" )
 const https = require( "https")
 //const url = require( "url" )
 
-// could probably convert this to support https too later, effort tho
 module.exports = {
 	request: function request( params, postData = null ) {
 		return new Promise( ( resolve, reject ) => {

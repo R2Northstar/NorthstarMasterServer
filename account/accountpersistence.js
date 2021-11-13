@@ -26,8 +26,8 @@ module.exports = ( fastify, opts, done ) => {
 		// mostly temp
 		let buf = await ( await request.file() ).toBuffer() 
 		
-		if ( buf.length == account.persistentData.length )
-			await accounts.AsyncWritePlayerPersistence( request.query.id, buf )
+		if ( buf.length == account.persistentDataBaseline.length )
+			await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
 		
 		return null
 	})

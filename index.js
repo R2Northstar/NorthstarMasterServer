@@ -1,4 +1,4 @@
-const fastify = require( "fastify" )({ logger: true })
+const fastify = require( "fastify" )({ logger: process.argv.includes( "-usefastifylogger" ) })
 const fs = require( "fs" )
 const path = require( "path" )
 
@@ -23,7 +23,7 @@ async function start() {
 	} 
 	catch ( ex )
 	{
-		fastify.log.error( ex )
+		console.error( ex )
 		process.exit( 1 )
 	}
 }

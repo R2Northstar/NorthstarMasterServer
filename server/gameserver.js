@@ -1,4 +1,5 @@
 const path = require( "path" )
+const crypto = require( "crypto" )
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) ) 
@@ -55,15 +56,17 @@ module.exports = ( fastify, opts, done ) => {
 			return { success: false }
 		
 		// pdiff stuff
-		if ( modInfo )
+		if ( modInfo && modInfo.Mods )
 		{
-			for ( let mod of modInfo )
+			for ( let mod of modInfo.Mods )
 			{
 				if ( !!mod.pdiff )
 				{
 					try
 					{
+						let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
 						mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
+						mod.pdiff.hash = pdiffHash
 					}
 					catch ( ex ) 
 					{

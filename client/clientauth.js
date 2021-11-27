@@ -4,6 +4,8 @@ const { GameServer, GetGameServers } = require( path.join( __dirname, "../shared
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) ) 
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
 
+let shouldRequireSessionToken = !process.argv.includes( "-nosessiontoken" )
+
 module.exports = ( fastify, opts, done ) => {
 	// exported routes
 	
@@ -20,24 +22,28 @@ module.exports = ( fastify, opts, done ) => {
 		}
 	},
 	async ( request, reply ) => {
-		let authResponse = await asyncHttp.request( {
-			method: "GET",
-			host: "https://r2-pc.stryder.respawn.com",
-			port: 443,
-			path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString(16).toUpperCase() }`
-		} )
-
-		let authJson
-		try {
-			authJson = JSON.parse( authResponse.toString() )
-		} catch (error) {
-			return { success: false }
+		// only do this if we're in an environment that actually requires session tokens
+		if ( shouldRequireSessionToken )
+		{
+			let authResponse = await asyncHttp.request( {
+				method: "GET",
+				host: "https://r2-pc.stryder.respawn.com",
+				port: 443,
+				path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString(16).toUpperCase() }`
+			} )
+	
+			let authJson
+			try {
+				authJson = JSON.parse( authResponse.toString() )
+			} catch (error) {
+				return { success: false }
+			}
+	
+			// check origin auth was fine
+			// unsure if we can check the exact value of storeUri? doing an includes check just in case
+			if ( !authResponse.length || !authJson.hasOnlineAccess || !authJson.storeUri.includes( "titanfall-2" ) )
+				return { success: false }
 		}
-
-		// check origin auth was fine
-		// unsure if we can check the exact value of storeUri? doing an includes check just in case
-		if ( !authResponse.length || !authJson.hasOnlineAccess || !authJson.storeUri.includes( "titanfall-2" ) )
-			return { success: false }
 		
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
 		if ( !account ) // create account for user
@@ -54,6 +60,7 @@ module.exports = ( fastify, opts, done ) => {
 
 	// POST /client/auth_with_server
 	// attempts to authenticate a client with a gameserver, so they can connect
+	// authentication includes giving them a 1-time token to join the gameserver, as well as sending their persistent data to the gameserver
 	fastify.post( '/client/auth_with_server', 
 	{
 		schema: {
@@ -75,23 +82,29 @@ module.exports = ( fastify, opts, done ) => {
 		if ( !account )
 			return { success: false }
 		
-		// check token
-		if ( request.query.playerToken != account.currentAuthToken )
-			return { success: false }
+		if ( shouldRequireSessionToken )
+		{
+			// check token
+			if ( request.query.playerToken != account.currentAuthToken )
+				return { success: false }
 
-		// check expired token
-		if ( account.currentAuthTokenExpirationTime < Date.now() )
-			return { success: false }
+			// check expired token
+			if ( account.currentAuthTokenExpirationTime < Date.now() )
+				return { success: false }
+		}
 
 		// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 		
+		// todo: build persistent data here, rather than sending baseline only
+		let pdata = accounts.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
+
 		let authResponse = await asyncHttp.request( { 
 			method: "POST", 
 			host: server.ip, 
 			port: server.authPort, 
 			path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}`
-		}, account.persistentDataBaseline )
+		}, pdata )
 		
 		if ( !authResponse )
 			return { success: false }
@@ -126,13 +139,16 @@ module.exports = ( fastify, opts, done ) => {
 		if ( !account )
 			return { success: false }
 		
-		// check token
-		if ( request.query.playerToken != account.currentAuthToken )
-			return { success: false }
+		if ( shouldRequireSessionToken )
+		{
+			// check token
+			if ( request.query.playerToken != account.currentAuthToken )
+				return { success: false }
 
-		// check expired token
-		if ( account.currentAuthTokenExpirationTime < Date.now() )
-			return { success: false }
+			// check expired token
+			if ( account.currentAuthTokenExpirationTime < Date.now() )
+				return { success: false }
+		}
 
 		// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 		let authToken = crypto.randomBytes( 16 ).toString("hex").substr( 0, 31 )

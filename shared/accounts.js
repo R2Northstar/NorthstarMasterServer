@@ -1,10 +1,13 @@
 const sqlite = require( "sqlite3" ).verbose()
+const path = require( "path" )
 const fs = require( "fs" )
+const pjson = require( path.join( __dirname, "../shared/pjson.js" ) ) 
 const TOKEN_EXPIRATION_TIME = 3600 * 24 // 24 hours
 
-const DEFAULT_PDATA_BASELINE = fs.readFileSync( "pdata/default.pdata" )
+const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
+const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
-let playerDB = new sqlite.Database( 'db/temp_pdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
+let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
 	if ( ex )
 		console.error( ex )
 	else
@@ -27,12 +30,12 @@ let playerDB = new sqlite.Database( 'db/temp_pdata.db', sqlite.OPEN_CREATE | sql
 			console.log( "Created player account table successfully" )
 	})
 
-	// create custom persistent data table
+	// create mod persistent data table
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
-	CREATE TABLE IF NOT EXISTS customPersistentData (
+	CREATE TABLE IF NOT EXISTS modPeristentData (
 		id TEXT NOT NULL,
-		pdiffHash INTEGER NOT NULL,
+		pdiffHash TEXT NOT NULL,
 		data TEXT NOT NULL,
 		PRIMARY KEY ( id, pdiffHash )
 	)
@@ -40,7 +43,7 @@ let playerDB = new sqlite.Database( 'db/temp_pdata.db', sqlite.OPEN_CREATE | sql
 		if ( ex )
 			console.error( ex )
 		else
-			console.log( "Created custom persistent data table successfully" )
+			console.log( "Created mod persistent data table successfully" )
 	})
 })
 
@@ -95,7 +98,7 @@ class PlayerAccount
 }
 
 module.exports = {
-	AsyncGetPlayerByID: async function ( id ) {
+	AsyncGetPlayerByID: async function AsyncGetPlayerByID( id ) {
 		let row = await asyncDBGet( "SELECT * FROM accounts WHERE id = ?", [ id ] )
 		
 		if ( !row )
@@ -104,19 +107,50 @@ module.exports = {
 		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
 	},
 	
-	AsyncCreateAccountForID: async function ( id ) {
+	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
 		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
 	},
 
-	AsyncUpdateCurrentPlayerAuthToken: async function( id, token ) {
+	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token ) {
 		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
 	},
 
-	AsyncUpdatePlayerCurrentServer: async function( id, serverId ) {
+	AsyncUpdatePlayerCurrentServer: async function AsyncUpdatePlayerCurrentServer( id, serverId ) {
 		await asyncDBRun( "UPDATE accounts SET currentServerId = ? WHERE id = ?", [ serverId, id ] )
 	},
 	
-	AsyncWritePlayerPersistenceBaseline: async function ( id, persistentDataBaseline ) {
+	AsyncWritePlayerPersistenceBaseline: async function AsyncWritePlayerPersistenceBaseline( id, persistentDataBaseline ) {
 		await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ? WHERE id = ?", [ persistentDataBaseline, id ] )
+	},
+
+	AsyncGetPlayerModPersistence: async function AsyncGetPlayerModPersistence( id, pdiffHash ) {
+		return JSON.parse( await asyncDBGet( "SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?", [ id, pdiffHash ] ) )
+	},
+
+	AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data ) {
+		
+	},
+
+	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs ) {
+		let player = AsyncGetPlayerByID( id )
+		let pdefCopy = DEFAULT_PDEF_OBJECT
+		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+
+		let newPdataJson = baselineJson
+
+		if ( !player )
+			return null
+		
+		for ( let pdiff of pdiffs )
+		{
+			for ( let enumAdd in pdiff.enums )
+				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+			
+			pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
+			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
+			newPdataJson = Object.assign( newPdataJson, AsyncGetPlayerModPersistence( id, pdiff.hash ) )
+		}
+		
+		return PdataJsonToBuffer( newPdataJson, pdefCopy )
 	}
 }

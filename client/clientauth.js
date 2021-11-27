@@ -47,7 +47,10 @@ module.exports = ( fastify, opts, done ) => {
 		
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
 		if ( !account ) // create account for user
-			account = await accounts.AsyncCreateAccountForID( request.query.id )
+		{
+			await accounts.AsyncCreateAccountForID( request.query.id )
+			account = await accounts.AsyncGetPlayerByID( request.query.id )
+		}
 
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )

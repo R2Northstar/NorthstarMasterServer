@@ -100,7 +100,7 @@ module.exports = ( fastify, opts, done ) => {
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 		
 		// todo: build persistent data here, rather than sending baseline only
-		let pdata = accounts.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
+		let pdata = await accounts.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
 
 		let authResponse = await asyncHttp.request( { 
 			method: "POST", 

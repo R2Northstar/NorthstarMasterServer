@@ -132,8 +132,11 @@ module.exports = {
 	},
 
 	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs ) {
-		let player = AsyncGetPlayerByID( id )
-		let pdefCopy = DEFAULT_PDEF_OBJECT
+		let player = await module.exports.AsyncGetPlayerByID( id )
+		return player.persistentDataBaseline
+
+		// disabling this for now
+		/*let pdefCopy = DEFAULT_PDEF_OBJECT
 		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
 
 		let newPdataJson = baselineJson
@@ -141,16 +144,17 @@ module.exports = {
 		if ( !player )
 			return null
 		
-		for ( let pdiff of pdiffs )
+		// temp etc
+		/*for ( let pdiff of pdiffs )
 		{
 			for ( let enumAdd in pdiff.enums )
 				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
 			
 			pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
 			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
-			newPdataJson = Object.assign( newPdataJson, AsyncGetPlayerModPersistence( id, pdiff.hash ) )
+			newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
 		}
 		
-		return PdataJsonToBuffer( newPdataJson, pdefCopy )
+		return PdataJsonToBuffer( newPdataJson, pdefCopy )*/
 	}
 }

@@ -11,9 +11,7 @@ module.exports = ( fastify, opts, done ) => {
 		let expiredServers = [] // might be better to move this to another function at some point, but easiest to do here atm
 		
 		let servers = Object.values( GetGameServers() )
-		
-		console.log( servers.length )
-		
+				
 		for ( let i = 0; i < servers.length; i++ )
 		{			
 			// prune servers if they've had 30 seconds since last heartbeat

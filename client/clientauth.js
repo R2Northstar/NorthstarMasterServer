@@ -155,6 +155,7 @@ module.exports = ( fastify, opts, done ) => {
 
 		// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 		let authToken = crypto.randomBytes( 16 ).toString("hex").substr( 0, 31 )
+		accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 				
 		return {
 			success: true,

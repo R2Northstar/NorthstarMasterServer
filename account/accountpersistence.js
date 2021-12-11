@@ -13,7 +13,8 @@ module.exports = ( fastify, opts, done ) => {
 	{
 		schema: {
 			querystring: {
-				"id": { type: "string" }
+				"id": { type: "string" },
+				"serverId": { type: "string" }
 			}
 		},
 	},
@@ -22,6 +23,15 @@ module.exports = ( fastify, opts, done ) => {
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
 		if ( !account )
 			return null
+
+		// if the client is on their own server then don't check this since their own server might not be on masterserver
+		if ( account.currentServerId != "self" )
+		{
+			let server = GetGameServers()[ request.query.serverId ]
+			// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
+			if ( !server || request.ip != server.ip || account.currentServerId != request.query.serverId )
+				return null
+		}
 		
 		// mostly temp
 		let buf = await ( await request.file() ).toBuffer() 

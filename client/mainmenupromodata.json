@@ -1,4 +1,10 @@
 {
+	"newInfo": {
+		"Title1": "",
+		"Title2": "",
+		"Title3": ""
+	},
+
 	"largeButton": {
 		"Title": "",
 		"Text": "",
@@ -8,14 +14,12 @@
 	
 	"smallButton1": {
 		"Title": "",
-		"Text": "",
 		"Url": "",
 		"ImageIndex": 0
 	},
 	
 	"smallButton2": {
 		"Title": "",
-		"Text": "",
 		"Url": "",
 		"ImageIndex": 0
 	}

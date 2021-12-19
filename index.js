@@ -1,6 +1,29 @@
-const fastify = require( "fastify" )({ logger: process.argv.includes( "-usefastifylogger" ) })
+
+if ( process.argv.includes( "-devenv" ) )
+	require( 'dotenv' ).config({ path: "./dev.env" })
+else
+	require( 'dotenv' ).config()
+	
 const fs = require( "fs" )
 const path = require( "path" )
+
+let fastify = require( "fastify" )
+if ( process.env.USE_HTTPS )
+{
+	fastify = fastify({ 
+		logger: process.env.USE_FASTIFY_LOGGER || false,
+		https: {
+			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
+			cert: fs.readFileSync( process.env.SSL_CERT_PATH )
+		}
+	})
+}
+else
+{
+	fastify = fastify({ 
+		logger: process.env.USE_FASTIFY_LOGGER || false,
+	})
+}
 
 const ROUTE_PATHS = [ "client", "server", "account" ]
 
@@ -16,10 +39,11 @@ for ( let routePath of ROUTE_PATHS )
 	}
 }
 
-async function start() {
+async function start() 
+{
 	try 
 	{
-		await fastify.listen( 8080, "0.0.0.0" )
+		await fastify.listen( process.env.LISTEN_PORT || 80, process.env.LISTEN_IP || "0.0.0.0" )
 	} 
 	catch ( ex )
 	{

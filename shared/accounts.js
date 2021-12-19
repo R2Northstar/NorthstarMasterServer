@@ -2,7 +2,7 @@ const sqlite = require( "sqlite3" ).verbose()
 const path = require( "path" )
 const fs = require( "fs" )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) ) 
-const TOKEN_EXPIRATION_TIME = 3600 * 24 // 24 hours
+const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )

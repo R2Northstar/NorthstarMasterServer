@@ -25,6 +25,9 @@ module.exports = ( fastify, opts, done ) => {
 		// only do this if we're in an environment that actually requires session tokens
 		if ( shouldRequireSessionToken )
 		{
+			if ( request.query.token.includes( "&" ) )
+				return { success: false }
+
 			let authResponse = await asyncHttp.request( {
 				method: "GET",
 				host: "https://r2-pc.stryder.respawn.com",
@@ -41,7 +44,7 @@ module.exports = ( fastify, opts, done ) => {
 	
 			// check origin auth was fine
 			// unsure if we can check the exact value of storeUri? doing an includes check just in case
-			if ( !authResponse.length || !authJson.hasOnlineAccess || !authJson.storeUri.includes( "titanfall-2" ) )
+			if ( !authResponse.length || !authJson.hasOnlineAccess == "1" /* this is actually a string of either "1" or "0" */ || !authJson.storeUri.includes( "titanfall-2" ) )
 				return { success: false }
 		}
 		

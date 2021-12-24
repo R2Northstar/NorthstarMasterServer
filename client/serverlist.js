@@ -39,7 +39,7 @@ module.exports = ( fastify, opts, done ) => {
 		for ( let server of expiredServers )
 			RemoveGameServer( server )
 		
-		return displayServerArray.sort( ( a, b ) => b.playerCount - a.playerCount )
+		return displayServerArray
 	})
 	
 	done()

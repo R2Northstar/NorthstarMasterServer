@@ -44,7 +44,7 @@ module.exports = ( fastify, opts, done ) => {
 	
 			// check origin auth was fine
 			// unsure if we can check the exact value of storeUri? doing an includes check just in case
-			if ( !authResponse.length || !authJson.hasOnlineAccess == "1" /* this is actually a string of either "1" or "0" */ || !authJson.storeUri.includes( "titanfall-2" ) )
+			if ( !authResponse.length || authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || !authJson.storeUri.includes( "titanfall-2" ) )
 				return { success: false }
 		}
 		

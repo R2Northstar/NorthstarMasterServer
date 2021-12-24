@@ -12,7 +12,7 @@ module.exports = ( fastify, opts, done ) => {
     // redirect anyone going to northstar.tf/discord to the discord
     fastify.get( '/discord',
     async ( request, reply ) => {
-        reply.redirect( "https://discord.gg/obama" ) // probably change this at some point
+        reply.redirect( "https://discord.gg/GYVRKC9pJh" )
     })
 
     done()

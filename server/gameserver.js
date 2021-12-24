@@ -5,6 +5,7 @@ const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const Filter = require('bad-words')
 let filter = new Filter();
+
 const VERIFY_STRING = "I am a northstar server!"
 
 module.exports = ( fastify, opts, done ) => {

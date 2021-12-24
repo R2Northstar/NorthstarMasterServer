@@ -119,3 +119,4 @@ dist
 
 # db files
 .db
+playerdata.db

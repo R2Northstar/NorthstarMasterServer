@@ -95,7 +95,8 @@ module.exports = ( fastify, opts, done ) => {
 	{
 		schema: {
 			querystring: {
-				id: { type: "string" } // the id of the server sending this message
+				id: { type: "string" }, // the id of the server sending this message
+				playerCount: { type: "integer" }
 			}
 		}
 	},
@@ -106,6 +107,7 @@ module.exports = ( fastify, opts, done ) => {
 			return null
 		
 		server.lastHeartbeat = Date.now()
+		server.playerCount = request.playerCount
 		return null
 	})
 	

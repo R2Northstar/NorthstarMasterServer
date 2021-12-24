@@ -8,6 +8,7 @@
 		"dev": "node index.js -devenv"
 	},
 	"dependencies": {
+		"bad-words": "^3.0.4",
 		"dotenv": "^10.0.0",
 		"fastify": "^3.24.0",
 		"fastify-multipart": "^5.1.0",

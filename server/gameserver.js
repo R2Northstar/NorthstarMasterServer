@@ -2,7 +2,9 @@ const path = require( "path" )
 const crypto = require( "crypto" )
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
-const pjson = require( path.join( __dirname, "../shared/pjson.js" ) ) 
+const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
+const Filter = require('bad-words')
+let filter = new Filter();
 
 const VERIFY_STRING = "I am a northstar server!"
 
@@ -75,8 +77,10 @@ module.exports = ( fastify, opts, done ) => {
 				}
 			}
 		}
-		
-		let newServer = new GameServer( request.query.name, request.query.description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+
+		let name = filter.clean(request.query.name)
+		let description = filter.clean(request.query.description)
+		let newServer = new GameServer(name, description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 		AddGameServer( newServer )
 		
 		return {

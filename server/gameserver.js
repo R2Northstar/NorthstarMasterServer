@@ -78,9 +78,9 @@ module.exports = ( fastify, opts, done ) => {
 			}
 		}
 
-		let name = filter.clean(request.query.name)
-		let description = filter.clean(request.query.description)
-		let newServer = new GameServer(name, description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+		let name = filter.clean( request.query.name )
+		let description = filter.clean( request.query.description )
+		let newServer = new GameServer( name, description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 		AddGameServer( newServer )
 		
 		return {
@@ -103,11 +103,11 @@ module.exports = ( fastify, opts, done ) => {
 	async ( request, reply ) => {
 		let server = GetGameServers()[ request.query.id ]
 		// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-		if ( !server || request.ip != server.ip )
+		if ( !server || request.ip != server.ip || !request.query.id || !request.query.playerCount )
 			return null
 		
 		server.lastHeartbeat = Date.now()
-		server.playerCount = request.playerCount
+		server.playerCount = request.query.playerCount
 		return null
 	})
 	

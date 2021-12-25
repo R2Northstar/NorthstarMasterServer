@@ -128,6 +128,51 @@ module.exports = ( fastify, opts, done ) => {
 		}
 	})
 	
+	
+	// POST /client/get_server_address
+	// sends the address of the server to a client
+	// requires client to be authenticated with the master server for added security
+	fastify.post( '/client/get_server_address', 
+		{
+		  schema: {
+		    querystring: {
+		      id: { type: "string" }, // id of the player trying to auth
+		      playerToken: { type: "string" }, // not implemented yet: the authing player's account token
+		      server: { type: "string" },
+		      password: { type: "string" } // the password the player is using to connect to the server
+		    }
+		  }
+		},
+		async ( request, reply ) => {
+		  let server = GetGameServers()[ request.query.server ]
+
+		  if ( !server || ( server.hasPassword && request.query.password != server.password ) )
+		    return { success: false }
+
+		  let account = await accounts.AsyncGetPlayerByID( request.query.id )
+		  if ( !account )
+		    return { success: false }
+
+		  if ( shouldRequireSessionToken )
+		  {
+		    // check token
+		    if ( request.query.playerToken != account.currentAuthToken )
+		      return { success: false }
+
+		    // check expired token
+		    if ( account.currentAuthTokenExpirationTime < Date.now() )
+		      return { success: false }
+		  }
+
+		  return {
+		    success: true,
+
+		    ip: server.ip,
+		    port: server.port
+		  }
+	})
+	
+	
 	// POST /client/auth_with_self
 	// attempts to authenticate a client with their own server, before the server is created
 	// note: atm, this just sends pdata to clients and doesn't do any kind of auth stuff, potentially rewrite later

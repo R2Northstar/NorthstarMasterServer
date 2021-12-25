@@ -103,12 +103,17 @@ module.exports = ( fastify, opts, done ) => {
 	async ( request, reply ) => {
 		let server = GetGameServers()[ request.query.id ]
 		// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-		if ( !server || request.ip != server.ip || !request.query.id || !request.query.playerCount )
+		if ( !server || request.ip != server.ip || !request.query.id )// remove !request.playerCount as if playercount==0 it will trigger skip heartbeat update
+		{
 			return null
+		}
 		
-		server.lastHeartbeat = Date.now()
-		server.playerCount = request.query.playerCount
-		return null
+		else								// Added else so update heartbeat will trigger,Have to add the brackets for me to work for some reason
+		{
+			server.lastHeartbeat = Date.now()
+			server.playerCount = request.query.playerCount
+			return null
+		}
 	})
 	
 	// POST /server/update_values
@@ -129,9 +134,13 @@ module.exports = ( fastify, opts, done ) => {
 				continue
 			
 			if ( key == "playerCount" || key == "maxPlayers" )
+			{
 				server[ key ] = parseInt( request.query[ key ] )
-			else
+			}
+			else						//i suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
+			{
 				server[ key ] = request.query[ key ]
+			}
 		}
 		
 		return null

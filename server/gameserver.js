@@ -79,7 +79,7 @@ module.exports = ( fastify, opts, done ) => {
 		}
 
 		let name = filter.clean( request.query.name )
-		let description = filter.clean( request.query.description )
+		let description = request.query.description == "" ? "" : filter.clean( request.query.description )
 		let newServer = new GameServer( name, description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 		AddGameServer( newServer )
 		

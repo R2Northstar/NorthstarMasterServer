@@ -138,15 +138,14 @@ module.exports = ( fastify, opts, done ) => {
 		    querystring: {
 		      id: { type: "string" }, // id of the player trying to auth
 		      playerToken: { type: "string" }, // not implemented yet: the authing player's account token
-		      server: { type: "string" },
-		      password: { type: "string" } // the password the player is using to connect to the server
+		      server: { type: "string" }
 		    }
 		  }
 		},
 		async ( request, reply ) => {
 		  let server = GetGameServers()[ request.query.server ]
 
-		  if ( !server || ( server.hasPassword && request.query.password != server.password ) )
+		  if ( !server || server.hasPassword )
 		    return { success: false }
 
 		  let account = await accounts.AsyncGetPlayerByID( request.query.id )
@@ -167,8 +166,7 @@ module.exports = ( fastify, opts, done ) => {
 		  return {
 		    success: true,
 
-		    ip: server.ip,
-		    port: server.port
+		    ip: server.ip
 		  }
 	})
 	

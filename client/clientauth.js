@@ -54,13 +54,23 @@ module.exports = ( fastify, opts, done ) => {
 			await accounts.AsyncCreateAccountForID( request.query.id )
 			account = await accounts.AsyncGetPlayerByID( request.query.id )
 		}
-
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
-
+		console.log("test")
+		console.log("isBanned:" + account.isBanned)
+		if(account.isBanned)
+		{
+		return {
+			success: false,
+			token: "nope"
+			}
+		}
+		else
+		{
 		return {
 			success: true,
 			token: authToken
+		}
 		}
 	})
 

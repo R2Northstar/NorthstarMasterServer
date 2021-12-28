@@ -15,6 +15,7 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 	
 	// create account table
 	// this should mirror the PlayerAccount class's	properties
+	// Added isBanned to databse
 	playerDB.run( `
 	CREATE TABLE IF NOT EXISTS accounts (
 		id TEXT PRIMARY KEY NOT NULL,

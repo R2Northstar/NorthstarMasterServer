@@ -13,19 +13,19 @@ module.exports = {
 			}
 
 			let req = lib.request( params, reqResult => {
-				if ( reqResult.statusCode < 200 || reqResult.statusCode >= 300) 
+				if ( reqResult.statusCode < 200 || reqResult.statusCode >= 300)
 					return reject()
-				
+
 				let data = []
 				reqResult.on( "data", c => data.push( c ) )
 				reqResult.on( "end", _ => resolve( Buffer.concat( data ) ) )
 			});
-			
+
 			req.on( "error", reject )
-			
+
 			if ( postData )
 				req.write( postData )
-				
+
 			req.end()
 		})
 	}

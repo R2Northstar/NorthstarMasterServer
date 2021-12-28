@@ -1,20 +1,20 @@
 const NATIVE_TYPES = {
-    int: { size: 4, 
-        read: ( buf, idx ) => buf.readInt32LE( idx ), 
+    int: { size: 4,
+        read: ( buf, idx ) => buf.readInt32LE( idx ),
         write: ( buf, value, idx ) => buf.writeInt32LE( value, idx )
     },
-    float: { size: 4, 
+    float: { size: 4,
         read: ( buf, idx ) => buf.readFloatLE( idx ),
         write: ( buf, value, idx ) => buf.writeFloatLE( value, idx )
     },
-    bool: { 
-        size: 1, 
+    bool: {
+        size: 1,
         read: ( buf, idx ) => !!buf.readUInt8( idx ),
         write: ( buf, value, idx ) => buf.writeUint8( value, idx )
     },
-    string: { 
-        size: 1, 
-        nativeArrayType: true, 
+    string: {
+        size: 1,
+        nativeArrayType: true,
         read: ( buf, idx, length ) => buf.toString( 'ascii', idx, idx + length ),
         write: ( buf, value, idx, length ) => buf.write( value.padEnd( length, '\u0000' ), idx, length, 'ascii' )
     }
@@ -53,7 +53,7 @@ function ParseDefinition( pdef )
         // check if this is a comment line
         if ( type.includes( "//" ) || type.length == 0 )
             continue
-        
+
         // user-defined type keywords
         if ( type[ 0 ][ 0 ] == '$' )
         {
@@ -66,21 +66,21 @@ function ParseDefinition( pdef )
                 if ( type == ENUM_START )
                 {
                     currentEnumName = name
-                    ret.enums[ currentEnumName ] = [] 
+                    ret.enums[ currentEnumName ] = []
                 }
                 else if ( type == STRUCT_START )
                 {
                     currentStructName = name
                     ret.structs[ currentStructName ] = []
                 }
-                else 
+                else
                     throw Error( `encountered unknown keyword ${type}` )
             }
             else if ( type == ENUM_END && currentEnumName )
                 currentEnumName = ""
             else if ( type == STRUCT_END && currentStructName )
                 currentStructName = ""
-            else 
+            else
                 throw Error( `encountered unknown case with keyword ${type}` )
         }
         // we're in an enum, so enum members
@@ -176,7 +176,7 @@ function ParseDefinitionDiff( pdiff )
         // check if this is a comment line
         if ( type.includes( "//" ) || type.length == 0 )
             continue
-        
+
         if ( currentEnumAddName )
         {
             if ( type == ENUM_END )
@@ -202,7 +202,7 @@ function ParseDefinitionDiff( pdiff )
             pdefIdx = i + 1
             break
         }
-        else 
+        else
             throw Error( `hit unexpected case` )
     }
 
@@ -213,7 +213,7 @@ function ParseDefinitionDiff( pdiff )
 
         ret.pdef = ParseDefinition( pdef )
     }
-    
+
     return ret
 }
 
@@ -229,7 +229,7 @@ function GetMemberSize( member, parsedDef )
     if ( member.type in NATIVE_TYPES )
     {
         if ( NATIVE_TYPES[ member.type ].nativeArrayType )
-            multiplier *= member.nativeArraySize        
+            multiplier *= member.nativeArraySize
 
         return NATIVE_TYPES[ member.type ].size * multiplier
     }
@@ -240,10 +240,10 @@ function GetMemberSize( member, parsedDef )
         let structSize = 0
         for ( let structMember of parsedDef.structs[ member.type ] )
             structSize += GetMemberSize( structMember, parsedDef )
-        
+
         return structSize * multiplier
     }
-    else 
+    else
         throw Error( `got unknown member type ${member.type}` )
 }
 
@@ -276,7 +276,7 @@ function GetMemberSize( member, parsedDef )
 //                }
 //
 //                if ( member.type in NATIVE_TYPES )
-//                {   
+//                {
 //                    ret[ memberName ] = NATIVE_TYPES[ member.type ].read( pdata, i, member.nativeArraySize )
 //                    i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
 //                }
@@ -307,11 +307,11 @@ function PdataToJson( pdata, pdef )
                 arraySize = pdef.enums[ member.arraySize ].length
 
             let retArray = []
-            
+
             for ( let j = 0; j < arraySize; j++ )
             {
                 if ( member.type in NATIVE_TYPES )
-                {   
+                {
                     retArray.push( NATIVE_TYPES[ member.type ].read( pdata, i, member.nativeArraySize ) )
                     i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
                 }

@@ -1,6 +1,6 @@
 module.exports = ( fastify, opts, done ) => {
 	// exported routes
-	
+
     // GET /
     // redirect anyone going to northstar.tf in a browser to the github
     fastify.get( '/',

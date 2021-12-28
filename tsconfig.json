@@ -14,7 +14,8 @@
     "downlevelIteration": true,
     "outDir": "./build",
     "rootDir": "./src",
-    "declaration": true
+    "sourceMap": true,
+    "declaration": false
   },
   "include": [
     "src/**/*.js",

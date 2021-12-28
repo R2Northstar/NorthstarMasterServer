@@ -1,3 +1,4 @@
+require('source-map-support').install()
 
 if ( process.argv.includes( "-devenv" ) )
 	require( 'dotenv' ).config({ path: "./dev.env" })

@@ -1,5 +1,7 @@
-module.exports = ( fastify, opts, done ) => {
-	// exported routes
+import { type FastifyPluginCallback } from "fastify"
+
+const register: FastifyPluginCallback = (fastify, opts, done) => {
+    // exported routes
 
     // GET /
     // redirect anyone going to northstar.tf in a browser to the github
@@ -24,3 +26,5 @@ module.exports = ( fastify, opts, done ) => {
 
     done()
 }
+
+export default register

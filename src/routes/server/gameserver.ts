@@ -1,3 +1,5 @@
+import { type FastifyPluginCallback } from "fastify"
+
 const path = require( "path" )
 const crypto = require( "crypto" )
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( "../../shared/gameserver.js" )
@@ -8,7 +10,7 @@ let filter = new Filter();
 
 const VERIFY_STRING = "I am a northstar server!"
 
-module.exports = ( fastify, opts, done ) => {
+const register: FastifyPluginCallback = (fastify, opts, done) => {
 	fastify.register( require( "fastify-multipart" ) )
 
 	// exported routes
@@ -177,3 +179,5 @@ module.exports = ( fastify, opts, done ) => {
 
 	done()
 }
+
+export default register

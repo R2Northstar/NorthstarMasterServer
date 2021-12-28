@@ -1,9 +1,9 @@
+import { type FastifyPluginCallback } from "fastify"
+
 const path = require( "path" )
 const { GameServer, GetGameServers, RemoveGameServer } = require( "../../shared/gameserver.js" )
 
-module.exports = ( fastify, opts, done ) => {
-	fastify.register(require( "fastify-cors" ))
-
+const register: FastifyPluginCallback = (fastify, opts, done) => {
 	// exported routes
 
 	// GET /client/servers
@@ -47,3 +47,5 @@ module.exports = ( fastify, opts, done ) => {
 
 	done()
 }
+
+export default register

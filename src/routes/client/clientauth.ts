@@ -1,3 +1,5 @@
+import { type FastifyPluginCallback } from "fastify"
+
 const path = require( "path" )
 const crypto = require( "crypto" )
 const { GameServer, GetGameServers } = require( "../../shared/gameserver.js" )
@@ -6,7 +8,7 @@ const asyncHttp = require( "../../shared/asynchttp.js" )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
-module.exports = ( fastify, opts, done ) => {
+const register: FastifyPluginCallback = (fastify, opts, done) => {
 	// exported routes
 
 	// POST /client/origin_auth
@@ -173,3 +175,5 @@ module.exports = ( fastify, opts, done ) => {
 
 	done()
 }
+
+export default register

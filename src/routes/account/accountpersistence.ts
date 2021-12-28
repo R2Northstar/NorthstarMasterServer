@@ -1,8 +1,10 @@
-const path = require( "path" )
+import { type FastifyPluginCallback } from "fastify"
+import multipart from 'fastify-multipart'
+
 const accounts = require( "../../shared/accounts.js" )
 
-module.exports = ( fastify, opts, done ) => {
-	fastify.register( require( "fastify-multipart" ) )
+const register: FastifyPluginCallback = (fastify, opts, done) => {
+	fastify.register(multipart)
 
 	// exported routes
 
@@ -44,3 +46,5 @@ module.exports = ( fastify, opts, done ) => {
 
 	done()
 }
+
+export default register

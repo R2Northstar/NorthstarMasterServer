@@ -20,7 +20,8 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 		id TEXT PRIMARY KEY NOT NULL,
 		currentAuthToken TEXT,
 		currentAuthTokenExpirationTime INTEGER,
-		currentServerId TEXT,
+		currentServerId TEXT, 
+		isBanned INTEGER DEFAULT 0,
 		persistentDataBaseline BLOB NOT NULL
 	)
 	`, ex => {
@@ -87,12 +88,13 @@ class PlayerAccount
 	// string currentServerId
 	// Buffer persistentDataBaseline
 	
-	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline )
+	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, isBanned , persistentDataBaseline )
 	{
 		this.id = id
 		this.currentAuthToken = currentAuthToken
 		this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
 		this.currentServerId = currentServerId
+		this.isBanned = isBanned
 		this.persistentDataBaseline = persistentDataBaseline
 	}
 }
@@ -104,13 +106,26 @@ module.exports = {
 		if ( !row )
 			return null
 		
-		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
+		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.isBanned , row.persistentDataBaseline )
 	},
 	
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
 		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
 	},
+	
+	
+	
+	
 
+	AsyncBanAccountByID: async function AsyncBanAccountByID( id ) {
+		await asyncDBRun( "UPDATE accounts SET isBanned = 1, WHERE id = ?", [id] )
+	},
+	AsyncUnbanAccountByID: async function AsyncUnbanAccountByID( id ) {
+		await asyncDBRun( "UPDATE accounts SET isBanned = 0, WHERE id = ?", [id] )
+	},
+	
+	
+	
 	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token ) {
 		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
 	},

@@ -22,8 +22,8 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 		currentAuthToken TEXT,
 		currentAuthTokenExpirationTime INTEGER,
 		currentServerId TEXT, 
+		persistentDataBaseline BLOB NOT NULL,
 		isBanned INTEGER DEFAULT 0,
-		persistentDataBaseline BLOB NOT NULL
 	)
 	`, ex => {
 		if ( ex )
@@ -89,14 +89,14 @@ class PlayerAccount
 	// string currentServerId
 	// Buffer persistentDataBaseline
 	
-	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, isBanned , persistentDataBaseline )
+	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, isBanned )
 	{
 		this.id = id
 		this.currentAuthToken = currentAuthToken
 		this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
 		this.currentServerId = currentServerId
-		this.isBanned = isBanned
 		this.persistentDataBaseline = persistentDataBaseline
+		this.isBanned = isBanned
 	}
 }
 
@@ -107,7 +107,7 @@ module.exports = {
 		if ( !row )
 			return null
 		
-		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.isBanned , row.persistentDataBaseline )
+		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.isBanned )
 	},
 	
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {

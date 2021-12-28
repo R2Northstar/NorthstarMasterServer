@@ -1,18 +1,18 @@
 const sqlite = require( "sqlite3" ).verbose()
 const path = require( "path" )
 const fs = require( "fs" )
-const pjson = require( path.join( __dirname, "../shared/pjson.js" ) ) 
+const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 
-const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
-const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
+const DEFAULT_PDATA_BASELINE = fs.readFileSync( path.join( __dirname, "..", "..", "assets", "default.pdata" ) )
+const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( path.join( __dirname, "..", "..", "assets", "persistent_player_data_version_231.pdef" ) ).toString() )
 
-let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
+let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => {
 	if ( ex )
 		console.error( ex )
 	else
 		console.log( "Connected to player database successfully" )
-	
+
 	// create account table
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
@@ -56,7 +56,7 @@ function asyncDBGet( sql, params = [] )
 				console.error( "Encountered error querying player database: " + ex )
 				reject( ex )
 			}
-			else 
+			else
 				resolve( row )
 		})
 	})
@@ -86,7 +86,7 @@ class PlayerAccount
 	// int currentAuthTokenExpirationTime
 	// string currentServerId
 	// Buffer persistentDataBaseline
-	
+
 	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline )
 	{
 		this.id = id
@@ -100,13 +100,13 @@ class PlayerAccount
 module.exports = {
 	AsyncGetPlayerByID: async function AsyncGetPlayerByID( id ) {
 		let row = await asyncDBGet( "SELECT * FROM accounts WHERE id = ?", [ id ] )
-		
+
 		if ( !row )
 			return null
-		
+
 		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
 	},
-	
+
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
 		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
 	},
@@ -118,7 +118,7 @@ module.exports = {
 	AsyncUpdatePlayerCurrentServer: async function AsyncUpdatePlayerCurrentServer( id, serverId ) {
 		await asyncDBRun( "UPDATE accounts SET currentServerId = ? WHERE id = ?", [ serverId, id ] )
 	},
-	
+
 	AsyncWritePlayerPersistenceBaseline: async function AsyncWritePlayerPersistenceBaseline( id, persistentDataBaseline ) {
 		await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ? WHERE id = ?", [ persistentDataBaseline, id ] )
 	},
@@ -128,7 +128,7 @@ module.exports = {
 	},
 
 	AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data ) {
-		
+
 	},
 
 	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs ) {
@@ -143,18 +143,18 @@ module.exports = {
 
 		if ( !player )
 			return null
-		
+
 		// temp etc
 		/*for ( let pdiff of pdiffs )
 		{
 			for ( let enumAdd in pdiff.enums )
 				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
-			
+
 			pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
 			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
 			newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
 		}
-		
+
 		return PdataJsonToBuffer( newPdataJson, pdefCopy )*/
 	}
 }

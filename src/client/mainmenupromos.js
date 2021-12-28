@@ -2,11 +2,11 @@ const path = require( "path" )
 const fs = require( "fs" )
 
 
-let promodataPath = path.join( __dirname, "mainmenupromodata.json" )
+let promodataPath = path.join( __dirname, "..", "..", "assets", "mainmenupromodata.json" )
 
 // watch the mainmenupromodata file so we can update it without a masterserver restart
 fs.watch( promodataPath, ( curr, prev ) => {
-    try 
+    try
     {
         mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
         console.log( "updated main menu promo data successfully!" )
@@ -24,10 +24,10 @@ if ( fs.existsSync( promodataPath ))
 
 module.exports = ( fastify, opts, done ) => {
 	// exported routes
-	
+
     // GET /client/mainmenupromos
     // returns main menu promo info
-    fastify.get( '/client/mainmenupromos', 
+    fastify.get( '/client/mainmenupromos',
     {},
     async ( request, reply ) => {
         return mainMenuPromoData

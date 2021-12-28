@@ -56,8 +56,8 @@ module.exports = ( fastify, opts, done ) => {
 		}
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
-		console.log("test")
-		console.log("isBanned:" + account.isBanned)
+		//console.log("test")
+		//console.log("isBanned:" + account.isBanned)
 		if(account.isBanned)
 		{
 		return {

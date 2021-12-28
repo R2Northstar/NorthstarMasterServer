@@ -30,7 +30,7 @@ const ROUTE_PATHS = [
 
 for ( const routePath of ROUTE_PATHS )
 {
-	const dir = path.join(__dirname, routePath)
+	const dir = path.join(__dirname, "routes", routePath)
 
 	for ( const file of fs.readdirSync( dir ) )
 	{

@@ -2,7 +2,7 @@ const path = require( "path" )
 const fs = require( "fs" )
 
 
-let promodataPath = path.join( __dirname, "..", "..", "assets", "mainmenupromodata.json" )
+let promodataPath = path.join( __dirname, "..", "..", "..", "assets", "mainmenupromodata.json" )
 
 // watch the mainmenupromodata file so we can update it without a masterserver restart
 fs.watch( promodataPath, ( curr, prev ) => {

@@ -1,5 +1,5 @@
 const path = require( "path" )
-const accounts = require( "../shared/accounts.js" )
+const accounts = require( "../../shared/accounts.js" )
 
 module.exports = ( fastify, opts, done ) => {
 	fastify.register( require( "fastify-multipart" ) )

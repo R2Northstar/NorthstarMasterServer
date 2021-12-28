@@ -1,5 +1,5 @@
 const path = require( "path" )
-const { GameServer, GetGameServers, RemoveGameServer } = require( "../shared/gameserver.js" )
+const { GameServer, GetGameServers, RemoveGameServer } = require( "../../shared/gameserver.js" )
 
 module.exports = ( fastify, opts, done ) => {
 	fastify.register(require( "fastify-cors" ))

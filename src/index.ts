@@ -1,32 +1,26 @@
-require('source-map-support').install()
+import 'source-map-support/register.js'
+
+import fs from 'node:fs'
+import path from 'node:path'
+import createFastify from 'fastify'
+import dotenv from 'dotenv'
 
 if ( process.argv.includes( "-devenv" ) )
-	require( 'dotenv' ).config({ path: "./dev.env" })
+	dotenv.config({ path: "./dev.env" })
 else
-	require( 'dotenv' ).config()
+	dotenv.config()
 
-const fs = require( "fs" )
-const path = require( "path" )
-
-let fastify = require( "fastify" )
-if ( process.env.USE_HTTPS )
-{
-	fastify = fastify({
-		logger: process.env.USE_FASTIFY_LOGGER || false,
-		https: {
-			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
-			cert: fs.readFileSync( process.env.SSL_CERT_PATH )
-		},
-		trustProxy: !!(process.env.TRUST_PROXY)
-	})
-}
-else
-{
-	fastify = fastify({
-		logger: process.env.USE_FASTIFY_LOGGER || false,
-		trustProxy: !!(process.env.TRUST_PROXY)
-	})
-}
+const fastify = process.env.USE_HTTPS
+	? createFastify({
+			logger: process.env.USE_FASTIFY_LOGGER || false,
+			https: {
+				key: fs.readFileSync( process.env.SSL_KEY_PATH ),
+				cert: fs.readFileSync( process.env.SSL_CERT_PATH )
+			}
+		})
+	: createFastify({
+			logger: process.env.USE_FASTIFY_LOGGER || false,
+		})
 
 const ROUTE_PATHS = [
 	"client",

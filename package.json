@@ -5,7 +5,8 @@
 	"main": "./build/index.js",
 	"scripts": {
 		"start": "node .",
-		"dev": "node . -devenv",
+		"start:dev": "node . -devenv",
+		"dev": "tsc --watch",
 		"build": "tsc"
 	},
 	"dependencies": {

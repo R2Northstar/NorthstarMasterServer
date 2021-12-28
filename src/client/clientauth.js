@@ -1,8 +1,8 @@
 const path = require( "path" )
 const crypto = require( "crypto" )
-const { GameServer, GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
-const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
-const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
+const { GameServer, GetGameServers } = require( "../shared/gameserver.js" )
+const accounts = require( "../shared/accounts.js" )
+const asyncHttp = require( "../shared/asynchttp.js" )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 

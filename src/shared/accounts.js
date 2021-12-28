@@ -1,7 +1,7 @@
 const sqlite = require( "sqlite3" ).verbose()
 const path = require( "path" )
 const fs = require( "fs" )
-const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
+const pjson = require( "../shared/pjson.js" )
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( path.join( __dirname, "..", "..", "assets", "default.pdata" ) )

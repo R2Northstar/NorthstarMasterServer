@@ -1,8 +1,8 @@
 const path = require( "path" )
 const crypto = require( "crypto" )
-const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
-const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
-const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
+const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( "../shared/gameserver.js" )
+const asyncHttp = require( "../shared/asynchttp.js" )
+const pjson = require( "../shared/pjson.js" )
 const Filter = require('bad-words')
 let filter = new Filter();
 

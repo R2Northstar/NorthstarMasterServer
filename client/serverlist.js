@@ -2,6 +2,8 @@ const path = require( "path" )
 const { GameServer, GetGameServers, RemoveGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 
 module.exports = ( fastify, opts, done ) => {
+	fastify.register(require( "fastify-cors" ))
+
 	// exported routes
 	
 	// GET /client/servers 

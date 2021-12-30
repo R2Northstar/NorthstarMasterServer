@@ -1,10 +1,10 @@
 import { type FastifyPluginCallback } from "fastify"
+import axios from "axios"
 
 const path = require( "path" )
 const crypto = require( "crypto" )
 const { GameServer, GetGameServers } = require( "../../shared/gameserver.js" )
 const accounts = require( "../../shared/accounts.js" )
-const asyncHttp = require( "../../shared/asynchttp.js" )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -31,23 +31,22 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 			if ( request.query.token.includes( "&" ) )
 				return { success: false }
 
-			let authResponse = await asyncHttp.request( {
-				method: "GET",
-				host: "https://r2-pc.stryder.respawn.com",
-				port: 443,
-				path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString(16).toUpperCase() }`
-			} )
+			const params = new URLSearchParams()
+			params.set('qt', 'origin-requesttoken')
+			params.set('type', 'server_token')
+			params.set('code', request.query.token)
+			params.set('forceTrial', '0')
+			params.set('proto', '0')
+			params.set('json', '1')
+			params.set('env', 'production')
+			params.set('userId', parseInt(request.query.id).toString(16).toUpperCase())
 
-			let authJson
-			try {
-				authJson = JSON.parse( authResponse.toString() )
-			} catch (error) {
-				return { success: false }
-			}
+			// TODO: Handle errors
+			let { data: authJson } = await axios.get('https://r2-pc.stryder.respawn.com/nucleus-oauth.php', { params })
 
 			// check origin auth was fine
 			// unsure if we can check the exact value of storeUri? doing an includes check just in case
-			if ( !authResponse.length || authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || !authJson.storeUri.includes( "titanfall-2" ) )
+			if ( authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || !authJson.storeUri.includes( "titanfall-2" ) )
 				return { success: false }
 		}
 

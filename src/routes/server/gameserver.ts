@@ -1,9 +1,9 @@
 import { type FastifyPluginCallback } from "fastify"
+import axios from "axios"
 
 const path = require( "path" )
 const crypto = require( "crypto" )
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( "../../shared/gameserver.js" )
-const asyncHttp = require( "../../shared/asynchttp.js" )
 const pjson = require( "../../shared/pjson.js" )
 const Filter = require('bad-words')
 let filter = new Filter();
@@ -49,12 +49,8 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 			catch ( ex ) {}
 		}
 
-		let authServerResponse = await asyncHttp.request( {
-			method: "GET",
-			host: request.ip,
-			port: request.query.authPort,
-			path: "/verify"
-		})
+		// TODO: Handle errors
+		let { data: authServerResponse } = await axios.get<string>(`http://${request.ip}:${request.query.authPort}/verify`, { responseType: 'text' })
 
 		if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
 			return { success: false }

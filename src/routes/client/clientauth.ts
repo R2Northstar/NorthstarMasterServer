@@ -43,23 +43,30 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         parameters.set('env', 'production')
         parameters.set(
           'userId',
-          Number.parseInt(request.query.id).toString(16).toUpperCase()
+          Number.parseInt(request.query.id, 10).toString(16).toUpperCase()
         )
 
+        interface AuthResponse {
+          token: string
+          hasOnlineAccess: string
+          expiry: string
+          storeUri: string
+        }
+
         // TODO: Handle errors
-        const { data: authJson } = await axios.get(
+        const { data: authJson } = await axios.get<AuthResponse>(
           'https://r2-pc.stryder.respawn.com/nucleus-oauth.php',
           { params: parameters }
         )
 
         // Check origin auth was fine
         // unsure if we can check the exact value of storeUri? doing an includes check just in case
-        if (
-          authJson.hasOnlineAccess !=
-            '1' /* this is actually a string of either "1" or "0" */ ||
-          !authJson.storeUri.includes('titanfall-2')
-        )
+        const hasOnlineAccess = authJson.hasOnlineAccess === '1'
+        const ownsGame = authJson.storeUri.includes('titanfall-2')
+
+        if (!hasOnlineAccess || !ownsGame) {
           return { success: false }
+        }
       }
 
       let account = await accounts.asyncGetPlayerByID(request.query.id)
@@ -109,20 +116,23 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       if (
         !server ||
         (server.hasPassword && request.query.password !== server.password)
-      )
+      ) {
         return { success: false }
+      }
 
       const account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) return { success: false }
 
       if (REQUIRE_SESSION_TOKEN) {
         // Check token
-        if (request.query.playerToken !== account.currentAuthToken)
+        if (request.query.playerToken !== account.currentAuthToken) {
           return { success: false }
+        }
 
         // Check expired token
-        if (account.currentAuthTokenExpirationTime < Date.now())
+        if (account.currentAuthTokenExpirationTime < Date.now()) {
           return { success: false }
+        }
       }
 
       // Fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
@@ -181,16 +191,20 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     },
     async request => {
       const account = await accounts.asyncGetPlayerByID(request.query.id)
-      if (!account) return { success: false }
+      if (!account) {
+        return { success: false }
+      }
 
       if (REQUIRE_SESSION_TOKEN) {
         // Check token
-        if (request.query.playerToken !== account.currentAuthToken)
+        if (request.query.playerToken !== account.currentAuthToken) {
           return { success: false }
+        }
 
         // Check expired token
-        if (account.currentAuthTokenExpirationTime < Date.now())
+        if (account.currentAuthTokenExpirationTime < Date.now()) {
           return { success: false }
+        }
       }
 
       // Fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31

@@ -53,7 +53,6 @@ const register: FastifyPluginAsync = async (fastify, _) => {
           storeUri: string
         }
 
-        // TODO: Handle errors
         const { data: authJson } = await axios.get<AuthResponse>(
           'https://r2-pc.stryder.respawn.com/nucleus-oauth.php',
           { params: parameters }

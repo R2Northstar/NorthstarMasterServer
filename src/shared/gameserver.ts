@@ -13,6 +13,7 @@ interface IGameServer {
   readonly port: number
   readonly authPort: number
   readonly password: string
+  readonly hasPassword: boolean
   readonly modInfo: Record<string, unknown>
   readonly lastHeartbeat: number
 }
@@ -36,6 +37,7 @@ export class GameServer implements IGameServer {
   public readonly port: number
   public readonly authPort: number
   public readonly password: string
+  public readonly hasPassword: boolean
   public modInfo: Record<string, unknown>
   public lastHeartbeat: number
 
@@ -67,6 +69,7 @@ export class GameServer implements IGameServer {
     this.port = port
     this.authPort = authPort
     this.password = password
+    this.hasPassword = Boolean(password)
     this.modInfo = modInfo
     this.lastHeartbeat = Date.now()
   }
@@ -82,6 +85,7 @@ export class GameServer implements IGameServer {
       maxPlayers: this.maxPlayers,
       map: this.map,
       playlist: this.playlist,
+      hasPassword: this.hasPassword,
       modInfo: this.modInfo,
 			hasPassword: Boolean(this.password),
       lastHeartbeat: this.lastHeartbeat,

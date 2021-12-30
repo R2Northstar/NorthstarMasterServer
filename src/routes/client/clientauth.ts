@@ -148,18 +148,17 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       parameters.set('authToken', authToken)
       parameters.set('serverAuthToken', server.serverAuthToken)
 
-      // TODO: handle errors
-      const { data: authResponse } = await axios.post<string>(
-        `http://${server.ip}:${server.authPort}/authenticate_incoming_player`,
-        pdata,
-        // TODO: Native JSON parsing
-        { responseType: 'text', params: parameters }
-      )
+      try {
+        const { data } = await axios.post<{ success: boolean }>(
+          `http://${server.ip}:${server.authPort}/authenticate_incoming_player`,
+          pdata,
+          { params: parameters }
+        )
 
-      if (!authResponse) return { success: false }
-
-      const jsonResponse = authResponse as unknown as Record<string, unknown>
-      if (!jsonResponse.success) return { success: false }
+        if (!data.success) return { success: false }
+      } catch {
+        return { success: false }
+      }
 
       return {
         success: true,

@@ -56,7 +56,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: AddServerQuery,
       },
     },
-    async (request, reply) => {
+    async request => {
       // Check server's verify endpoint on their auth server, make sure it's fine
       // in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
 
@@ -72,14 +72,18 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         } catch {}
       }
 
-      // TODO: Handle errors
-      const { data: authServerResponse } = await axios.get<string>(
-        `http://${request.ip}:${request.query.authPort}/verify`,
-        { responseType: 'text' }
-      )
+      try {
+        const { data: authServerResponse } = await axios.get<string>(
+          `http://${request.ip}:${request.query.authPort}/verify`,
+          { responseType: 'text' }
+        )
 
-      if (!authServerResponse || authServerResponse.toString() != VERIFY_STRING)
+        if (authServerResponse !== VERIFY_STRING) {
+          return { success: false }
+        }
+      } catch {
         return { success: false }
+      }
 
       // Pdiff stuff
       if (modInfo && modInfo.Mods) {
@@ -101,9 +105,10 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
       const name = filter.clean(request.query.name)
       const description =
-        request.query.description == ''
+        request.query.description === ''
           ? ''
           : filter.clean(request.query.description)
+
       const newServer = new GameServer(
         name,
         description,
@@ -192,13 +197,13 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: RemoveServerQuery,
       },
     },
-    async request => {
+    async (request, response) => {
       const server = getGameServer(request.query.id)
       // Dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
       if (!server || request.ip !== server.ip) return null
 
       removeGameServer(server)
-      return null
+      await response.code(204)
     }
   )
 }

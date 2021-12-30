@@ -1,20 +1,39 @@
-import path from 'node:path'
 import fs from 'node:fs'
+import path from 'node:path'
 
-const sqlite = require( "sqlite3" ).verbose()
-const pjson = require( "../shared/pjson.js" )
-const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
+const sqlite = require('sqlite3').verbose()
+const pjson = require('../shared/pjson.js')
 
-const DEFAULT_PDATA_BASELINE = fs.readFileSync( path.join( __dirname, "..", "..", "assets", "default.pdata" ) )
-const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( path.join( __dirname, "..", "..", "assets", "persistent_player_data_version_231.pdef" ) ).toString() )
+const TOKEN_EXPIRATION_TIME = 3_600_000 * 24 // 24 hours
 
-let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => {
-	if ( ex ) console.error( ex )
-	else console.log( "Connected to player database successfully" )
+const DEFAULT_PDATA_BASELINE = fs.readFileSync(
+  path.join(__dirname, '..', '..', 'assets', 'default.pdata')
+)
+const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition(
+  fs
+    .readFileSync(
+      path.join(
+        __dirname,
+        '..',
+        '..',
+        'assets',
+        'persistent_player_data_version_231.pdef'
+      )
+    )
+    .toString()
+)
 
-	// create account table
-	// this should mirror the PlayerAccount class's	properties
-	playerDB.run( `
+const playerDB = new sqlite.Database(
+  'playerdata.db',
+  sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE,
+  ex => {
+    if (ex) console.error(ex)
+    else console.log('Connected to player database successfully')
+
+    // Create account table
+    // this should mirror the PlayerAccount class's	properties
+    playerDB.run(
+      `
 	CREATE TABLE IF NOT EXISTS accounts (
 		id TEXT PRIMARY KEY NOT NULL,
 		currentAuthToken TEXT,
@@ -22,113 +41,148 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 		currentServerId TEXT,
 		persistentDataBaseline BLOB NOT NULL
 	)
-	`, ex => {
-		if ( ex )
-			console.error( ex )
-		else
-			console.log( "Created player account table successfully" )
-	})
+	`,
+      ex => {
+        if (ex) console.error(ex)
+        else console.log('Created player account table successfully')
+      }
+    )
 
-	// create mod persistent data table
-	// this should mirror the PlayerAccount class's	properties
-	playerDB.run( `
+    // Create mod persistent data table
+    // this should mirror the PlayerAccount class's	properties
+    playerDB.run(
+      `
 	CREATE TABLE IF NOT EXISTS modPeristentData (
 		id TEXT NOT NULL,
 		pdiffHash TEXT NOT NULL,
 		data TEXT NOT NULL,
 		PRIMARY KEY ( id, pdiffHash )
 	)
-	`, ex => {
-		if ( ex )
-			console.error( ex )
-		else
-			console.log( "Created mod persistent data table successfully" )
-	})
-})
+	`,
+      ex => {
+        if (ex) console.error(ex)
+        else console.log('Created mod persistent data table successfully')
+      }
+    )
+  }
+)
 
-function asyncDBGet( sql, params = [] )
-{
-	return new Promise( ( resolve, reject ) => {
-		playerDB.get( sql, params, ( ex, row ) => {
-			if ( ex )
-			{
-				console.error( "Encountered error querying player database: " + ex )
-				reject( ex )
-			}
-			else
-				resolve( row )
-		})
-	})
+async function asyncDBGet(sql, parameters = []) {
+  return new Promise((resolve, reject) => {
+    playerDB.get(sql, parameters, (ex, row) => {
+      if (ex) {
+        console.error('Encountered error querying player database: ' + ex)
+        reject(ex)
+      } else resolve(row)
+    })
+  })
 }
 
-function asyncDBRun( sql, params = [] )
-{
-	return new Promise( ( resolve, reject ) => {
-		playerDB.run( sql, params, ex => {
-			if ( ex )
-			{
-				console.error( "Encountered error querying player database: " + ex )
-				reject( ex )
-			}
-			else
-				resolve()
-		})
-	})
+async function asyncDBRun(sql, parameters = []) {
+  return new Promise((resolve, reject) => {
+    playerDB.run(sql, parameters, ex => {
+      if (ex) {
+        console.error('Encountered error querying player database: ' + ex)
+        reject(ex)
+      } else resolve()
+    })
+  })
 }
 
 class PlayerAccount {
-	public id: string
-	public currentAuthToken: string
-	public currentAuthTokenExpirationTime: number
-	public currentServerId: string
-	public persistentDataBaseline: Buffer
+  public id: string
+  public currentAuthToken: string
+  public currentAuthTokenExpirationTime: number
+  public currentServerId: string
+  public persistentDataBaseline: Buffer
 
-	constructor (id: string, currentAuthToken: string, currentAuthTokenExpirationTime: number, currentServerId: string, persistentDataBaseline: Buffer) {
-		this.id = id
-		this.currentAuthToken = currentAuthToken
-		this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
-		this.currentServerId = currentServerId
-		this.persistentDataBaseline = persistentDataBaseline
-	}
+  constructor(
+    id: string,
+    currentAuthToken: string,
+    currentAuthTokenExpirationTime: number,
+    currentServerId: string,
+    persistentDataBaseline: Buffer
+  ) {
+    this.id = id
+    this.currentAuthToken = currentAuthToken
+    this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
+    this.currentServerId = currentServerId
+    this.persistentDataBaseline = persistentDataBaseline
+  }
 }
 
 export const AsyncGetPlayerByID = async (id: string) => {
-	let row = await asyncDBGet( "SELECT * FROM accounts WHERE id = ?", [ id ] )
-	if (!row) return null
+  const row = await asyncDBGet('SELECT * FROM accounts WHERE id = ?', [id])
+  if (!row) return null
 
-	return new PlayerAccount(row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline)
+  return new PlayerAccount(
+    row.id,
+    row.currentAuthToken,
+    row.currentAuthTokenExpirationTime,
+    row.currentServerId,
+    row.persistentDataBaseline
+  )
 }
 
 export const AsyncCreateAccountForID = async (id: string) => {
-	await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
+  await asyncDBRun(
+    'INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )',
+    [id, DEFAULT_PDATA_BASELINE]
+  )
 }
 
-export const AsyncUpdateCurrentPlayerAuthToken = async (id: string, token: string) => {
-	await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
+export const AsyncUpdateCurrentPlayerAuthToken = async (
+  id: string,
+  token: string
+) => {
+  await asyncDBRun(
+    'UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?',
+    [token, Date.now() + TOKEN_EXPIRATION_TIME, id]
+  )
 }
 
-export const AsyncUpdatePlayerCurrentServer = async (id: string, serverId: string) => {
-	await asyncDBRun( "UPDATE accounts SET currentServerId = ? WHERE id = ?", [ serverId, id ] )
+export const AsyncUpdatePlayerCurrentServer = async (
+  id: string,
+  serverId: string
+) => {
+  await asyncDBRun('UPDATE accounts SET currentServerId = ? WHERE id = ?', [
+    serverId,
+    id,
+  ])
 }
 
-export const AsyncWritePlayerPersistenceBaseline = async (id: string, persistentDataBaseline) => {
-	await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ? WHERE id = ?", [ persistentDataBaseline, id ] )
+export const AsyncWritePlayerPersistenceBaseline = async (
+  id: string,
+  persistentDataBaseline
+) => {
+  await asyncDBRun(
+    'UPDATE accounts SET persistentDataBaseline = ? WHERE id = ?',
+    [persistentDataBaseline, id]
+  )
 }
 
 export const AsyncGetPlayerModPersistence = async (id: string, pdiffHash) => {
-	return JSON.parse( await asyncDBGet( "SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?", [ id, pdiffHash ] ) )
+  return JSON.parse(
+    await asyncDBGet(
+      'SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?',
+      [id, pdiffHash]
+    )
+  )
 }
 
 export const AsyncWritePlayerModPersistence = async (id, pdiffHash, data) => {
-	// TODO
+  // TODO
 }
 
-export const AsyncGetPlayerPersistenceBufferForMods = async (id: string, pdiffs) => {
-	let player = await AsyncGetPlayerByID( id )
-	return player?.persistentDataBaseline
+export const AsyncGetPlayerPersistenceBufferForMods = async (
+  id: string,
+  pdiffs
+) => {
+  const player = await AsyncGetPlayerByID(id)
+  return player?.persistentDataBaseline
 
-	// disabling this for now
-	/*let pdefCopy = DEFAULT_PDEF_OBJECT
+  // Disabling this for now
+  /* let pdefCopy = DEFAULT_PDEF_OBJECT
 	let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
 
 	let newPdataJson = baselineJson
@@ -147,5 +201,5 @@ export const AsyncGetPlayerPersistenceBufferForMods = async (id: string, pdiffs)
 		newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
 	}
 
-	return PdataJsonToBuffer( newPdataJson, pdefCopy )*/
+	return PdataJsonToBuffer( newPdataJson, pdefCopy ) */
 }

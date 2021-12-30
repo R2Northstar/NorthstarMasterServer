@@ -1,38 +1,40 @@
 const NATIVE_TYPES = {
-    int: { size: 4,
-        read: ( buf, idx ) => buf.readInt32LE( idx ),
-        write: ( buf, value, idx ) => buf.writeInt32LE( value, idx )
-    },
-    float: { size: 4,
-        read: ( buf, idx ) => buf.readFloatLE( idx ),
-        write: ( buf, value, idx ) => buf.writeFloatLE( value, idx )
-    },
-    bool: {
-        size: 1,
-        read: ( buf, idx ) => !!buf.readUInt8( idx ),
-        write: ( buf, value, idx ) => buf.writeUint8( value, idx )
-    },
-    string: {
-        size: 1,
-        nativeArrayType: true,
-        read: ( buf, idx, length ) => buf.toString( 'ascii', idx, idx + length ),
-        write: ( buf, value, idx, length ) => buf.write( value.padEnd( length, '\u0000' ), idx, length, 'ascii' )
-    }
+  int: {
+    size: 4,
+    read: (buf, idx) => buf.readInt32LE(idx),
+    write: (buf, value, idx) => buf.writeInt32LE(value, idx),
+  },
+  float: {
+    size: 4,
+    read: (buf, idx) => buf.readFloatLE(idx),
+    write: (buf, value, idx) => buf.writeFloatLE(value, idx),
+  },
+  bool: {
+    size: 1,
+    read: (buf, idx) => !!buf.readUInt8(idx),
+    write: (buf, value, idx) => buf.writeUint8(value, idx),
+  },
+  string: {
+    size: 1,
+    nativeArrayType: true,
+    read: (buf, idx, length) => buf.toString('ascii', idx, idx + length),
+    write: (buf, value, idx, length) =>
+      buf.write(value.padEnd(length, '\u0000'), idx, length, 'ascii'),
+  },
 }
 
-const ENUM_START = "$ENUM_START"
-const ENUM_END = "$ENUM_END"
+const ENUM_START = '$ENUM_START'
+const ENUM_END = '$ENUM_END'
 
-const STRUCT_START = "$STRUCT_START"
-const STRUCT_END = "$STRUCT_END"
+const STRUCT_START = '$STRUCT_START'
+const STRUCT_END = '$STRUCT_END'
 
-const PDIFF_ENUM_ADD = "$ENUM_ADD"
-const PDIFF_PDEF_START = "$PROP_START"
+const PDIFF_ENUM_ADD = '$ENUM_ADD'
+const PDIFF_PDEF_START = '$PROP_START'
 
-// reads a .pdef file, outputs all keys/values in a json format we use for this module
-function ParseDefinition( pdef )
-{
-    let ret = {
+// Reads a .pdef file, outputs all keys/values in a json format we use for this module
+function ParseDefinition(pdef) {
+  let returnValue = {
         structs: {},
         enums: {},
 
@@ -66,12 +68,12 @@ function ParseDefinition( pdef )
                 if ( type == ENUM_START )
                 {
                     currentEnumName = name
-                    ret.enums[ currentEnumName ] = []
+                    returnValue.enums[ currentEnumName ] = []
                 }
                 else if ( type == STRUCT_START )
                 {
                     currentStructName = name
-                    ret.structs[ currentStructName ] = []
+                    returnValue.structs[ currentStructName ] = []
                 }
                 else
                     throw Error( `encountered unknown keyword ${type}` )
@@ -90,7 +92,7 @@ function ParseDefinition( pdef )
                 throw new Error( `unexpected characters in enum member` )
 
             // enums only have member names, values are just their index in the enum
-            ret.enums[ currentEnumName ].push( type )
+            returnValue.enums[ currentEnumName ].push( type )
         }
         // normal members/struct members
         else
@@ -114,7 +116,7 @@ function ParseDefinition( pdef )
                 isArray = true
 
             // verify type stuff
-            if ( !( checkType in NATIVE_TYPES || checkType in ret.structs || checkType in ret.enums ) )
+            if ( !( checkType in NATIVE_TYPES || checkType in returnValue.structs || checkType in returnValue.enums ) )
                 throw Error( `got unknown type ${checkType}` )
             else
             {
@@ -137,84 +139,71 @@ function ParseDefinition( pdef )
 
                     let arraySize = name.substring( bracketIndex + 1, name.indexOf( ']' ) )
 
-                    if ( arraySize in ret.enums )
+                    if ( arraySize in returnValue.enums )
                         newMember.arraySize = arraySize // just use the enum name here, easier to just let people resolve this themselves
                     else
                         newMember.arraySize = parseInt( arraySize )
                 }
 
                 if ( currentStructName )
-                    ret.structs[ currentStructName ].push( newMember )
+                    returnValue.structs[ currentStructName ].push( newMember )
                 else
-                    ret.members.push( newMember )
+                    returnValue.members.push( newMember )
             }
         }
     }
 
-    return ret
+    return returnValue
 }
 
-function ParseDefinitionDiff( pdiff )
-{
-    let ret = {
+function ParseDefinitionDiff(pdiff) {
+  const ret = {
         enumAdds: {},
         pdefString: "",
         pdef: {}
     }
 
-    let pdefIdx = -1
-    let currentEnumAddName
-    let lines = pdiff.split( '\n' )
+  let pdefIdx = -1
+  let currentEnumAddName
+  let lines = pdiff.split('\n')
 
-    // read each line
-    for ( let i = 0; i < lines.length; i++ )
-    {
-        // read types/names
-        let split = lines[ i ].trim().split( /\s+/g )
-        let type = split[ 0 ]
+  // Read each line
+  for (let i = 0; i < lines.length; i++) {
+    // Read types/names
+    let split = lines[i].trim().split(/\s+/g)
+    let type = split[0]
 
-        // check if this is a comment line
-        if ( type.includes( "//" ) || type.length == 0 )
-            continue
+    // Check if this is a comment line
+    if (type.includes('//') || type.length == 0) continue
 
-        if ( currentEnumAddName )
-        {
-            if ( type == ENUM_END )
-                currentEnumAddName = ""
-            else
-            {
-                if ( !type.match( /^\w+$/ ) )
-                    throw Error( `unexpected characters in enum member` )
+    if (currentEnumAddName) {
+      if (type == ENUM_END) currentEnumAddName = ''
+      else {
+        if (!type.match(/^\w+$/))
+          throw Error(`unexpected characters in enum member`)
 
-                ret.enumAdds[ currentEnumAddName ].push(type)
-            }
-        }
-        else if ( type == PDIFF_ENUM_ADD )
-        {
-            currentEnumAddName = split[ 1 ]
-            if ( !currentEnumAddName.match( /^\w+$/ ) )
-                throw Error( `unexpected characters in enum name` )
+        ret.enumAdds[currentEnumAddName].push(type)
+      }
+    } else if (type == PDIFF_ENUM_ADD) {
+      currentEnumAddName = split[1]
+      if (!currentEnumAddName.match(/^\w+$/))
+        throw Error(`unexpected characters in enum name`)
 
-            ret.enumAdds[ currentEnumAddName ] = []
-        }
-        else if ( type == PDIFF_PDEF_START )
-        {
-            pdefIdx = i + 1
-            break
-        }
-        else
-            throw Error( `hit unexpected case` )
-    }
+      ret.enumAdds[currentEnumAddName] = []
+    } else if (type == PDIFF_PDEF_START) {
+      pdefIdx = i + 1
+      break
+    } else throw Error(`hit unexpected case`)
+  }
 
-    if ( pdefIdx != -1 )
-    {
-        let pdef = lines.slice( pdefIdx ).join( '\n' )
-        ret.pdefString = pdef
+  if (pdefIdx != -1) {
+    let pdef = lines.slice(pdefIdx).join('\n')
+    ret.pdefString = pdef
 
-        ret.pdef = ParseDefinition( pdef )
-    }
+    ret.pdef = ParseDefinition(pdef)
+  }
 
-    return ret
+  return ret
 }
 
 function GetMemberSize( member, parsedDef )
@@ -233,7 +222,7 @@ function GetMemberSize( member, parsedDef )
 
         return NATIVE_TYPES[ member.type ].size * multiplier
     }
-    else if ( member.type in parsedDef.enums )
+    if ( member.type in parsedDef.enums )
         return NATIVE_TYPES.int.size * multiplier
     else if ( member.type in parsedDef.structs )
     {
@@ -247,8 +236,8 @@ function GetMemberSize( member, parsedDef )
         throw Error( `got unknown member type ${member.type}` )
 }
 
-//function PdataToJson( pdata, pdef )
-//{
+// function PdataToJson( pdata, pdef )
+// {
 //    let ret = {}
 //    let i = 0
 //
@@ -291,52 +280,49 @@ function GetMemberSize( member, parsedDef )
 //    recursiveReadPdata( pdef.members )
 //
 //    return ret
-//}
+// }
 
-function PdataToJson( pdata, pdef )
-{
-    let ret = {}
-    let i = 0
+function PdataToJson(pdata, pdef) {
+  const ret = {}
+  let i = 0
 
-    function recursiveReadPdata( struct, base )
-    {
-        for ( let member of struct )
-        {
-            let arraySize = member.arraySize || 1
-            if ( typeof( arraySize ) == 'string' )
-                arraySize = pdef.enums[ member.arraySize ].length
+  function recursiveReadPdata(struct, base) {
+    for (let member of struct) {
+      let arraySize = member.arraySize || 1
+      if (typeof arraySize == 'string')
+        arraySize = pdef.enums[member.arraySize].length
 
-            let retArray = []
+      let returnValueArray = []
 
             for ( let j = 0; j < arraySize; j++ )
             {
                 if ( member.type in NATIVE_TYPES )
                 {
-                    retArray.push( NATIVE_TYPES[ member.type ].read( pdata, i, member.nativeArraySize ) )
+                    returnValueArray.push( NATIVE_TYPES[ member.type ].read( pdata, i, member.nativeArraySize ) )
                     i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
                 }
                 else if ( member.type in pdef.enums )
-                    retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+                    returnValueArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
                 else if ( member.type in pdef.structs )
                 {
                     let newStruct = {}
                     recursiveReadPdata( pdef.structs[ member.type ], newStruct )
-                    retArray.push( newStruct )
+                    returnValueArray.push( newStruct )
                 }
             }
 
-            base[ member.name ] = { type: member.type, arraySize: member.arraySize, nativeArraySize: member.nativeArraySize, value: member.arraySize ? retArray : retArray[ 0 ] }
-        }
+            base[ member.name ] = { type: member.type, arraySize: member.arraySize, nativeArraySize: member.nativeArraySize, value: member.arraySize ? returnValueArray : returnValueArray[ 0 ] }
+      }
     }
+  }
 
-    recursiveReadPdata( pdef.members, ret )
+  recursiveReadPdata(pdef.members, ret)
 
-    return ret
+  return ret
 }
 
-
-//function PdataJsonToBuffer( json, pdef )
-//{
+// function PdataJsonToBuffer( json, pdef )
+// {
 //    // calc size
 //    let size = 0
 //    for ( let member of pdef.members )
@@ -375,63 +361,56 @@ function PdataToJson( pdata, pdef )
 //
 //    recursiveWritePdata( pdef.members )
 //    return buf
-//}
+// }
 
-function PdataJsonToBuffer( json, pdef, pdata )
-{
-    // calc size
-    let size = 0
-    for ( let member of pdef.members )
-        size += GetMemberSize( member, pdef )
+function PdataJsonToBuffer(json, pdef, pdata) {
+  // Calc size
+  let size = 0
+  for (let member of pdef.members) size += GetMemberSize(member, pdef)
 
-    let buf = Buffer.alloc( size )
+  let buf = Buffer.alloc(size)
 
-    let i = 0
-    let currentKey = 0
-    let keys = Object.keys( json )
+  let i = 0
+  let currentKey = 0
+  let keys = Object.keys(json)
 
-    function recursiveWritePdata( struct )
-    {
-        for ( let memberName in struct )
-        {
-            let member = struct[ memberName ]
+  function recursiveWritePdata(struct) {
+    for (let memberName in struct) {
+      let member = struct[memberName]
 
-            let arraySize = member.arraySize || 1
-            if ( typeof( arraySize ) == 'string' )
-                arraySize = pdef.enums[ arraySize ].length
+      let arraySize = member.arraySize || 1
+      if (typeof arraySize == 'string') arraySize = pdef.enums[arraySize].length
 
-            for ( let j = 0; j < arraySize; j++ )
-            {
-                let val = member.value
-                if ( Array.isArray( val ) )
-                    val = member.value[ j ]
+      for (let j = 0; j < arraySize; j++) {
+        let value = member.value
+                if ( Array.isArray( value ) )
+                    value = member.value[ j ]
 
                 if ( member.type in NATIVE_TYPES )
                 {
-                    NATIVE_TYPES[ member.type ].write( buf, val, i, member.nativeArraySize )
+                    NATIVE_TYPES[ member.type ].write( buf, value, i, member.nativeArraySize )
                     i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
                 }
                 else if ( member.type in pdef.enums )
                 {
-                    buf.writeUInt8( pdef.enums[ member.type ].indexOf( val ), i++ ) // enums are uint8s
+                    buf.writeUInt8( pdef.enums[ member.type ].indexOf( value ), i++ ) // enums are uint8s
                 }
                 else if ( member.type in pdef.structs )
-                    recursiveWritePdata( val )
-            }
-        }
+                    recursiveWritePdata( value )
+      }
     }
+  }
 
-    recursiveWritePdata( json )
-    return buf
+  recursiveWritePdata(json)
+  return buf
 }
 
-
 module.exports = {
-    NATIVE_TYPES: NATIVE_TYPES,
+  NATIVE_TYPES,
 
-    ParseDefinition: ParseDefinition,
-    ParseDefinitionDiff: ParseDefinitionDiff,
-    GetMemberSize: GetMemberSize,
-    PdataToJson: PdataToJson,
-    PdataJsonToBuffer: PdataJsonToBuffer,
+  ParseDefinition: ParseDefinition,
+  ParseDefinitionDiff,
+  GetMemberSize,
+  PdataToJson: PdataToJson,
+  PdataJsonToBuffer,
 }

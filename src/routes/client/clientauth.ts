@@ -3,7 +3,7 @@ import axios from 'axios'
 import { type FastifyPluginAsync } from 'fastify'
 import crypto from 'node:crypto'
 import * as accounts from '../../shared/accounts.js'
-import { getGameServers } from '../../shared/gameserver.js'
+import { getGameServer } from '../../shared/gameserver.js'
 
 const shouldRequireSessionToken = (process.env.REQUIRE_SESSION_TOKEN = true)
 
@@ -105,7 +105,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
       },
     },
     async (request, reply) => {
-      const server = getGameServers()[request.query.server]
+      const server = getGameServer(request.query.server)
 
       if (
         !server ||

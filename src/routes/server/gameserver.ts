@@ -7,7 +7,7 @@ import crypto from 'node:crypto'
 import {
   addGameServer,
   GameServer,
-  getGameServers,
+  getGameServer,
   removeGameServer,
 } from '../../shared/gameserver.js'
 import * as pjson from '../../shared/pjson.js'
@@ -142,9 +142,9 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       },
     },
     async (request, reply) => {
-      const server = getGameServers()[request.query.id]
+      const server = getGameServer(request.query.id)
       // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-      if (!server || request.ip != server.ip || !request.query.id) {
+      if (!server || request.ip !== server.ip || !request.query.id) {
         // Remove !request.playerCount as if playercount==0 it will trigger skip heartbeat update
         return null
       } // Added else so update heartbeat will trigger,Have to add the brackets for me to work for some reason
@@ -161,7 +161,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
   fastify.post('/server/update_values', async (request, reply) => {
     if (!('id' in request.query)) return null
 
-    const server = getGameServers()[request.query.id]
+    const server = getGameServer(request.query.id)
     // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
     if (!server || request.ip !== server.ip) return null
 
@@ -192,8 +192,8 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: RemoveServerQuery,
       },
     },
-    async (request, reply) => {
-      const server = getGameServers()[request.query.id]
+    async request => {
+      const server = getGameServer(request.query.id)
       // Dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
       if (!server || request.ip !== server.ip) return null
 

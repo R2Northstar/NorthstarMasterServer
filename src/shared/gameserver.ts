@@ -150,6 +150,10 @@ export const getGameServers = () => {
   return Object.fromEntries(gameServers.entries())
 }
 
+export const getGameServer = (id: string) => {
+  return gameServers.get(id)
+}
+
 export const addGameServer = (server: GameServer) => {
   gameServers.set(server.id, server)
 }

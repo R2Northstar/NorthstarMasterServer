@@ -23,10 +23,10 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
   const AddServerQuery = Type.Object({
     // The port the gameserver is being hosted on ( for connect )
-    port: Type.Integer(),
+    port: Type.Integer({ minimum: 1, maximum: 65_535 }),
 
     // The port the server's http auth server is being hosted on
-    authPort: Type.Integer(),
+    authPort: Type.Integer({ minimum: 1, maximum: 65_535 }),
 
     // The name of the server
     name: Type.String(),
@@ -41,7 +41,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     playlist: Type.String(),
 
     // The maximum number of players the server accepts
-    maxPlayers: Type.Integer(),
+    maxPlayers: Type.Integer({ minimum: 0 }),
 
     // The server's password, if 0 length, the server does not accept a password
     password: Type.String(),
@@ -136,7 +136,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
   const HeartbeatQuery = Type.Object({
     // The id of the server sending this message
     id: Type.String(),
-    playerCount: Type.Integer(),
+    playerCount: Type.Integer({ minimum: 0 }),
   })
 
   // POST /server/heartbeat
@@ -167,8 +167,8 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
     name: Type.Optional(Type.String()),
     description: Type.Optional(Type.String()),
-    playerCount: Type.Optional(Type.Integer()),
-    maxPlayers: Type.Optional(Type.Integer()),
+    playerCount: Type.Optional(Type.Integer({ minimum: 0 })),
+    maxPlayers: Type.Optional(Type.Integer({ minimum: 0 })),
     map: Type.Optional(Type.String()),
     playlist: Type.Optional(Type.String()),
   })

@@ -1,37 +1,24 @@
 import { type FastifyPluginAsync } from 'fastify'
-import fs from 'node:fs'
+import fastifyStatic from 'fastify-static'
 import path from 'node:path'
 
-const promodataPath = path.join(
+const publicAssetsPath = path.join(
   __dirname,
   '..',
   '..',
   '..',
   'assets',
-  'mainmenupromodata.json'
+  'public'
 )
 
-// Watch the mainmenupromodata file so we can update it without a masterserver restart
-fs.watch(promodataPath, (curr, previous) => {
-  try {
-    mainMenuPromoData = JSON.parse(fs.readFileSync(promodataPath).toString())
-    console.log('updated main menu promo data successfully!')
-  } catch (error) {
-    console.log(`encountered error updating main menu promo data: ${error}`)
-  }
-})
-
-let mainMenuPromoData = {}
-if (fs.existsSync(promodataPath))
-  mainMenuPromoData = JSON.parse(fs.readFileSync(promodataPath).toString())
-
 const register: FastifyPluginAsync = async (fastify, _) => {
+  await fastify.register(fastifyStatic, { root: publicAssetsPath })
   // exported routes
 
   // GET /client/mainmenupromos
   // returns main menu promo info
-  fastify.get('/client/mainmenupromos', {}, async () => {
-    return mainMenuPromoData
+  fastify.get('/client/mainmenupromos', async (_, response) => {
+    return response.sendFile('mainmenupromodata.json')
   })
 }
 

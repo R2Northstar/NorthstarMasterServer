@@ -7,7 +7,8 @@
 		"start": "node .",
 		"start:dev": "node . -devenv",
 		"dev": "tsc --watch",
-		"build": "tsc"
+		"build": "tsc",
+		"lint": "xo ./src"
 	},
 	"dependencies": {
 		"@sinclair/typebox": "^0.23.2",
@@ -22,6 +23,7 @@
 	"devDependencies": {
 		"@types/node": "^17.0.5",
 		"source-map-support": "^0.5.21",
-		"typescript": "^4.5.4"
+		"typescript": "^4.5.4",
+		"xo": "^0.47.0"
 	}
 }

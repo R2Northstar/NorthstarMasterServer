@@ -1,0 +1,46 @@
+{
+  "space": true,
+  "semicolon": false,
+  "prettier": true,
+
+  "ignores": ["./src/worldql-fb/messages/*.ts"],
+  "rules": {
+    "no-negated-condition": 0,
+    "sort-imports": ["error", {
+      "ignoreCase": true,
+      "ignoreDeclarationSort": true
+    }],
+
+    "import/first": "error",
+    "import/no-unassigned-import": 0,
+    "import/newline-after-import": "error",
+    "import/order": ["error", {
+      "newlines-between": "ignore",
+      "alphabetize": {
+        "order": "asc",
+        "caseInsensitive": true
+      },
+      "groups": [
+        ["builtin", "external"],
+        "internal",
+        "parent",
+        ["sibling", "index"]
+      ],
+      "pathGroups": [{
+        "pattern": "~*",
+        "group": "internal"
+      }, {
+        "pattern": "~*/**",
+        "group": "internal"
+      }]
+    }],
+
+    "unicorn/filename-case": 0,
+    "unicorn/no-array-reduce": 0,
+    "unicorn/no-unreadable-array-destructuring": 0,
+    "unicorn/no-process-exit": 0,
+
+    "@typescript-eslint/naming-convention": 0,
+    "@typescript-eslint/no-unnecessary-boolean-literal-compare": 0
+  }
+}

@@ -11,6 +11,7 @@ export const IS_DEV = !IS_PROD
 export const LISTEN_PORT = registerInt('LISTEN_PORT') ?? 3000
 export const LISTEN_IP = registerString('LISTEN_IP') ?? '0.0.0.0'
 export const USE_FASTIFY_LOGGER = registerBool('USE_FASTIFY_LOGGER') ?? false
+export const TRUST_PROXY = registerBool('TRUST_PROXY') ?? true
 // #endregion
 
 // #region Application

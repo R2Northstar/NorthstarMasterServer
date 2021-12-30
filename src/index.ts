@@ -3,14 +3,19 @@ import 'source-map-support/register.js'
 import createFastify from 'fastify'
 import { readdir } from 'node:fs/promises'
 import path from 'node:path'
-import { LISTEN_IP, LISTEN_PORT, USE_FASTIFY_LOGGER } from './env/index.js'
+import {
+  LISTEN_IP,
+  LISTEN_PORT,
+  TRUST_PROXY,
+  USE_FASTIFY_LOGGER,
+} from './env/index.js'
 
 const ROUTE_PATHS = ['client', 'server', 'account'] as const
 
 const init = async () => {
   const fastify = await createFastify({
     logger: USE_FASTIFY_LOGGER,
-    trustProxy: true,
+    trustProxy: TRUST_PROXY,
   })
 
   /* eslint-disable no-await-in-loop */

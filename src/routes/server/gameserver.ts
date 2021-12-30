@@ -160,29 +160,42 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     }
   )
 
+  const UpdateValuesQuery = Type.Object({
+    // The id of the server sending this message
+    id: Type.String(),
+
+    name: Type.Optional(Type.String()),
+    description: Type.Optional(Type.String()),
+    playerCount: Type.Optional(Type.Integer()),
+    maxPlayers: Type.Optional(Type.Integer()),
+    map: Type.Optional(Type.String()),
+    playlist: Type.Optional(Type.String()),
+  })
+
   // POST /server/update_values
   // updates values shown on the server list, such as map, playlist, or player count
   // no schema for this one, since it's fully dynamic and fastify doesnt do optional params
-  fastify.post('/server/update_values', async (request, reply) => {
-    if (!('id' in request.query)) return null
-
-    const server = getGameServer(request.query.id)
-    // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-    if (!server || request.ip !== server.ip) return null
-
-    for (const key of Object.keys(request.query)) {
-      if (key === 'id' || !(key in server)) continue
-
-      if (key === 'playerCount' || key === 'maxPlayers') {
-        server[key] = Number.parseInt(request.query[key])
-      } // I suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
-      else {
-        server[key] = request.query[key]
+  fastify.post<{ Querystring: Static<typeof UpdateValuesQuery> }>(
+    '/server/update_values',
+    async (request, response) => {
+      const server = getGameServer(request.query.id)
+      if (!server || request.ip !== server.ip) {
+        await response.code(204).send()
+        return
       }
-    }
 
-    return null
-  })
+      /* eslint-disable prettier/prettier */
+      if (request.query.name) server.name = request.query.name
+      if (request.query.description) server.description = request.query.description
+      if (request.query.playerCount) server.playerCount = request.query.playerCount
+      if (request.query.maxPlayers) server.maxPlayers = request.query.maxPlayers
+      if (request.query.map) server.map = request.query.map
+      if (request.query.playlist) server.playlist = request.query.playlist
+      /* eslint-enable prettier/prettier */
+
+      await response.code(204).send()
+    }
+  )
 
   const RemoveServerQuery = Type.Object({
     id: Type.String(),
@@ -203,7 +216,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       if (!server || request.ip !== server.ip) return null
 
       removeGameServer(server)
-      await response.code(204)
+      await response.code(204).send()
     }
   )
 }

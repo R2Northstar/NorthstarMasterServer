@@ -5,9 +5,13 @@ import { readdir } from 'node:fs/promises'
 import path from 'node:path'
 import { LISTEN_IP, LISTEN_PORT, USE_FASTIFY_LOGGER } from './env/index.js'
 
+const ROUTE_PATHS = ['client', 'server', 'account'] as const
+
 const init = async () => {
-  const fastify = await createFastify({ logger: USE_FASTIFY_LOGGER })
-  const ROUTE_PATHS = ['client', 'server', 'account'] as const
+  const fastify = await createFastify({
+    logger: USE_FASTIFY_LOGGER,
+    trustProxy: true,
+  })
 
   /* eslint-disable no-await-in-loop */
   for (const routeDir of ROUTE_PATHS) {

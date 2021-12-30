@@ -109,7 +109,7 @@ module.exports = ( fastify, opts, done ) => {
 			method: "POST", 
 			host: server.ip, 
 			port: server.authPort, 
-			path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}`
+			path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
 		}, pdata )
 		
 		if ( !authResponse )

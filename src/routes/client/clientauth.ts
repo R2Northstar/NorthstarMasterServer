@@ -2,10 +2,9 @@ import { type Static, Type } from '@sinclair/typebox'
 import axios from 'axios'
 import { type FastifyPluginAsync } from 'fastify'
 import crypto from 'node:crypto'
+import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
 import * as accounts from '../../shared/accounts.js'
 import { getGameServer } from '../../shared/gameserver.js'
-
-const shouldRequireSessionToken = (process.env.REQUIRE_SESSION_TOKEN = true)
 
 const register: FastifyPluginAsync = async (fastify, options) => {
   // exported routes
@@ -30,7 +29,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
     },
     async (request, reply) => {
       // Only do this if we're in an environment that actually requires session tokens
-      if (shouldRequireSessionToken) {
+      if (REQUIRE_SESSION_TOKEN) {
         // TODO: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
         if (request.query.token.includes('&')) return { success: false }
 
@@ -116,7 +115,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
       const account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) return { success: false }
 
-      if (shouldRequireSessionToken) {
+      if (REQUIRE_SESSION_TOKEN) {
         // Check token
         if (request.query.playerToken !== account.currentAuthToken)
           return { success: false }
@@ -182,7 +181,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
       const account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) return { success: false }
 
-      if (shouldRequireSessionToken) {
+      if (REQUIRE_SESSION_TOKEN) {
         // Check token
         if (request.query.playerToken !== account.currentAuthToken)
           return { success: false }

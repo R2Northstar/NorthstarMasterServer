@@ -1,9 +1,9 @@
 import { type FastifyPluginCallback } from "fastify"
 import axios from "axios"
+import { GameServer, GetGameServers, AddGameServer, RemoveGameServer } from '../../shared/gameserver.js'
 
 const path = require( "path" )
 const crypto = require( "crypto" )
-const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( "../../shared/gameserver.js" )
 const pjson = require( "../../shared/pjson.js" )
 const Filter = require('bad-words')
 let filter = new Filter();

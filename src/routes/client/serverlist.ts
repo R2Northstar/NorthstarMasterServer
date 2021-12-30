@@ -1,7 +1,7 @@
 import { type FastifyPluginCallback } from "fastify"
+import { GameServer, GetGameServers, RemoveGameServer } from '../../shared/gameserver.js'
 
 const path = require( "path" )
-const { GameServer, GetGameServers, RemoveGameServer } = require( "../../shared/gameserver.js" )
 
 const register: FastifyPluginCallback = (fastify, opts, done) => {
 	// exported routes
@@ -28,19 +28,15 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 				continue
 
 			// create a copy of the gameserver obj for clients so we can hide sensitive info
-			let copy = new GameServer( servers[ i ] )
-			delete copy.ip
-			delete copy.port
-			delete copy.authPort
-			delete copy.password
-			delete copy.serverAuthToken
+			let copy = servers[i].clean()
 
 			displayServerArray.push( copy )
 		}
 
 		// delete servers that we've marked for deletion
-		for ( let server of expiredServers )
+		for ( let server of expiredServers ) {
 			RemoveGameServer( server )
+		}
 
 		return displayServerArray
 	})

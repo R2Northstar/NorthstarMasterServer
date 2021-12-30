@@ -11,6 +11,7 @@ let fastify = require( "fastify" )
 if ( process.env.USE_HTTPS )
 {
 	fastify = fastify({ 
+		trustProxy: true,
 		logger: process.env.USE_FASTIFY_LOGGER || false,
 		https: {
 			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
@@ -21,6 +22,7 @@ if ( process.env.USE_HTTPS )
 else
 {
 	fastify = fastify({ 
+		trustProxy: true,
 		logger: process.env.USE_FASTIFY_LOGGER || false,
 	})
 }

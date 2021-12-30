@@ -1,6 +1,7 @@
 import { type FastifyPluginCallback } from "fastify"
 import axios from "axios"
 import { GameServer, GetGameServers, AddGameServer, RemoveGameServer } from '../../shared/gameserver.js'
+import { type Static, Type } from '@sinclair/typebox'
 
 const path = require( "path" )
 const crypto = require( "crypto" )
@@ -15,21 +16,38 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 
 	// exported routes
 
+	const AddServerQuery = Type.Object({
+		// the port the gameserver is being hosted on ( for connect )
+		port: Type.Integer(),
+
+		// the port the server's http auth server is being hosted on
+		authPort: Type.Integer(),
+
+		// the name of the server
+		name: Type.String(),
+
+		// the description of the server
+		description: Type.String(),
+
+		// the map the server is on
+		map: Type.String(),
+
+		// the playlist the server is using
+		playlist: Type.String(),
+
+		// the maximum number of players the server accepts
+		maxPlayers: Type.Integer(),
+
+		// the server's password, if 0 length, the server does not accept a password
+		password: Type.String(),
+	})
+
 	// POST /server/add_server
 	// adds a gameserver to the server list
-	fastify.post( '/server/add_server',
+	fastify.post<{ Querystring: Static<typeof AddServerQuery> }>( '/server/add_server',
 	{
 		schema: {
-			querystring: {
-				port: { type: "integer" }, // the port the gameserver is being hosted on ( for connect )
-				authPort: { type: "integer" }, // the port the server's http auth server is being hosted on
-				name: { type: "string" }, // the name of the server
-				description: { type: "string" }, // the description of the server
-				map: { type: "string" }, // the map the server is on
-				playlist: { type: "string" }, // the playlist the server is using
-				maxPlayers: { type: "integer" }, // the maximum number of players the server accepts
-				password: { type: "string" } // the server's password, if 0 length, the server does not accept a password
-			}
+			querystring: AddServerQuery
 		}
 	},
 	async ( request, reply ) => {
@@ -88,15 +106,18 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 		}
 	})
 
+	const HeartbeatQuery = Type.Object({
+		// the id of the server sending this message
+		id: Type.String(),
+		playerCount: Type.Integer(),
+	})
+
 	// POST /server/heartbeat
 	// refreshes a gameserver's last heartbeat time, gameservers are removed after 30 seconds without a heartbeat
-	fastify.post( '/server/heartbeat',
+	fastify.post<{ Querystring: Static<typeof HeartbeatQuery> }>( '/server/heartbeat',
 	{
 		schema: {
-			querystring: {
-				id: { type: "string" }, // the id of the server sending this message
-				playerCount: { type: "integer" }
-			}
+			querystring: HeartbeatQuery
 		}
 	},
 	async ( request, reply ) => {
@@ -153,14 +174,16 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 		return null
 	})
 
+	const RemoveServerQuery = Type.Object({
+		id: Type.String(),
+	})
+
 	// DELETE /server/remove_server
 	// removes a gameserver from the server list
-	fastify.delete( '/server/remove_server',
+	fastify.delete<{ Querystring: Static<typeof RemoveServerQuery> }>( '/server/remove_server',
 	{
 		schema: {
-			querystring: {
-				id: { type: "string" }
-			}
+			querystring: RemoveServerQuery
 		}
 	},
 	async ( request, reply ) => {

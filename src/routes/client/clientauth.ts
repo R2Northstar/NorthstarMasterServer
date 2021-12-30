@@ -1,5 +1,6 @@
 import { type FastifyPluginCallback } from "fastify"
 import axios from "axios"
+import { type Static, Type } from '@sinclair/typebox'
 
 const path = require( "path" )
 const crypto = require( "crypto" )
@@ -11,16 +12,21 @@ let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 const register: FastifyPluginCallback = (fastify, opts, done) => {
 	// exported routes
 
+	const OriginAuthQuery = Type.Object({
+		// the authing player's id
+		id: Type.String(),
+
+		// the authing player's origin token
+		token: Type.String(),
+	})
+
 	// POST /client/origin_auth
 	// used to authenticate a user on northstar, so we know the person using their uid is really them
 	// returns the user's northstar session token
-	fastify.get( '/client/origin_auth',
+	fastify.get<{ Querystring: Static<typeof OriginAuthQuery> }>( '/client/origin_auth',
 	{
 		schema: {
-			querystring: {
-				id: { type: "string" }, // the authing player's id
-				token: { type: "string" } // the authing player's origin token
-			}
+			querystring: OriginAuthQuery
 		}
 	},
 	async ( request, reply ) => {
@@ -66,18 +72,27 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 		}
 	})
 
+	const AuthWithServerQuery = Type.Object({
+		// id of the player trying to auth
+		id: Type.String(),
+
+		// not implemented yet: the authing player's account token
+		playerToken: Type.String(),
+
+		// server id being authed against
+		server: Type.String(),
+
+		// the password the player is using to connect to the server
+		password: Type.String(),
+	})
+
 	// POST /client/auth_with_server
 	// attempts to authenticate a client with a gameserver, so they can connect
 	// authentication includes giving them a 1-time token to join the gameserver, as well as sending their persistent data to the gameserver
-	fastify.post( '/client/auth_with_server',
+	fastify.post<{ Querystring: Static<typeof AuthWithServerQuery> }>( '/client/auth_with_server',
 	{
 		schema: {
-			querystring: {
-				id: { type: "string" }, // id of the player trying to auth
-				playerToken: { type: "string" }, // not implemented yet: the authing player's account token
-				server: { type: "string" },
-				password: { type: "string" } // the password the player is using to connect to the server
-			}
+			querystring: AuthWithServerQuery
 		}
 	},
 	async ( request, reply ) => {
@@ -130,16 +145,21 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 		}
 	})
 
+	const AuthWithSelfQuery = Type.Object({
+		// id of the player trying to auth
+		id: Type.String(),
+
+		// not implemented yet: the authing player's account token
+		playerToken: Type.String(),
+	})
+
 	// POST /client/auth_with_self
 	// attempts to authenticate a client with their own server, before the server is created
 	// note: atm, this just sends pdata to clients and doesn't do any kind of auth stuff, potentially rewrite later
-	fastify.post( '/client/auth_with_self',
+	fastify.post<{ Querystring: Static<typeof AuthWithSelfQuery> }>( '/client/auth_with_self',
 	{
 		schema: {
-			querystring: {
-				id: { type: "string" }, // id of the player trying to auth
-				playerToken: { type: "string" }, // not implemented yet: the authing player's account token
-			}
+			querystring: AuthWithSelfQuery
 		}
 	},
 	async ( request, reply ) => {

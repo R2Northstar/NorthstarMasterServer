@@ -1,5 +1,7 @@
 import { type FastifyPluginCallback } from "fastify"
 import multipart from 'fastify-multipart'
+import { type Static, Type } from '@sinclair/typebox'
+import { GetGameServers } from '../../shared/gameserver.js'
 
 const accounts = require( "../../shared/accounts.js" )
 
@@ -8,16 +10,18 @@ const register: FastifyPluginCallback = (fastify, opts, done) => {
 
 	// exported routes
 
+	const WritePersistenceQuery = Type.Object({
+		id: Type.String(),
+		serverId: Type.String(),
+	})
+
 	// POST /accounts/write_persistence
 	// attempts to write persistent data for a player
 	// note: this is entirely insecure atm, at the very least, we should prevent it from being called on servers that the account being written to isn't currently connected to
-	fastify.post( '/accounts/write_persistence',
+	fastify.post<{ Querystring: Static<typeof WritePersistenceQuery> }>( '/accounts/write_persistence',
 	{
 		schema: {
-			querystring: {
-				"id": { type: "string" },
-				"serverId": { type: "string" }
-			}
+			querystring: WritePersistenceQuery
 		},
 	},
 	async ( request, response ) => {

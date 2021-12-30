@@ -3,7 +3,7 @@ import axios from 'axios'
 import Filter from 'bad-words'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
-import crypto from 'node:crypto'
+import { createHash } from 'node:crypto'
 import {
   addGameServer,
   GameServer,
@@ -65,9 +65,10 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
       if (request.isMultipart()) {
         try {
-          modInfo = JSON.parse(
-            (await (await request.file()).toBuffer()).toString()
-          )
+          const file = await request.file()
+          const buffer = await file.toBuffer()
+
+          modInfo = JSON.parse(buffer.toString('utf8'))
           hasValidModInfo = Array.isArray(modInfo.Mods)
         } catch {}
       }
@@ -86,14 +87,14 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       }
 
       // Pdiff stuff
-      if (modInfo && modInfo.Mods) {
+      if (modInfo?.Mods) {
         for (const mod of modInfo.Mods) {
           if (mod.pdiff) {
             try {
-              const pdiffHash = crypto
-                .createHash('sha1')
+              const pdiffHash = createHash('sha1')
                 .update(mod.pdiff)
                 .digest('hex')
+
               mod.pdiff = pjson.ParseDefinitionDiffs(mod.pdiff)
               mod.pdiff.hash = pdiffHash
             } catch {

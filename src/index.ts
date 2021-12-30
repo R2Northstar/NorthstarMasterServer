@@ -1,49 +1,35 @@
 import 'source-map-support/register.js'
 
-import dotenv from 'dotenv'
 import createFastify from 'fastify'
-import fs from 'node:fs'
+import { readdir } from 'node:fs/promises'
 import path from 'node:path'
-import process from 'node:process'
+import { LISTEN_IP, LISTEN_PORT, USE_FASTIFY_LOGGER } from './env/index.js'
 
-if (process.argv.includes('-devenv')) dotenv.config({ path: './dev.env' })
-else dotenv.config()
+const init = async () => {
+  const fastify = await createFastify({ logger: USE_FASTIFY_LOGGER })
+  const ROUTE_PATHS = ['client', 'server', 'account'] as const
 
-const fastify = process.env.USE_HTTPS
-  ? createFastify({
-      logger: process.env.USE_FASTIFY_LOGGER ?? false,
-      https: {
-        key: fs.readFileSync(process.env.SSL_KEY_PATH),
-        cert: fs.readFileSync(process.env.SSL_CERT_PATH),
-      },
-    })
-  : createFastify({
-      logger: process.env.USE_FASTIFY_LOGGER ?? false,
-    })
+  /* eslint-disable no-await-in-loop */
+  for (const routeDir of ROUTE_PATHS) {
+    const cleanDir = path.join('routes', routeDir)
+    const dir = path.join(__dirname, cleanDir)
+    const files = await readdir(dir)
 
-const ROUTE_PATHS = ['client', 'server', 'account'] as const
+    for (const file of files) {
+      if (!file.endsWith('.js')) continue
 
-for (const routePath of ROUTE_PATHS) {
-  const dir = path.join(__dirname, 'routes', routePath)
+      const modulePath = path.join(dir, file)
+      const { default: module } = await import(modulePath)
 
-  for (const file of fs.readdirSync(dir)) {
-    if (file.endsWith('.js')) {
-      console.log(`Registering routes from file ${path.join(dir, file)}`)
-      fastify.register(require(path.join(dir, file)))
+      const cleanPath = path.join(cleanDir, file)
+      console.log(`Registering routes from file ${cleanPath}`)
+
+      await fastify.register(module)
     }
   }
+  /* eslint-enable no-await-in-loop */
+
+  await fastify.listen(LISTEN_PORT, LISTEN_IP)
 }
 
-async function start() {
-  try {
-    await fastify.listen(
-      process.env.LISTEN_PORT ?? 80,
-      process.env.LISTEN_IP ?? '0.0.0.0'
-    )
-  } catch (error: unknown) {
-    console.error(error)
-    process.exit(1)
-  }
-}
-
-void start()
+void init().catch(console.error)

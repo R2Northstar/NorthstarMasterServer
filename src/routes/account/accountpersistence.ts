@@ -2,7 +2,7 @@ import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
 import * as accounts from '../../shared/accounts.js'
-import { getGameServers } from '../../shared/gameserver.js'
+import { getGameServer } from '../../shared/gameserver.js'
 
 const register: FastifyPluginAsync = async (fastify, _) => {
   await fastify.register(multipart)
@@ -24,34 +24,40 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: WritePersistenceQuery,
       },
     },
-    async request => {
+    async (request, response) => {
       // Check if account exists
       const account = await accounts.asyncGetPlayerByID(request.query.id)
-      if (!account) return null
+      if (!account) {
+        await response.code(204).send()
+        return
+      }
 
       // If the client is on their own server then don't check this since their own server might not be on masterserver
       if (account.currentServerId !== 'self') {
-        const server = getGameServers()[request.query.serverId]
-        // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
+        const server = getGameServer(request.query.serverId)
+        // Dont update if the server doesnt exist, or the server isnt the one sending the write
         if (
           !server ||
           request.ip !== server.ip ||
           account.currentServerId !== request.query.serverId
-        )
-          return null
+        ) {
+          await response.code(204).send()
+          return
+        }
       }
 
       // Mostly temp
       const file = await request.file()
       const buf = await file.toBuffer()
 
-      if (buf.length === account.persistentDataBaseline.length)
+      if (buf.length === account.persistentDataBaseline.length) {
         await accounts.asyncWritePlayerPersistenceBaseline(
           request.query.id,
           buf
         )
+      }
 
-      return null
+      await response.code(204).send()
     }
   )
 }

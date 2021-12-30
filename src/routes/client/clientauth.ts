@@ -6,7 +6,7 @@ import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
 import * as accounts from '../../shared/accounts.js'
 import { getGameServer } from '../../shared/gameserver.js'
 
-const register: FastifyPluginAsync = async (fastify, options) => {
+const register: FastifyPluginAsync = async (fastify, _) => {
   // exported routes
 
   const OriginAuthQuery = Type.Object({
@@ -27,7 +27,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
         querystring: OriginAuthQuery,
       },
     },
-    async (request, reply) => {
+    async request => {
       // Only do this if we're in an environment that actually requires session tokens
       if (REQUIRE_SESSION_TOKEN) {
         // TODO: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
@@ -103,7 +103,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
         querystring: AuthWithServerQuery,
       },
     },
-    async (request, reply) => {
+    async request => {
       const server = getGameServer(request.query.server)
 
       if (
@@ -134,14 +134,16 @@ const register: FastifyPluginAsync = async (fastify, options) => {
         server.modInfo.Mods.filter(m => Boolean(m.pdiff)).map(m => m.pdiff)
       )
 
-      const authResponse = await asyncHttp.request(
-        {
-          method: 'POST',
-          host: server.ip,
-          port: server.authPort,
-          path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}`,
-        },
-        pdata
+      const parameters = new URLSearchParams()
+      parameters.set('id', request.query.id)
+      parameters.set('authToken', authToken)
+
+      // TODO: handle errors
+      const { data: authResponse } = await axios.post<string>(
+        `http://${server.ip}:${server.authPort}/authenticate_incoming_player`,
+        pdata,
+        // TODO: Native JSON parsing
+        { responseType: 'text', params: parameters }
       )
 
       if (!authResponse) return { success: false }
@@ -177,7 +179,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
         querystring: AuthWithSelfQuery,
       },
     },
-    async (request, reply) => {
+    async request => {
       const account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) return { success: false }
 
@@ -193,7 +195,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
 
       // Fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
       const authToken = crypto.randomBytes(16).toString('hex').slice(0, 31)
-      accounts.asyncUpdatePlayerCurrentServer(account.id, 'self') // Bit of a hack: use the "self" id for local servers
+      await accounts.asyncUpdatePlayerCurrentServer(account.id, 'self') // Bit of a hack: use the "self" id for local servers
 
       return {
         success: true,

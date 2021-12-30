@@ -71,7 +71,7 @@ const register: FastifyPluginAsync = async (fastify, options) => {
       }
 
       const authToken = crypto.randomBytes(16).toString('hex')
-      accounts.asyncUpdateCurrentPlayerAuthToken(account.id, authToken)
+      await accounts.asyncUpdateCurrentPlayerAuthToken(account.id, authToken)
 
       return {
         success: true,

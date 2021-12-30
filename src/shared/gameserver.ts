@@ -113,6 +113,10 @@ export class GameServer implements IGameServer {
     return this._password
   }
 
+  public get hasPassword(): boolean {
+    return this._password !== ''
+  }
+
   public get modInfo(): Record<string, unknown> {
     return this._modInfo
   }
@@ -142,14 +146,14 @@ export class GameServer implements IGameServer {
 }
 
 const gameServers = new Map<string, GameServer>()
-export const GetGameServers = () => {
+export const getGameServers = () => {
   return Object.fromEntries(gameServers.entries())
 }
 
-export const AddGameServer = (server: GameServer) => {
+export const addGameServer = (server: GameServer) => {
   gameServers.set(server.id, server)
 }
 
-export const RemoveGameServer = (server: GameServer) => {
+export const removeGameServer = (server: GameServer) => {
   gameServers.delete(server.id)
 }

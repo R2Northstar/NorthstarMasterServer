@@ -1,7 +1,6 @@
-import { type FastifyPluginCallback } from 'fastify'
-
-const fs = require('fs')
-const path = require('path')
+import { type FastifyPluginAsync } from 'fastify'
+import fs from 'node:fs'
+import path from 'node:path'
 
 const promodataPath = path.join(
   __dirname,
@@ -26,7 +25,7 @@ let mainMenuPromoData = {}
 if (fs.existsSync(promodataPath))
   mainMenuPromoData = JSON.parse(fs.readFileSync(promodataPath).toString())
 
-const register: FastifyPluginCallback = (fastify, options, done) => {
+const register: FastifyPluginAsync = (fastify, options) => {
   // exported routes
 
   // GET /client/mainmenupromos
@@ -34,8 +33,6 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
   fastify.get('/client/mainmenupromos', {}, async (request, reply) => {
     return mainMenuPromoData
   })
-
-  done()
 }
 
 export default register

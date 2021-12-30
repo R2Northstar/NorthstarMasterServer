@@ -1,14 +1,16 @@
+import { Buffer } from 'node:buffer'
 import fs from 'node:fs'
 import path from 'node:path'
+import sqliteRaw from 'sqlite3'
+import * as pjson from './pjson.js'
 
-const sqlite = require('sqlite3').verbose()
-const pjson = require('../shared/pjson.js')
-
+const sqlite = sqliteRaw.verbose()
 const TOKEN_EXPIRATION_TIME = 3_600_000 * 24 // 24 hours
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync(
   path.join(__dirname, '..', '..', 'assets', 'default.pdata')
 )
+
 const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition(
   fs
     .readFileSync(
@@ -67,22 +69,26 @@ const playerDB = new sqlite.Database(
   }
 )
 
-async function asyncDBGet(sql, parameters = []) {
+async function asyncDBGet(sql: string, parameters: any[] = []) {
   return new Promise((resolve, reject) => {
     playerDB.get(sql, parameters, (ex, row) => {
       if (ex) {
-        console.error('Encountered error querying player database: ' + ex)
+        console.log('Encountered error querying player database')
+        console.error(ex)
+
         reject(ex)
       } else resolve(row)
     })
   })
 }
 
-async function asyncDBRun(sql, parameters = []) {
-  return new Promise((resolve, reject) => {
+async function asyncDBRun(sql: string, parameters: any[] = []) {
+  return new Promise<void>((resolve, reject) => {
     playerDB.run(sql, parameters, ex => {
       if (ex) {
-        console.error('Encountered error querying player database: ' + ex)
+        console.log('Encountered error querying player database')
+        console.error(ex)
+
         reject(ex)
       } else resolve()
     })
@@ -111,7 +117,7 @@ class PlayerAccount {
   }
 }
 
-export const AsyncGetPlayerByID = async (id: string) => {
+export const asyncGetPlayerByID = async (id: string) => {
   const row = await asyncDBGet('SELECT * FROM accounts WHERE id = ?', [id])
   if (!row) return null
 
@@ -124,14 +130,14 @@ export const AsyncGetPlayerByID = async (id: string) => {
   )
 }
 
-export const AsyncCreateAccountForID = async (id: string) => {
+export const asyncCreateAccountForID = async (id: string) => {
   await asyncDBRun(
     'INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )',
     [id, DEFAULT_PDATA_BASELINE]
   )
 }
 
-export const AsyncUpdateCurrentPlayerAuthToken = async (
+export const asyncUpdateCurrentPlayerAuthToken = async (
   id: string,
   token: string
 ) => {
@@ -141,7 +147,7 @@ export const AsyncUpdateCurrentPlayerAuthToken = async (
   )
 }
 
-export const AsyncUpdatePlayerCurrentServer = async (
+export const asyncUpdatePlayerCurrentServer = async (
   id: string,
   serverId: string
 ) => {
@@ -151,7 +157,7 @@ export const AsyncUpdatePlayerCurrentServer = async (
   ])
 }
 
-export const AsyncWritePlayerPersistenceBaseline = async (
+export const asyncWritePlayerPersistenceBaseline = async (
   id: string,
   persistentDataBaseline
 ) => {
@@ -161,7 +167,7 @@ export const AsyncWritePlayerPersistenceBaseline = async (
   )
 }
 
-export const AsyncGetPlayerModPersistence = async (id: string, pdiffHash) => {
+export const asyncGetPlayerModPersistence = async (id: string, pdiffHash) => {
   return JSON.parse(
     await asyncDBGet(
       'SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?',
@@ -170,15 +176,15 @@ export const AsyncGetPlayerModPersistence = async (id: string, pdiffHash) => {
   )
 }
 
-export const AsyncWritePlayerModPersistence = async (id, pdiffHash, data) => {
+export const asyncWritePlayerModPersistence = async (id, pdiffHash, data) => {
   // TODO
 }
 
-export const AsyncGetPlayerPersistenceBufferForMods = async (
+export const asyncGetPlayerPersistenceBufferForMods = async (
   id: string,
   pdiffs
 ) => {
-  const player = await AsyncGetPlayerByID(id)
+  const player = await asyncGetPlayerByID(id)
   return player?.persistentDataBaseline
 
   // Disabling this for now

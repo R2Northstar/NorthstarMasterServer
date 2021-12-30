@@ -1,24 +1,23 @@
 import { type Static, Type } from '@sinclair/typebox'
 import axios from 'axios'
-import { type FastifyPluginCallback } from 'fastify'
+import Filter from 'bad-words'
+import { type FastifyPluginAsync } from 'fastify'
+import multipart from 'fastify-multipart'
+import crypto from 'node:crypto'
 import {
-  AddGameServer,
+  addGameServer,
   GameServer,
-  GetGameServers,
-  RemoveGameServer,
+  getGameServers,
+  removeGameServer,
 } from '../../shared/gameserver.js'
-
-const Filter = require('bad-words')
-const crypto = require('crypto')
-const path = require('path')
-const pjson = require('../../shared/pjson.js')
+import * as pjson from '../../shared/pjson.js'
 
 const filter = new Filter()
 
 const VERIFY_STRING = 'I am a northstar server!'
 
-const register: FastifyPluginCallback = (fastify, options, done) => {
-  fastify.register(require('fastify-multipart'))
+const register: FastifyPluginAsync = async (fastify, _) => {
+  await fastify.register(multipart)
 
   // exported routes
 
@@ -118,7 +117,7 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
         request.query.password,
         modInfo
       )
-      AddGameServer(newServer)
+      addGameServer(newServer)
 
       return {
         success: true,
@@ -143,7 +142,7 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
       },
     },
     async (request, reply) => {
-      const server = GetGameServers()[request.query.id]
+      const server = getGameServers()[request.query.id]
       // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
       if (!server || request.ip != server.ip || !request.query.id) {
         // Remove !request.playerCount as if playercount==0 it will trigger skip heartbeat update
@@ -162,14 +161,14 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
   fastify.post('/server/update_values', async (request, reply) => {
     if (!('id' in request.query)) return null
 
-    const server = GetGameServers()[request.query.id]
+    const server = getGameServers()[request.query.id]
     // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-    if (!server || request.ip != server.ip) return null
+    if (!server || request.ip !== server.ip) return null
 
     for (const key of Object.keys(request.query)) {
-      if (key == 'id' || !(key in server)) continue
+      if (key === 'id' || !(key in server)) continue
 
-      if (key == 'playerCount' || key == 'maxPlayers') {
+      if (key === 'playerCount' || key === 'maxPlayers') {
         server[key] = Number.parseInt(request.query[key])
       } // I suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
       else {
@@ -194,16 +193,14 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
       },
     },
     async (request, reply) => {
-      const server = GetGameServers()[request.query.id]
+      const server = getGameServers()[request.query.id]
       // Dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
-      if (!server || request.ip != server.ip) return null
+      if (!server || request.ip !== server.ip) return null
 
-      RemoveGameServer(server)
+      removeGameServer(server)
       return null
     }
   )
-
-  done()
 }
 
 export default register

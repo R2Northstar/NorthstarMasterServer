@@ -1,15 +1,13 @@
 import { type Static, Type } from '@sinclair/typebox'
 import axios from 'axios'
-import { type FastifyPluginCallback } from 'fastify'
-
-const crypto = require('crypto')
-const path = require('path')
-const accounts = require('../../shared/accounts.js')
-const { GameServer, GetGameServers } = require('../../shared/gameserver.js')
+import { type FastifyPluginAsync } from 'fastify'
+import crypto from 'node:crypto'
+import * as accounts from '../../shared/accounts.js'
+import { getGameServers } from '../../shared/gameserver.js'
 
 const shouldRequireSessionToken = (process.env.REQUIRE_SESSION_TOKEN = true)
 
-const register: FastifyPluginCallback = (fastify, options, done) => {
+const register: FastifyPluginAsync = async (fastify, options) => {
   // exported routes
 
   const OriginAuthQuery = Type.Object({
@@ -65,15 +63,15 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
           return { success: false }
       }
 
-      let account = await accounts.AsyncGetPlayerByID(request.query.id)
+      let account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) {
         // Create account for user
-        await accounts.AsyncCreateAccountForID(request.query.id)
-        account = await accounts.AsyncGetPlayerByID(request.query.id)
+        await accounts.asyncCreateAccountForID(request.query.id)
+        account = await accounts.asyncGetPlayerByID(request.query.id)
       }
 
       const authToken = crypto.randomBytes(16).toString('hex')
-      accounts.AsyncUpdateCurrentPlayerAuthToken(account.id, authToken)
+      accounts.asyncUpdateCurrentPlayerAuthToken(account.id, authToken)
 
       return {
         success: true,
@@ -107,20 +105,20 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
       },
     },
     async (request, reply) => {
-      const server = GetGameServers()[request.query.server]
+      const server = getGameServers()[request.query.server]
 
       if (
         !server ||
-        (server.hasPassword && request.query.password != server.password)
+        (server.hasPassword && request.query.password !== server.password)
       )
         return { success: false }
 
-      const account = await accounts.AsyncGetPlayerByID(request.query.id)
+      const account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) return { success: false }
 
       if (shouldRequireSessionToken) {
         // Check token
-        if (request.query.playerToken != account.currentAuthToken)
+        if (request.query.playerToken !== account.currentAuthToken)
           return { success: false }
 
         // Check expired token
@@ -131,8 +129,8 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
       // Fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
       const authToken = crypto.randomBytes(16).toString('hex').slice(0, 31)
 
-      // Todo: build persistent data here, rather than sending baseline only
-      const pdata = await accounts.AsyncGetPlayerPersistenceBufferForMods(
+      // TODO: build persistent data here, rather than sending baseline only
+      const pdata = await accounts.asyncGetPlayerPersistenceBufferForMods(
         request.query.id,
         server.modInfo.Mods.filter(m => Boolean(m.pdiff)).map(m => m.pdiff)
       )
@@ -181,12 +179,12 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
       },
     },
     async (request, reply) => {
-      const account = await accounts.AsyncGetPlayerByID(request.query.id)
+      const account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) return { success: false }
 
       if (shouldRequireSessionToken) {
         // Check token
-        if (request.query.playerToken != account.currentAuthToken)
+        if (request.query.playerToken !== account.currentAuthToken)
           return { success: false }
 
         // Check expired token
@@ -196,7 +194,7 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
 
       // Fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
       const authToken = crypto.randomBytes(16).toString('hex').slice(0, 31)
-      accounts.AsyncUpdatePlayerCurrentServer(account.id, 'self') // Bit of a hack: use the "self" id for local servers
+      accounts.asyncUpdatePlayerCurrentServer(account.id, 'self') // Bit of a hack: use the "self" id for local servers
 
       return {
         success: true,
@@ -210,8 +208,6 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
       }
     }
   )
-
-  done()
 }
 
 export default register

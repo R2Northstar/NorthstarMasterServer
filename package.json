@@ -21,7 +21,9 @@
 		"sqlite3": "^5.0.2"
 	},
 	"devDependencies": {
+		"@types/bad-words": "^3.0.1",
 		"@types/node": "^17.0.5",
+		"@types/sqlite3": "^3.1.8",
 		"source-map-support": "^0.5.21",
 		"typescript": "^4.5.4",
 		"xo": "^0.47.0"

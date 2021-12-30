@@ -1,12 +1,11 @@
 import { type Static, Type } from '@sinclair/typebox'
-import { type FastifyPluginCallback } from 'fastify'
+import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
-import { GetGameServers } from '../../shared/gameserver.js'
+import * as accounts from '../../shared/accounts.js'
+import { getGameServers } from '../../shared/gameserver.js'
 
-const accounts = require('../../shared/accounts.js')
-
-const register: FastifyPluginCallback = (fastify, options, done) => {
-  fastify.register(multipart)
+const register: FastifyPluginAsync = async (fastify, _) => {
+  await fastify.register(multipart)
 
   // exported routes
 
@@ -25,28 +24,29 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
         querystring: WritePersistenceQuery,
       },
     },
-    async (request, response) => {
+    async request => {
       // Check if account exists
-      const account = await accounts.AsyncGetPlayerByID(request.query.id)
+      const account = await accounts.asyncGetPlayerByID(request.query.id)
       if (!account) return null
 
       // If the client is on their own server then don't check this since their own server might not be on masterserver
-      if (account.currentServerId != 'self') {
-        const server = GetGameServers()[request.query.serverId]
+      if (account.currentServerId !== 'self') {
+        const server = getGameServers()[request.query.serverId]
         // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
         if (
           !server ||
-          request.ip != server.ip ||
-          account.currentServerId != request.query.serverId
+          request.ip !== server.ip ||
+          account.currentServerId !== request.query.serverId
         )
           return null
       }
 
       // Mostly temp
-      const buf = await (await request.file()).toBuffer()
+      const file = await request.file()
+      const buf = await file.toBuffer()
 
-      if (buf.length == account.persistentDataBaseline.length)
-        await accounts.AsyncWritePlayerPersistenceBaseline(
+      if (buf.length === account.persistentDataBaseline.length)
+        await accounts.asyncWritePlayerPersistenceBaseline(
           request.query.id,
           buf
         )
@@ -54,8 +54,6 @@ const register: FastifyPluginCallback = (fastify, options, done) => {
       return null
     }
   )
-
-  done()
 }
 
 export default register

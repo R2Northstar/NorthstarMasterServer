@@ -16,7 +16,7 @@ export const TRUST_PROXY = registerBool('TRUST_PROXY') ?? true
 
 // #region Database Driver
 type SupportedDriver = typeof supportedDrivers[number]
-const supportedDrivers = ['sqlite'] as const
+const supportedDrivers = ['sqlite', 'pg'] as const
 
 // @ts-expect-error Type Check Function
 export const isSupportedDriver: (
@@ -28,14 +28,16 @@ export const isSupportedDriver: (
 
 const dbDriver = registerString('DB_DRIVER') ?? 'sqlite'
 if (!isSupportedDriver(dbDriver)) {
-  throw new Error(`unsupported db driver: ${dbDriver}`)
+  const message = `unsupported db driver: ${dbDriver}\nselect one of: ${supportedDrivers.join(', ')}`
+  throw new Error(message)
 }
 
 export const DB_DRIVER = dbDriver
 // #endregion
 
-// #region SQLite Driver
+// #region Database Settings
 export const DB_SQLITE_FILE_NAME = registerString('DB_SQLITE_FILE_NAME') ?? './playerdata.db'
+export const DB_PSQL_CONN = registerString('DB_PSQL_CONN', DB_DRIVER === 'pg')
 // #endregion
 
 // #region Application

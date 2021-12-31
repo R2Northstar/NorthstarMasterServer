@@ -1,6 +1,6 @@
 import { SYNC_GAME_SERVERS } from '~env/index.js'
 import { redisHandle } from '~storage/redis.js'
-import { getGameServers, removeGameServer } from './index.js'
+import { getGameServers, removeMultipleServers } from './index.js'
 
 const LOCK_KEY = 'northstar:lock:sweep'
 
@@ -41,10 +41,9 @@ export const sweepGameServers = async () => {
   try {
     const servers = await getGameServers()
     const expired = servers.filter(x => x.hasExpired())
-    console.log(expired)
 
     // Remove all servers
-    await Promise.all(expired.map(x => removeGameServer(x)))
+    await removeMultipleServers(...expired)
   } finally {
     await release()
   }

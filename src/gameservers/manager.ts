@@ -7,4 +7,5 @@ export interface GameServerManager {
   getGameServer(id: string): MaybePromise<GameServer | undefined>
   addGameServer(server: GameServer): MaybePromise<void>
   removeGameServer(server: GameServer): MaybePromise<void>
+  removeMultipleServers(...servers: GameServer[]): MaybePromise<void>
 }

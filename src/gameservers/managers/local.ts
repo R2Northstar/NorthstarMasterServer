@@ -20,6 +20,12 @@ export const createLocalManager: () => GameServerManager = () => {
     async removeGameServer(server) {
       gameServers.delete(server.id)
     },
+
+    async removeMultipleServers(...servers) {
+      for (const server of servers) {
+        gameServers.delete(server.id)
+      }
+    },
   }
 
   return Object.freeze(methods)

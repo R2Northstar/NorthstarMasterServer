@@ -8,7 +8,13 @@ const activeManager = SYNC_GAME_SERVERS
   : createLocalManager()
 
 // eslint-disable-next-line prettier/prettier
-const { getGameServers, getGameServer, addGameServer, removeGameServer } = activeManager
-export { getGameServers, getGameServer, addGameServer, removeGameServer }
+const { getGameServers, getGameServer, addGameServer, removeGameServer, removeMultipleServers } = activeManager
+export {
+  getGameServers,
+  getGameServer,
+  addGameServer,
+  removeGameServer,
+  removeMultipleServers,
+}
 
 export { GameServer, CleanGameServer, ModInfo, Mod } from './gameserver.js'

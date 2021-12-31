@@ -62,6 +62,15 @@ export const createRedisManager: () => Promise<GameServerManager> =
           await pubsub.publish(`northstar:servers`, 'remove')
         }
       },
+
+      async removeMultipleServers(...servers) {
+        const keys = servers.map(x => `northstar:server:${x.id}`)
+        await db.del(...keys)
+
+        if (CACHE_GAME_SERVERS) {
+          await pubsub.publish(`northstar:servers`, 'remove')
+        }
+      },
     }
 
     return Object.freeze(methods)

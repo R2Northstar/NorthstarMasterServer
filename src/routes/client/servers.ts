@@ -17,6 +17,7 @@ const cache: Cache = {
   data: [],
 }
 
+// Invalidate cache on server modification
 if (CACHE_GAME_SERVERS) {
   const { sub } = await redisHandle()
 

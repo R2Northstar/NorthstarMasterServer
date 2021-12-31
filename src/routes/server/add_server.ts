@@ -4,7 +4,7 @@ import Filter from 'bad-words'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
 import { createHash } from 'node:crypto'
-import { addGameServer, GameServer } from '../../shared/gameserver.js'
+import { addGameServer, GameServer } from '../../gameservers/index.js'
 import * as pjson from '../../shared/pjson.js'
 
 const filter = new Filter()
@@ -103,19 +103,32 @@ const register: FastifyPluginAsync = async (fastify, _) => {
           ? ''
           : filter.clean(request.query.description)
 
-      const newServer = new GameServer(
+      // Name,
+      // description,
+      // 0,
+      // request.query.maxPlayers,
+      // request.query.map,
+      // request.query.playlist,
+      // request.ip,
+      // request.query.port,
+      // request.query.authPort,
+      // request.query.password,
+      // modInfo
+
+      const newServer = new GameServer({
         name,
         description,
-        0,
-        request.query.maxPlayers,
-        request.query.map,
-        request.query.playlist,
-        request.ip,
-        request.query.port,
-        request.query.authPort,
-        request.query.password,
-        modInfo
-      )
+        playerCount: 0,
+        maxPlayers: request.query.maxPlayers,
+        map: request.query.map,
+        playlist: request.query.playlist,
+        ip: request.ip,
+        port: request.query.port,
+        authPort: request.query.authPort,
+        password: request.query.password,
+        // TODO: Strongly type
+        modInfo: modInfo as Record<string, unknown>,
+      })
 
       await addGameServer(newServer)
 

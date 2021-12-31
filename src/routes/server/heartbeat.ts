@@ -1,6 +1,6 @@
 import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
-import { getGameServer } from '../../shared/gameserver.js'
+import { getGameServer } from '../../gameservers/index.js'
 
 const register: FastifyPluginAsync = async (fastify, _) => {
   const HeartbeatQuery = Type.Object({

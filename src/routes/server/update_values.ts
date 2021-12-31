@@ -1,6 +1,6 @@
 import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
-import { getGameServer } from '../../shared/gameserver.js'
+import { getGameServer } from '../../gameservers/index.js'
 
 // POST /server/update_values
 // updates values shown on the server list, such as map, playlist, or player count

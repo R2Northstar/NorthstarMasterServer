@@ -3,8 +3,8 @@ import axios from 'axios'
 import { type FastifyPluginAsync } from 'fastify'
 import crypto from 'node:crypto'
 import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
+import { getGameServer } from '../../gameservers/index.js'
 import * as accounts from '../../shared/accounts.js'
-import { getGameServer } from '../../shared/gameserver.js'
 
 // POST /client/auth_with_server
 // attempts to authenticate a client with a gameserver, so they can connect

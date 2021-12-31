@@ -9,7 +9,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
   await fastify.register(fastifyStatic, { root: PUBLIC_ASSETS_DIR })
 
   fastify.get('/client/mainmenupromos', async (_, response) => {
-    return response.sendFile('mainmenupromodata.json')
+    return response.sendFile('mainMenuPromos.json')
   })
 }
 

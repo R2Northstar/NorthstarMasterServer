@@ -1,0 +1,92 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "type": "object",
+  "properties": {
+    "newInfo": {
+      "type": "object",
+      "properties": {
+        "Title1": {
+          "type": "string"
+        },
+        "Title2": {
+          "type": "string"
+        },
+        "Title3": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "Title1",
+        "Title2",
+        "Title3"
+      ]
+    },
+    "largeButton": {
+      "type": "object",
+      "properties": {
+        "Title": {
+          "type": "string"
+        },
+        "Text": {
+          "type": "string"
+        },
+        "Url": {
+          "type": "string"
+        },
+        "ImageIndex": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "Title",
+        "Text",
+        "Url",
+        "ImageIndex"
+      ]
+    },
+    "smallButton1": {
+      "type": "object",
+      "properties": {
+        "Title": {
+          "type": "string"
+        },
+        "Url": {
+          "type": "string"
+        },
+        "ImageIndex": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "Title",
+        "Url",
+        "ImageIndex"
+      ]
+    },
+    "smallButton2": {
+      "type": "object",
+      "properties": {
+        "Title": {
+          "type": "string"
+        },
+        "Url": {
+          "type": "string"
+        },
+        "ImageIndex": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "Title",
+        "Url",
+        "ImageIndex"
+      ]
+    }
+  },
+  "required": [
+    "newInfo",
+    "largeButton",
+    "smallButton1",
+    "smallButton2"
+  ]
+}

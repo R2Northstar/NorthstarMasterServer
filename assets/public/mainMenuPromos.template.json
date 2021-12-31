@@ -1,4 +1,6 @@
 {
+	"$schema": "./mainMenuPromos.schema.json",
+
 	"newInfo": {
 		"Title1": "",
 		"Title2": "",
@@ -11,16 +13,16 @@
 		"Url": "",
 		"ImageIndex": 0
 	},
-	
+
 	"smallButton1": {
 		"Title": "",
 		"Url": "",
 		"ImageIndex": 0
 	},
-	
+
 	"smallButton2": {
 		"Title": "",
 		"Url": "",
 		"ImageIndex": 0
 	}
-}	
+}

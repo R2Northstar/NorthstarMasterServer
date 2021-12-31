@@ -1,0 +1,24 @@
+# dependencies
+/node_modules
+/.pnp.*
+/.yarn/*
+!/.yarn/patches
+!/.yarn/plugins
+!/.yarn/releases
+!/.yarn/sdks
+
+# ide directories
+.vscode
+.idea
+
+# compiled output
+build
+
+# logs
+logs/
+*.log
+
+# runtime
+!*.env.example
+*.env
+*.db

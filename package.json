@@ -16,7 +16,9 @@
     "predev": "yarn run clean",
     "debug": "nodemon --watch build --inspect",
     "build": "yarn run clean && yarn run compile",
-    "lint": "xo ./src"
+    "check": "yarn run compile --noEmit",
+    "lint": "xo ./src",
+    "test": "yarn run check && yarn run lint"
   },
   "dependencies": {
     "@sinclair/typebox": "^0.23.2",

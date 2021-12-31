@@ -1,8 +1,6 @@
 import { type FastifyPluginAsync } from 'fastify'
 
 const register: FastifyPluginAsync = async (fastify, _) => {
-  // exported routes
-
   // GET /
   // redirect anyone going to northstar.tf in a browser to the github
   fastify.get('/', async (request, reply) => {

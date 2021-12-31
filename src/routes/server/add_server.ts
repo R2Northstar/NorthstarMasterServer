@@ -4,22 +4,17 @@ import Filter from 'bad-words'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
 import { createHash } from 'node:crypto'
-import {
-  addGameServer,
-  GameServer,
-  getGameServer,
-  removeGameServer,
-} from '../../shared/gameserver.js'
+import { addGameServer, GameServer } from '../../shared/gameserver.js'
 import * as pjson from '../../shared/pjson.js'
 
 const filter = new Filter()
-
 const VERIFY_STRING = 'I am a northstar server!'
+
+// POST /server/add_server
+// adds a gameserver to the server list
 
 const register: FastifyPluginAsync = async (fastify, _) => {
   await fastify.register(multipart)
-
-  // exported routes
 
   const AddServerQuery = Type.Object({
     // The port the gameserver is being hosted on ( for connect )
@@ -47,8 +42,6 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     password: Type.String(),
   })
 
-  // POST /server/add_server
-  // adds a gameserver to the server list
   fastify.post<{ Querystring: Static<typeof AddServerQuery> }>(
     '/server/add_server',
     {
@@ -95,7 +88,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
                 .update(mod.pdiff)
                 .digest('hex')
 
-              mod.pdiff = pjson.ParseDefinitionDiffs(mod.pdiff)
+              mod.pdiff = pjson.ParseDefinitionDiff(mod.pdiff)
               mod.pdiff.hash = pdiffHash
             } catch {
               mod.pdiff = null
@@ -131,94 +124,6 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         id: newServer.id,
         serverAuthToken: newServer.serverAuthToken,
       }
-    }
-  )
-
-  const HeartbeatQuery = Type.Object({
-    // The id of the server sending this message
-    id: Type.String(),
-    playerCount: Type.Integer({ minimum: 0 }),
-  })
-
-  // POST /server/heartbeat
-  // refreshes a gameserver's last heartbeat time, gameservers are removed after 30 seconds without a heartbeat
-  fastify.post<{ Querystring: Static<typeof HeartbeatQuery> }>(
-    '/server/heartbeat',
-    {
-      schema: {
-        querystring: HeartbeatQuery,
-      },
-    },
-    async (request, response) => {
-      const server = await getGameServer(request.query.id)
-      if (!server || request.ip !== server.ip) {
-        return null
-      }
-
-      server.lastHeartbeat = Date.now()
-      server.playerCount = request.query.playerCount
-
-      return null
-    }
-  )
-
-  const UpdateValuesQuery = Type.Object({
-    // The id of the server sending this message
-    id: Type.String(),
-
-    name: Type.Optional(Type.String()),
-    description: Type.Optional(Type.String()),
-    playerCount: Type.Optional(Type.Integer({ minimum: 0 })),
-    maxPlayers: Type.Optional(Type.Integer({ minimum: 0 })),
-    map: Type.Optional(Type.String()),
-    playlist: Type.Optional(Type.String()),
-  })
-
-  // POST /server/update_values
-  // updates values shown on the server list, such as map, playlist, or player count
-  // no schema for this one, since it's fully dynamic and fastify doesnt do optional params
-  fastify.post<{ Querystring: Static<typeof UpdateValuesQuery> }>(
-    '/server/update_values',
-    async (request, response) => {
-      const server = await getGameServer(request.query.id)
-      if (!server || request.ip !== server.ip) {
-        await response.code(204).send()
-        return
-      }
-
-      /* eslint-disable prettier/prettier */
-      if (request.query.name) server.name = request.query.name
-      if (request.query.description) server.description = request.query.description
-      if (request.query.playerCount) server.playerCount = request.query.playerCount
-      if (request.query.maxPlayers) server.maxPlayers = request.query.maxPlayers
-      if (request.query.map) server.map = request.query.map
-      if (request.query.playlist) server.playlist = request.query.playlist
-      /* eslint-enable prettier/prettier */
-
-      await response.code(204).send()
-    }
-  )
-
-  const RemoveServerQuery = Type.Object({
-    id: Type.String(),
-  })
-
-  // DELETE /server/remove_server
-  // removes a gameserver from the server list
-  fastify.delete<{ Querystring: Static<typeof RemoveServerQuery> }>(
-    '/server/remove_server',
-    {
-      schema: {
-        querystring: RemoveServerQuery,
-      },
-    },
-    async (request, response) => {
-      const server = await getGameServer(request.query.id)
-      // Dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
-      if (!server || request.ip !== server.ip) return null
-
-      await removeGameServer(server)
-      await response.code(204).send()
     }
   )
 }

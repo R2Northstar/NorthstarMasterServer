@@ -4,19 +4,18 @@ import multipart from 'fastify-multipart'
 import * as accounts from '../../shared/accounts.js'
 import { getGameServer } from '../../shared/gameserver.js'
 
+// POST /accounts/write_persistence
+// attempts to write persistent data for a player
+// note: this is entirely insecure atm, at the very least, we should prevent it from being called on servers that the account being written to isn't currently connected to
+
 const register: FastifyPluginAsync = async (fastify, _) => {
   await fastify.register(multipart)
-
-  // exported routes
 
   const WritePersistenceQuery = Type.Object({
     id: Type.String(),
     serverId: Type.String(),
   })
 
-  // POST /accounts/write_persistence
-  // attempts to write persistent data for a player
-  // note: this is entirely insecure atm, at the very least, we should prevent it from being called on servers that the account being written to isn't currently connected to
   fastify.post<{ Querystring: Static<typeof WritePersistenceQuery> }>(
     '/accounts/write_persistence',
     {

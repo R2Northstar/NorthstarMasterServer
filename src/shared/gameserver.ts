@@ -18,7 +18,7 @@ interface IGameServer {
   readonly lastHeartbeat: number
 }
 
-type CleanGameServer = Omit<
+export type CleanGameServer = Omit<
   IGameServer,
   'authToken' | 'ip' | 'port' | 'authPort' | 'password'
 >

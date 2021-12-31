@@ -1,17 +1,22 @@
 import { type FastifyPluginAsync } from 'fastify'
-import { getGameServers, removeGameServer } from '../../shared/gameserver.js'
+import {
+  type CleanGameServer,
+  type GameServer,
+  getGameServers,
+  removeGameServer,
+} from '../../shared/gameserver.js'
+
+// GET /client/servers
+// returns a list of available servers
 
 const register: FastifyPluginAsync = async (fastify, _) => {
-  // exported routes
-
-  // GET /client/servers
-  // returns a list of available servers
   fastify.get('/client/servers', async () => {
-    const displayServerArray = []
-    const expiredServers = [] // Might be better to move this to another function at some point, but easiest to do here atm
+    const cleanServers: CleanGameServer[] = []
+
+    // TODO: Move to a mark and sweep system
+    const expiredServers: GameServer[] = []
 
     const servers = await getGameServers()
-
     for (const server of servers) {
       // Prune servers if they've had 30 seconds since last heartbeat
       if (Date.now() - server.lastHeartbeat > 30_000) {
@@ -20,19 +25,19 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       }
 
       // Don't show non-private_match servers on lobby since they'll pollute server list
-      if (server.map === 'mp_lobby' && server.playlist !== 'private_match')
+      if (server.map === 'mp_lobby' && server.playlist !== 'private_match') {
         continue
+      }
 
-      // Create a copy of the gameserver obj for clients so we can hide sensitive info
+      // Remove sensitive info from server
       const copy = server.clean()
-
-      displayServerArray.push(copy)
+      cleanServers.push(copy)
     }
 
     // Delete servers that we've marked for deletion
     await Promise.all(expiredServers.map(server => removeGameServer(server)))
 
-    return displayServerArray
+    return cleanServers
   })
 }
 

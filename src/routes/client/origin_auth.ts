@@ -1,8 +1,8 @@
 import { type Static, Type } from '@sinclair/typebox'
 import axios from 'axios'
 import { type FastifyPluginAsync } from 'fastify'
-import { getOrCreate as getOrCreateAccount } from '../../accounts/index.js'
-import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
+import { getOrCreate as getOrCreateAccount } from '~accounts/index.js'
+import { REQUIRE_SESSION_TOKEN } from '~env/index.js'
 
 // POST /client/origin_auth
 // used to authenticate a user on northstar, so we know the person using their uid is really them

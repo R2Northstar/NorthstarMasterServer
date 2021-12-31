@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import { type OnlyProperties } from '../utils.js'
+import { type OnlyProperties } from '~utils.js'
 
 type HiddenFields = 'serverAuthToken' | 'ip' | 'port' | 'authPort' | 'password'
 export type CleanGameServer = Readonly<

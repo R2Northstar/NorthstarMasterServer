@@ -1,5 +1,5 @@
 import knex from 'knex'
-import { DB_DRIVER, DB_SQLITE_FILE_NAME } from './env/index.js'
+import { DB_DRIVER, DB_SQLITE_FILE_NAME } from '~env/index.js'
 
 const initDriver = () => {
   switch (DB_DRIVER) {

@@ -1,6 +1,6 @@
 import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
-import { getGameServer, removeGameServer } from '../../gameservers/index.js'
+import { getGameServer, removeGameServer } from '~gameservers/index.js'
 
 // DELETE /server/remove_server
 // removes a gameserver from the server list

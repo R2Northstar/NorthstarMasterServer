@@ -4,7 +4,7 @@ import {
   type GameServer,
   getGameServers,
   removeGameServer,
-} from '../../gameservers/index.js'
+} from '~gameservers/index.js'
 
 // GET /client/servers
 // returns a list of available servers

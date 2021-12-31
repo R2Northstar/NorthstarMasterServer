@@ -1,6 +1,6 @@
 import { type FastifyPluginAsync } from 'fastify'
 import fastifyStatic from 'fastify-static'
-import { PUBLIC_ASSETS_DIR } from '../../constants.js'
+import { PUBLIC_ASSETS_DIR } from '~constants.js'
 
 // GET /client/mainmenupromos
 // returns main menu promo info

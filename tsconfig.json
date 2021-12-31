@@ -11,7 +11,18 @@
     "declaration": false,
     "rootDir": "./src",
     "outDir": "./build",
-    "forceConsistentCasingInFileNames": true
+    "baseUrl": "./src",
+    "forceConsistentCasingInFileNames": true,
+    "plugins": [{ "transform": "typescript-transform-paths" }],
+    "paths": {
+      "~accounts/*": ["accounts/*"],
+      "~env/*": ["env/*"],
+      "~gameservers/*": ["gameservers/*"],
+      "~routes/*": ["routes/*"],
+      "~constants.js": ["constants.js"],
+      "~db.js": ["db.js"],
+      "~utils.js": ["utils.js"]
+    }
   },
   "include": [
     "src/**/*.ts"

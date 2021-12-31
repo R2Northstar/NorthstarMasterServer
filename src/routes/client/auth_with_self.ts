@@ -1,8 +1,8 @@
 import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
 import crypto from 'node:crypto'
-import { getById as getAccountById } from '../../accounts/index.js'
-import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
+import { getById as getAccountById } from '~accounts/index.js'
+import { REQUIRE_SESSION_TOKEN } from '~env/index.js'
 
 // POST /client/auth_with_self
 // attempts to authenticate a client with their own server, before the server is created

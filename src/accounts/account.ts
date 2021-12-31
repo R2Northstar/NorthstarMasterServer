@@ -1,8 +1,8 @@
 import { type Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
-import { DEFAULT_PDATA_BASELINE, TOKEN_EXPIRATION_TIME } from '../constants.js'
-import { db } from '../db.js'
-import { type OnlyProperties } from '../utils.js'
+import { DEFAULT_PDATA_BASELINE, TOKEN_EXPIRATION_TIME } from '~constants.js'
+import { db } from '~db.js'
+import { type OnlyProperties } from '~utils.js'
 
 // #region Account Class
 interface AccountOptions {

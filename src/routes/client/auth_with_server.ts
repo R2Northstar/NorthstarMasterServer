@@ -2,9 +2,9 @@ import { type Static, Type } from '@sinclair/typebox'
 import axios from 'axios'
 import { type FastifyPluginAsync } from 'fastify'
 import crypto from 'node:crypto'
-import { getById as getAccountById } from '../../accounts/index.js'
-import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
-import { getGameServer } from '../../gameservers/index.js'
+import { getById as getAccountById } from '~accounts/index.js'
+import { REQUIRE_SESSION_TOKEN } from '~env/index.js'
+import { getGameServer } from '~gameservers/index.js'
 
 // POST /client/auth_with_server
 // attempts to authenticate a client with a gameserver, so they can connect

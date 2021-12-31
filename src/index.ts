@@ -4,13 +4,13 @@ import createFastify from 'fastify'
 import { readdir } from 'node:fs/promises'
 import { join as joinPath } from 'node:path'
 import { pathToFileURL } from 'node:url'
-import { ROOT_DIR } from './constants.js'
+import { ROOT_DIR } from '~constants.js'
 import {
   LISTEN_IP,
   LISTEN_PORT,
   TRUST_PROXY,
   USE_FASTIFY_LOGGER,
-} from './env/index.js'
+} from '~env/index.js'
 
 const ROUTE_PATHS = ['client', 'server', 'account'] as const
 

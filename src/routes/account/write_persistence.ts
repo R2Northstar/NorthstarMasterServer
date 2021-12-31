@@ -1,8 +1,8 @@
 import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
-import { getById as getAccountById } from '../../accounts/index.js'
-import { getGameServer } from '../../gameservers/index.js'
+import { getById as getAccountById } from '~accounts/index.js'
+import { getGameServer } from '~gameservers/index.js'
 
 // POST /accounts/write_persistence
 // attempts to write persistent data for a player

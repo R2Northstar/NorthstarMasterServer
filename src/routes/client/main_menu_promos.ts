@@ -7,7 +7,7 @@ import { PUBLIC_ASSETS_DIR } from '~constants.js'
 // returns main menu promo info
 
 const register: FastifyPluginAsync = async (fastify, _) => {
-  await fastify.register(cors)
+  await fastify.register(cors, { preflight: false })
   await fastify.register(fastifyStatic, { root: PUBLIC_ASSETS_DIR })
 
   fastify.get('/client/mainmenupromos', async (_, response) => {

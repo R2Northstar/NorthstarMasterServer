@@ -1,5 +1,6 @@
 import { type Buffer } from 'node:buffer'
 
+// #region Account Class
 interface AccountOptions {
   id: string
   authToken: string
@@ -8,7 +9,7 @@ interface AccountOptions {
   persistentDataBaseline: Buffer
 }
 
-export class PlayerAccount {
+class PlayerAccount {
   public readonly id: string
   private readonly _authToken: string
   private readonly _authTokenExpireTime: number
@@ -58,3 +59,26 @@ export class PlayerAccount {
   }
   // #endregion
 }
+// #endregion
+
+// #region Methods
+export const createAccount: (
+  id: string
+) => Promise<PlayerAccount> = async id => {
+  throw new Error('not implemented')
+}
+
+export const getById: (
+  id: string
+) => Promise<PlayerAccount | undefined> = async id => {
+  throw new Error('not implemented')
+}
+
+export const getOrCreate: (id: string) => Promise<PlayerAccount> = async id => {
+  const account = await getById(id)
+  if (account !== undefined) return account
+
+  const newAccount = await createAccount(id)
+  return newAccount
+}
+// #endregion

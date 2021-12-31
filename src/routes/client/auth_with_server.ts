@@ -44,6 +44,9 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
       const account = await getAccountById(request.query.id)
       if (account === undefined) return { success: false }
+      if (account.isBanned) {
+        return { success: false }
+      }
 
       if (REQUIRE_SESSION_TOKEN) {
         // Check token

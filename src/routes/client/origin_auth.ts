@@ -68,6 +68,10 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       }
 
       const account = await getOrCreateAccount(request.query.id)
+      if (account.isBanned) {
+        return { success: false }
+      }
+
       return {
         success: true,
         token: account.authToken,

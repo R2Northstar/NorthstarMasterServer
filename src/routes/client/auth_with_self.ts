@@ -26,7 +26,8 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     },
     async request => {
       const account = await getAccountById(request.query.id)
-      if (account === undefined) {
+      if (account === undefined) return { success: false }
+      if (account.isBanned) {
         return { success: false }
       }
 

@@ -7,6 +7,7 @@ import { type OnlyProperties } from '~utils.js'
 // #region Account Class
 interface AccountOptions {
   id: string
+  isBanned?: boolean
   authToken?: string
   authTokenExpireTime?: number
   currentServerID?: string
@@ -15,6 +16,7 @@ interface AccountOptions {
 
 class PlayerAccount {
   public readonly id: string
+  public readonly isBanned: boolean
   private _authToken: string
   private _authTokenExpireTime: number
   private _currentServerID: string | undefined
@@ -22,6 +24,7 @@ class PlayerAccount {
 
   constructor(options: AccountOptions) {
     this.id = options.id
+    this.isBanned = options.isBanned ?? false
     this._authToken = options.authToken ?? randomBytes(16).toString('hex')
     this._authTokenExpireTime =
       options.authTokenExpireTime ?? Date.now() + TOKEN_EXPIRATION_TIME
@@ -89,6 +92,7 @@ const accountToModel: (
   account: PlayerAccount
 ) => AccountProperties = account => ({
   id: account.id,
+  isBanned: account.isBanned,
   authToken: account.authToken,
   authTokenExpireTime: account.authTokenExpireTime,
   currentServerID: account.currentServerID,

@@ -30,6 +30,11 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         return
       }
 
+      if (account.isBanned) {
+        await response.code(204).send()
+        return
+      }
+
       // If the client is on their own server then don't check this since their own server might not be on masterserver
       if (account.currentServerID !== 'self') {
         const server = await getGameServer(request.query.serverId)

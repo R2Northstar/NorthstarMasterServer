@@ -10,6 +10,7 @@
       "ignoreCase": true,
       "ignoreDeclarationSort": true
     }],
+    "new-cap": ["error", {"capIsNewExceptionPattern": "^Type\\.."}],
 
     "import/first": "error",
     "import/no-unassigned-import": 0,

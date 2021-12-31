@@ -21,6 +21,7 @@
     "bad-words": "^3.0.4",
     "dotenv": "^10.0.0",
     "fastify": "^3.24.0",
+    "fastify-cors": "^6.0.2",
     "fastify-multipart": "^5.1.0",
     "fastify-static": "^4.5.0",
     "knex": "^0.95.15",

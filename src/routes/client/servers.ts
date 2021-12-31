@@ -1,4 +1,5 @@
 import { type FastifyPluginAsync } from 'fastify'
+import cors from 'fastify-cors'
 import {
   type CleanGameServer,
   type GameServer,
@@ -10,6 +11,8 @@ import {
 // returns a list of available servers
 
 const register: FastifyPluginAsync = async (fastify, _) => {
+  await fastify.register(cors)
+
   fastify.get('/client/servers', async () => {
     const cleanServers: CleanGameServer[] = []
     const expiredServers: GameServer[] = [] // TODO: Move to a mark and sweep system

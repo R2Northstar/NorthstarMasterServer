@@ -308,6 +308,13 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@msgpack/msgpack@npm:^2.7.1":
+  version: 2.7.1
+  resolution: "@msgpack/msgpack@npm:2.7.1"
+  checksum: 29b4eb42aa8b300944165e1fe88c022662680b77905c108dcadba8350cc3496d56fb4de4e009d9660e7e84d5e35d206b3b829293f7d0d5944a48be60ee0ab278
+  languageName: node
+  linkType: hard
+
 "@nodelib/fs.scandir@npm:2.1.5":
   version: 2.1.5
   resolution: "@nodelib/fs.scandir@npm:2.1.5"
@@ -339,6 +346,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@northstar/master-server@workspace:."
   dependencies:
+    "@msgpack/msgpack": ^2.7.1
     "@sinclair/typebox": ^0.23.2
     "@types/bad-words": ^3.0.1
     "@types/ioredis": ^4.28.5

@@ -21,6 +21,7 @@
     "test": "yarn run check && yarn run lint"
   },
   "dependencies": {
+    "@msgpack/msgpack": "^2.7.1",
     "@sinclair/typebox": "^0.23.2",
     "axios": "^0.24.0",
     "bad-words": "^3.0.4",

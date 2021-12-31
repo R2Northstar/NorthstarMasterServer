@@ -23,7 +23,7 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 		currentAuthTokenExpirationTime INTEGER,
 		currentServerId TEXT, 
 		persistentDataBaseline BLOB NOT NULL,
-		isBanned INTEGER DEFAULT 0,
+		isBanned INTEGER DEFAULT 0
 	)
 	`, ex => {
 		if ( ex )

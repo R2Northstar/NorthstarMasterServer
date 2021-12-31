@@ -123,7 +123,8 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         request.query.password,
         modInfo
       )
-      addGameServer(newServer)
+
+      await addGameServer(newServer)
 
       return {
         success: true,
@@ -149,7 +150,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       },
     },
     async (request, response) => {
-      const server = getGameServer(request.query.id)
+      const server = await getGameServer(request.query.id)
       if (!server || request.ip !== server.ip) {
         return null
       }
@@ -179,7 +180,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
   fastify.post<{ Querystring: Static<typeof UpdateValuesQuery> }>(
     '/server/update_values',
     async (request, response) => {
-      const server = getGameServer(request.query.id)
+      const server = await getGameServer(request.query.id)
       if (!server || request.ip !== server.ip) {
         await response.code(204).send()
         return
@@ -212,11 +213,11 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       },
     },
     async (request, response) => {
-      const server = getGameServer(request.query.id)
+      const server = await getGameServer(request.query.id)
       // Dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
       if (!server || request.ip !== server.ip) return null
 
-      removeGameServer(server)
+      await removeGameServer(server)
       await response.code(204).send()
     }
   )

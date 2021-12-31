@@ -34,7 +34,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
       // If the client is on their own server then don't check this since their own server might not be on masterserver
       if (account.currentServerId !== 'self') {
-        const server = getGameServer(request.query.serverId)
+        const server = await getGameServer(request.query.serverId)
         // Dont update if the server doesnt exist, or the server isnt the one sending the write
         if (
           !server ||

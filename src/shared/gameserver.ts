@@ -96,19 +96,40 @@ export class GameServer implements IGameServer {
   // #endregion
 }
 
-const gameServers = new Map<string, GameServer>()
-export const getGameServers = () => {
-  return Object.fromEntries(gameServers.entries())
+type MaybePromise<T> = T | PromiseLike<T>
+
+interface GameServerManager {
+  getGameServers(): MaybePromise<readonly GameServer[]>
+  getGameServer(id: string): MaybePromise<GameServer | undefined>
+  addGameServer(server: GameServer): MaybePromise<void>
+  removeGameServer(server: GameServer): MaybePromise<void>
 }
 
-export const getGameServer = (id: string) => {
-  return gameServers.get(id)
+const createLocalManager: () => GameServerManager = () => {
+  const gameServers = new Map<string, GameServer>()
+  const methods: GameServerManager = {
+    async getGameServers() {
+      const servers = [...gameServers.values()]
+      return Object.freeze(servers)
+    },
+
+    async getGameServer(id) {
+      return gameServers.get(id)
+    },
+
+    async addGameServer(server) {
+      gameServers.set(server.id, server)
+    },
+
+    async removeGameServer(server) {
+      gameServers.delete(server.id)
+    },
+  }
+
+  return Object.freeze(methods)
 }
 
-export const addGameServer = (server: GameServer) => {
-  gameServers.set(server.id, server)
-}
+const { getGameServer, getGameServers, addGameServer, removeGameServer } =
+  createLocalManager()
 
-export const removeGameServer = (server: GameServer) => {
-  gameServers.delete(server.id)
-}
+export { getGameServer, getGameServers, addGameServer, removeGameServer }

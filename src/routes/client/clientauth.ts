@@ -110,7 +110,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       },
     },
     async request => {
-      const server = getGameServer(request.query.server)
+      const server = await getGameServer(request.query.server)
 
       if (
         !server ||

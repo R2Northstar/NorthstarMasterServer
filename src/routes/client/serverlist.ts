@@ -10,7 +10,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     const displayServerArray = []
     const expiredServers = [] // Might be better to move this to another function at some point, but easiest to do here atm
 
-    const servers = Object.values(getGameServers())
+    const servers = await getGameServers()
 
     for (const server of servers) {
       // Prune servers if they've had 30 seconds since last heartbeat
@@ -30,9 +30,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     }
 
     // Delete servers that we've marked for deletion
-    for (const server of expiredServers) {
-      removeGameServer(server)
-    }
+    await Promise.all(expiredServers.map(server => removeGameServer(server)))
 
     return displayServerArray
   })

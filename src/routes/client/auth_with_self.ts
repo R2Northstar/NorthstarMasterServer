@@ -1,8 +1,8 @@
 import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
 import crypto from 'node:crypto'
+import { getById as getAccountById } from '../../accounts/index.js'
 import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
-import * as accounts from '../../shared/accounts.js'
 
 // POST /client/auth_with_self
 // attempts to authenticate a client with their own server, before the server is created
@@ -25,26 +25,27 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       },
     },
     async request => {
-      const account = await accounts.asyncGetPlayerByID(request.query.id)
-      if (!account) {
+      const account = await getAccountById(request.query.id)
+      if (account === undefined) {
         return { success: false }
       }
 
       if (REQUIRE_SESSION_TOKEN) {
         // Check token
-        if (request.query.playerToken !== account.currentAuthToken) {
+        if (request.query.playerToken !== account.authToken) {
           return { success: false }
         }
 
         // Check expired token
-        if (account.currentAuthTokenExpirationTime < Date.now()) {
+        if (account.tokenExpired()) {
           return { success: false }
         }
       }
 
       // Fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
       const authToken = crypto.randomBytes(16).toString('hex').slice(0, 31)
-      await accounts.asyncUpdatePlayerCurrentServer(account.id, 'self') // Bit of a hack: use the "self" id for local servers
+      // Bit of a hack: use the "self" id for local servers
+      await account.updateCurrentServer('self')
 
       return {
         success: true,

@@ -1,9 +1,8 @@
 import { type Static, Type } from '@sinclair/typebox'
 import axios from 'axios'
 import { type FastifyPluginAsync } from 'fastify'
-import crypto from 'node:crypto'
+import { getOrCreate as getOrCreateAccount } from '../../accounts/index.js'
 import { REQUIRE_SESSION_TOKEN } from '../../env/index.js'
-import * as accounts from '../../shared/accounts.js'
 
 // POST /client/origin_auth
 // used to authenticate a user on northstar, so we know the person using their uid is really them
@@ -68,19 +67,10 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         }
       }
 
-      let account = await accounts.asyncGetPlayerByID(request.query.id)
-      if (!account) {
-        // Create account for user
-        await accounts.asyncCreateAccountForID(request.query.id)
-        account = await accounts.asyncGetPlayerByID(request.query.id)
-      }
-
-      const authToken = crypto.randomBytes(16).toString('hex')
-      await accounts.asyncUpdateCurrentPlayerAuthToken(account.id, authToken)
-
+      const account = await getOrCreateAccount(request.query.id)
       return {
         success: true,
-        token: authToken,
+        token: account.authToken,
       }
     }
   )

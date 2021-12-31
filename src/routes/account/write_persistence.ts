@@ -1,8 +1,8 @@
 import { type Static, Type } from '@sinclair/typebox'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
+import { getById as getAccountById } from '../../accounts/index.js'
 import { getGameServer } from '../../gameservers/index.js'
-import * as accounts from '../../shared/accounts.js'
 
 // POST /accounts/write_persistence
 // attempts to write persistent data for a player
@@ -24,22 +24,25 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       },
     },
     async (request, response) => {
-      // Check if account exists
-      const account = await accounts.asyncGetPlayerByID(request.query.id)
-      if (!account) {
+      const account = await getAccountById(request.query.id)
+      if (account === undefined) {
         await response.code(204).send()
         return
       }
 
       // If the client is on their own server then don't check this since their own server might not be on masterserver
-      if (account.currentServerId !== 'self') {
+      if (account.currentServerID !== 'self') {
         const server = await getGameServer(request.query.serverId)
-        // Dont update if the server doesnt exist, or the server isnt the one sending the write
-        if (
-          !server ||
-          request.ip !== server.ip ||
-          account.currentServerId !== request.query.serverId
-        ) {
+        if (server === undefined) {
+          await response.code(204).send()
+          return
+        }
+
+        const isCorrectServer = request.ip !== server.ip
+        const isCurrentServer =
+          account.currentServerID === request.query.serverId
+
+        if (!isCorrectServer || !isCurrentServer) {
           await response.code(204).send()
           return
         }
@@ -50,10 +53,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       const buf = await file.toBuffer()
 
       if (buf.length === account.persistentDataBaseline.length) {
-        await accounts.asyncWritePlayerPersistenceBaseline(
-          request.query.id,
-          buf
-        )
+        await account.updatePersistentDataBaseline(buf)
       }
 
       await response.code(204).send()

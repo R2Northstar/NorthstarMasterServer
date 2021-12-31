@@ -1,7 +1,7 @@
 import { type GameServer } from '../gameserver.js'
 import { type GameServerManager } from '../manager.js'
 
-const createLocalManager: () => GameServerManager = () => {
+export const createLocalManager: () => GameServerManager = () => {
   const gameServers = new Map<string, GameServer>()
   const methods: GameServerManager = {
     async getGameServers() {
@@ -24,5 +24,3 @@ const createLocalManager: () => GameServerManager = () => {
 
   return Object.freeze(methods)
 }
-
-export const localServerManager = createLocalManager()

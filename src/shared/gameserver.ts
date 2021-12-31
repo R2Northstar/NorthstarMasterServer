@@ -20,7 +20,7 @@ interface IGameServer {
 
 type CleanGameServer = Omit<
   IGameServer,
-  'ip' | 'port' | 'authPort' | 'password'
+  'authToken' | 'ip' | 'port' | 'authPort' | 'password'
 >
 
 export class GameServer implements IGameServer {

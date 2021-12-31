@@ -21,7 +21,7 @@
       "~gameservers/*": ["gameservers/*"],
       "~routes/*": ["routes/*"],
       "~constants.js": ["constants.js"],
-      "~db.js": ["db.js"],
+      "~storage/*": ["storage/*"],
       "~pjson.js": ["pjson.js"],
       "~utils.js": ["utils.js"]
     }

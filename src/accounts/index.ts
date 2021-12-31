@@ -1,4 +1,4 @@
-import { db } from '~db.js'
+import { db } from '~storage/sql.js'
 
 const hasAccountsTable = await db.schema.hasTable('accounts')
 if (!hasAccountsTable) {

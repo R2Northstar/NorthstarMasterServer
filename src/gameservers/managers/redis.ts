@@ -6,7 +6,7 @@ import { type GameServerManager } from '../manager.js'
 
 export const createRedisManager: () => Promise<GameServerManager> =
   async () => {
-    const db = await redisHandle()
+    const { db } = await redisHandle()
 
     const encoder = new Encoder()
     const decoder = new Decoder()

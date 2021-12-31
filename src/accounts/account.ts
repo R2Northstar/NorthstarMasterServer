@@ -47,6 +47,10 @@ class PlayerAccount {
   }
   // #endregion
 
+  public tokenExpired(): boolean {
+    return this._authTokenExpireTime < Date.now()
+  }
+
   // #region Update Methods
   public async updateAuthToken(token?: string) {
     const authToken = token ?? randomBytes(16).toString('hex')

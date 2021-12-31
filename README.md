@@ -7,5 +7,5 @@ This fork is built upon the [official Master Server](https://github.com/R2Norths
 * More structured project layout
 * High availability using Redis to sync multiple instances
 * Multiple storage backends (SQLite for dev/single instances, or PostgreSQL for high availability)
-* Route Caching for commonly requested routes using Redis (WIP)
+* Route Caching for commonly requested routes using Redis
 * Automatic Docker Images

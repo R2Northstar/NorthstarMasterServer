@@ -7,7 +7,7 @@ import { type GameServerManager } from '../manager.js'
 
 export const createRedisManager: () => Promise<GameServerManager> =
   async () => {
-    const { db, pubsub } = await redisHandle()
+    const { db } = await redisHandle()
 
     const encoder = new Encoder()
     const decoder = new Decoder()
@@ -51,7 +51,7 @@ export const createRedisManager: () => Promise<GameServerManager> =
         await db.set(`northstar:server:${server.id}`, serialized)
 
         if (CACHE_GAME_SERVERS) {
-          await pubsub.publish(`northstar:servers`, 'add')
+          await db.publish(`northstar:servers`, 'add')
         }
       },
 
@@ -59,7 +59,7 @@ export const createRedisManager: () => Promise<GameServerManager> =
         await db.del(`northstar:server:${server.id}`)
 
         if (CACHE_GAME_SERVERS) {
-          await pubsub.publish(`northstar:servers`, 'remove')
+          await db.publish(`northstar:servers`, 'remove')
         }
       },
 
@@ -68,7 +68,7 @@ export const createRedisManager: () => Promise<GameServerManager> =
         await db.del(...keys)
 
         if (CACHE_GAME_SERVERS) {
-          await pubsub.publish(`northstar:servers`, 'remove')
+          await db.publish(`northstar:servers`, 'remove')
         }
       },
     }

@@ -9,6 +9,7 @@
     "noImplicitAny": true,
     "sourceMap": true,
     "declaration": false,
+    "removeComments": true,
     "rootDir": "./src",
     "outDir": "./build",
     "baseUrl": "./src",

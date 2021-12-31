@@ -1,27 +1,32 @@
 import { type Buffer } from 'node:buffer'
+import { randomBytes } from 'node:crypto'
+import { DEFAULT_PDATA_BASELINE, TOKEN_EXPIRATION_TIME } from '../constants.js'
+import { OnlyProperties } from '../utils.js'
+import { db } from './index.js'
 
 // #region Account Class
 interface AccountOptions {
   id: string
-  authToken: string
-  authTokenExpireTime: number
-  currentServerID: string
-  persistentDataBaseline: Buffer
+  authToken?: string
+  authTokenExpireTime?: number
+  currentServerID?: string
+  persistentDataBaseline?: Buffer
 }
 
 class PlayerAccount {
   public readonly id: string
   private readonly _authToken: string
   private readonly _authTokenExpireTime: number
-  private readonly _currentServerID: string
+  private readonly _currentServerID: string | undefined
   private readonly _persistentDataBaseline: Buffer
 
   constructor(options: AccountOptions) {
     this.id = options.id
-    this._authToken = options.authToken
-    this._authTokenExpireTime = options.authTokenExpireTime
-    this._currentServerID = options.currentServerID
-    this._persistentDataBaseline = options.persistentDataBaseline
+    this._authToken = options.authToken ?? randomBytes(16).toString('hex')
+    this._authTokenExpireTime =
+      options.authTokenExpireTime ?? Date.now() + TOKEN_EXPIRATION_TIME
+    this._persistentDataBaseline =
+      options.persistentDataBaseline ?? DEFAULT_PDATA_BASELINE
   }
 
   // #region Readonly Fields
@@ -33,7 +38,7 @@ class PlayerAccount {
     return this._authTokenExpireTime
   }
 
-  public get currentServerID(): string {
+  public get currentServerID(): string | undefined {
     return this._currentServerID
   }
 
@@ -62,16 +67,38 @@ class PlayerAccount {
 // #endregion
 
 // #region Methods
+type AccountProperties = OnlyProperties<PlayerAccount>
+const accountToModel: (
+  account: PlayerAccount
+) => AccountProperties = account => ({
+  id: account.id,
+  authToken: account.authToken,
+  authTokenExpireTime: account.authTokenExpireTime,
+  currentServerID: account.currentServerID,
+  persistentDataBaseline: account.persistentDataBaseline,
+})
+
 export const createAccount: (
   id: string
 ) => Promise<PlayerAccount> = async id => {
-  throw new Error('not implemented')
+  const account = new PlayerAccount({ id })
+  const model = accountToModel(account)
+
+  await db<AccountProperties>('accounts').insert(model)
+  return account
 }
 
 export const getById: (
   id: string
 ) => Promise<PlayerAccount | undefined> = async id => {
-  throw new Error('not implemented')
+  const result = await db<AccountProperties>('accounts')
+    .select('*')
+    .where({ id })
+    .limit(1)
+    .first()
+
+  if (result === undefined) return undefined
+  return new PlayerAccount(result)
 }
 
 export const getOrCreate: (id: string) => Promise<PlayerAccount> = async id => {

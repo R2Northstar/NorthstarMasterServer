@@ -30,6 +30,7 @@ const init = async () => {
       if (!file.endsWith('.js')) continue
 
       const { href: modulePath } = pathToFileURL(joinPath(dir, file))
+      // eslint-disable-next-line node/no-unsupported-features/es-syntax
       const module = (await import(modulePath)) as unknown
 
       // Ensure module has default export

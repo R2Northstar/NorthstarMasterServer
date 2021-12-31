@@ -54,9 +54,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         id: account.id,
         authToken,
         // This fucking sucks, but i couldn't get game to behave if i sent it as an ascii string, so using this for now
-        persistentData: Array.from(
-          new Uint8Array(account.persistentDataBaseline)
-        ),
+        persistentData: [...new Uint8Array(account.persistentDataBaseline)],
       }
     }
   )

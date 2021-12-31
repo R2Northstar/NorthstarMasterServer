@@ -43,7 +43,9 @@ export const sweepGameServers = async () => {
     const expired = servers.filter(x => x.hasExpired())
 
     // Remove all servers
-    await removeMultipleServers(...expired)
+    if (expired.length > 0) {
+      await removeMultipleServers(...expired)
+    }
   } finally {
     await release()
   }

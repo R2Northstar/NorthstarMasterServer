@@ -1,7 +1,7 @@
 import { type Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
 import { DEFAULT_PDATA_BASELINE, TOKEN_EXPIRATION_TIME } from '../constants.js'
-import { OnlyProperties } from '../utils.js'
+import { type OnlyProperties } from '../utils.js'
 import { db } from './index.js'
 
 // #region Account Class
@@ -15,10 +15,10 @@ interface AccountOptions {
 
 class PlayerAccount {
   public readonly id: string
-  private readonly _authToken: string
-  private readonly _authTokenExpireTime: number
-  private readonly _currentServerID: string | undefined
-  private readonly _persistentDataBaseline: Buffer
+  private _authToken: string
+  private _authTokenExpireTime: number
+  private _currentServerID: string | undefined
+  private _persistentDataBaseline: Buffer
 
   constructor(options: AccountOptions) {
     this.id = options.id
@@ -48,19 +48,32 @@ class PlayerAccount {
   // #endregion
 
   // #region Update Methods
-  public async updateAuthToken(token: string) {
-    // TODO
-    throw new Error('not implemented')
+  public async updateAuthToken(token?: string) {
+    const authToken = token ?? randomBytes(16).toString('hex')
+    const authTokenExpireTime = Date.now() + TOKEN_EXPIRATION_TIME
+
+    await db<AccountProperties>('accounts')
+      .update({ authToken, authTokenExpireTime })
+      .where({ id: this.id })
+
+    this._authToken = authToken
+    this._authTokenExpireTime = authTokenExpireTime
   }
 
   public async updateCurrentServer(serverID: string) {
-    // TODO
-    throw new Error('not implemented')
+    await db<AccountProperties>('accounts')
+      .update({ currentServerID: serverID })
+      .where({ id: this.id })
+
+    this._currentServerID = serverID
   }
 
   public async updatePersistentDataBaseline(persistentDataBaseline: Buffer) {
-    // TODO
-    throw new Error('not implemented')
+    await db<AccountProperties>('accounts')
+      .update({ persistentDataBaseline })
+      .where({ id: this.id })
+
+    this._persistentDataBaseline = persistentDataBaseline
   }
   // #endregion
 }

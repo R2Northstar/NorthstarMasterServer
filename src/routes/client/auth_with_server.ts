@@ -61,10 +61,8 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       const authToken = crypto.randomBytes(16).toString('hex').slice(0, 31)
 
       // TODO: build persistent data here, rather than sending baseline only
-      const pdata = await accounts.asyncGetPlayerPersistenceBufferForMods(
-        request.query.id,
-        server.modInfo.Mods.filter(m => Boolean(m.pdiff)).map(m => m.pdiff)
-      )
+      // server.modInfo.Mods.filter(m => Boolean(m.pdiff)).map(m => m.pdiff)
+      const pdata = account.persistentDataBaseline
 
       const parameters = new URLSearchParams()
       parameters.set('id', request.query.id)

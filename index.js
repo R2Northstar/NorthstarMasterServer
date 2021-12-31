@@ -15,13 +15,15 @@ if ( process.env.USE_HTTPS )
 		https: {
 			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
 			cert: fs.readFileSync( process.env.SSL_CERT_PATH )
-		}
+		},
+		trustProxy: !!(process.env.TRUST_PROXY)
 	})
 }
 else
 {
 	fastify = fastify({ 
 		logger: process.env.USE_FASTIFY_LOGGER || false,
+		trustProxy: !!(process.env.TRUST_PROXY)
 	})
 }
 

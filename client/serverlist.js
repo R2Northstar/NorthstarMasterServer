@@ -31,6 +31,7 @@ module.exports = ( fastify, opts, done ) => {
 			delete copy.port
 			delete copy.authPort
 			delete copy.password
+			delete copy.serverAuthToken
 			
 			displayServerArray.push( copy )
 		}

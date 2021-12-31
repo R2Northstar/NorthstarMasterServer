@@ -85,7 +85,8 @@ module.exports = ( fastify, opts, done ) => {
 		
 		return {
 			success: true,
-			id: newServer.id
+			id: newServer.id,
+			serverAuthToken: newServer.serverAuthToken
 		}
 	})
 	

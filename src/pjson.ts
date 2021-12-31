@@ -193,7 +193,7 @@ export const parseDefinition: (pdef: string) => PDef = pdef => {
 }
 
 interface PDiff {
-  enumAdds: Record<string, unknown>
+  enumAdds: Record<string, string[]>
   pdefString: string
   pdef: PDef
 }
@@ -230,8 +230,6 @@ export const parseDefinitionDiff: (pdiff: string) => PDiff = pdiff => {
           throw new Error(`unexpected characters in enum member`)
         }
 
-        // FIXME: Properly type when I know what the type should be
-        // @ts-expect-error to-do
         returnValue.enumAdds[currentEnumAddName].push(type)
       }
     } else if (type === PDIFF_ENUM_ADD) {

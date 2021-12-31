@@ -1,6 +1,7 @@
 import 'source-map-support/register.js'
 
 import createFastify from 'fastify'
+import ms from 'ms'
 import { readdir } from 'node:fs/promises'
 import { join as joinPath } from 'node:path'
 import { pathToFileURL } from 'node:url'
@@ -11,6 +12,7 @@ import {
   TRUST_PROXY,
   USE_FASTIFY_LOGGER,
 } from '~env/index.js'
+import { sweepGameServers } from '~gameservers/sweep.js'
 
 const ROUTE_PATHS = ['client', 'server', 'account'] as const
 
@@ -50,6 +52,12 @@ const init = async () => {
     }
   }
   /* eslint-enable no-await-in-loop */
+
+  // Periodically sweep game servers
+  void sweepGameServers()
+  setInterval(() => {
+    void sweepGameServers()
+  }, ms('10s'))
 
   await fastify.listen(LISTEN_PORT, LISTEN_IP)
 }

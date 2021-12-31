@@ -1,4 +1,5 @@
 import { type Decoder, type Encoder } from '@msgpack/msgpack'
+import ms from 'ms'
 import { Buffer } from 'node:buffer'
 import { randomBytes } from 'node:crypto'
 import { type OnlyProperties } from '~utils.js'
@@ -33,7 +34,7 @@ export interface GameServerOptions {
   authPort: number
   password?: string
   modInfo?: ModInfo
-  lastHeartbeat?: Date
+  lastHeartbeat?: number
 }
 
 export class GameServer {
@@ -105,7 +106,7 @@ export class GameServer {
     this.password = options.password ?? ''
     this.hasPassword = Boolean(this.password)
     this.modInfo = options.modInfo ?? { Mods: [] }
-    this.lastHeartbeat = Date.now()
+    this.lastHeartbeat = options.lastHeartbeat ?? Date.now()
   }
   // #endregion
 
@@ -136,6 +137,10 @@ export class GameServer {
     })
 
     return clean
+  }
+
+  public hasExpired(): boolean {
+    return Date.now() - this.lastHeartbeat > ms('30s')
   }
   // #endregion
 }

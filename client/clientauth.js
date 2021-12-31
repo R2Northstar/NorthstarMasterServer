@@ -60,8 +60,8 @@ module.exports = ( fastify, opts, done ) => {
 		//console.log("isBanned:" + account.isBanned)
 		if(account.isBanned)
 		{
+		console.log("Rejected banned Player auth request:" + account.id )
 		return {
-			console.log("Rejected banned Player auth request:" + account.id )
 			success: false,
 			token: "nope"
 			}

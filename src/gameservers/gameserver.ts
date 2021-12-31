@@ -1,9 +1,5 @@
 import { randomBytes } from 'node:crypto'
-
-type OnlyProperties<T> = {
-  // eslint-disable-next-line @typescript-eslint/ban-types
-  [P in keyof T as T[P] extends Function ? never : P]: T[P]
-}
+import { type OnlyProperties } from '../utils.js'
 
 type HiddenFields = 'serverAuthToken' | 'ip' | 'port' | 'authPort' | 'password'
 export type CleanGameServer = Readonly<

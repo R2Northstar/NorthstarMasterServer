@@ -43,5 +43,6 @@ export const DB_PSQL_CONN = registerString('DB_PSQL_CONN', DB_DRIVER === 'pg')
 // #region Application
 export const REQUIRE_SESSION_TOKEN = registerBool('REQUIRE_SESSION_TOKEN') ?? true
 export const SYNC_GAME_SERVERS = registerBool('SYNC_GAME_SERVERS') ?? !IS_DEV
-export const REDIS_CONN = registerString('REDIS_CONN', SYNC_GAME_SERVERS)
+export const CACHE_GAME_SERVERS = registerBool('CACHE_GAME_SERVERS') ?? !IS_DEV
+export const REDIS_CONN = registerString('REDIS_CONN', SYNC_GAME_SERVERS || CACHE_GAME_SERVERS)
 // #endregion

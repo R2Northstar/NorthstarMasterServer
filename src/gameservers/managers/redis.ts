@@ -1,12 +1,13 @@
 import { Decoder, Encoder } from '@msgpack/msgpack'
 import { type Buffer } from 'node:buffer'
+import { CACHE_GAME_SERVERS } from '~env/index.js'
 import { redisHandle } from '~storage/redis.js'
 import { GameServer } from '../gameserver.js'
 import { type GameServerManager } from '../manager.js'
 
 export const createRedisManager: () => Promise<GameServerManager> =
   async () => {
-    const { db } = await redisHandle()
+    const { db, pubsub } = await redisHandle()
 
     const encoder = new Encoder()
     const decoder = new Decoder()
@@ -48,10 +49,18 @@ export const createRedisManager: () => Promise<GameServerManager> =
       async addGameServer(server) {
         const serialized = server.encode(encoder)
         await db.set(`northstar:server:${server.id}`, serialized)
+
+        if (CACHE_GAME_SERVERS) {
+          await pubsub.publish(`northstar:servers`, 'add')
+        }
       },
 
       async removeGameServer(server) {
         await db.del(`northstar:server:${server.id}`)
+
+        if (CACHE_GAME_SERVERS) {
+          await pubsub.publish(`northstar:servers`, 'remove')
+        }
       },
     }
 

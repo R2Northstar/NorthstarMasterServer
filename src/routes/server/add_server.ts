@@ -3,10 +3,8 @@ import axios from 'axios'
 import Filter from 'bad-words'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
-import { createHash } from 'node:crypto'
 import { VERIFY_STRING } from '~constants.js'
-import { addGameServer, GameServer } from '~gameservers/index.js'
-import { parseDefinitionDiff } from '~pjson.js'
+import { addGameServer, GameServer, type ModInfo } from '~gameservers/index.js'
 
 const filter = new Filter()
 
@@ -53,17 +51,25 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       // Check server's verify endpoint on their auth server, make sure it's fine
       // in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
 
-      let hasValidModInfo = true
-      let modInfo
+      const extractModInfo: () => Promise<ModInfo | undefined> = async () => {
+        if (request.isMultipart() === false) return
 
-      if (request.isMultipart()) {
         try {
           const file = await request.file()
           const buffer = await file.toBuffer()
+          const payload = JSON.parse(buffer.toString('utf8')) as unknown
 
-          modInfo = JSON.parse(buffer.toString('utf8'))
-          hasValidModInfo = Array.isArray(modInfo.Mods)
-        } catch {}
+          if (typeof payload !== 'object') return
+          if (payload === null) return
+
+          const modInfo = payload as Record<string, unknown>
+          if ('Mods' in modInfo === false) return
+          if (Array.isArray(modInfo.Mods) === false) return
+
+          return payload as ModInfo
+        } catch {
+          // No-op
+        }
       }
 
       try {
@@ -80,20 +86,11 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       }
 
       // Pdiff stuff
+      const modInfo = await extractModInfo()
       if (modInfo?.Mods) {
         for (const mod of modInfo.Mods) {
-          if (mod.pdiff) {
-            try {
-              const pdiffHash = createHash('sha1')
-                .update(mod.pdiff)
-                .digest('hex')
-
-              mod.pdiff = parseDefinitionDiff(mod.pdiff)
-              mod.pdiff.hash = pdiffHash
-            } catch {
-              mod.pdiff = null
-            }
-          }
+          // TODO: Replace with actual logic once upstream is working as intended
+          mod.Pdiff = null
         }
       }
 
@@ -102,18 +99,6 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         request.query.description === ''
           ? ''
           : filter.clean(request.query.description)
-
-      // Name,
-      // description,
-      // 0,
-      // request.query.maxPlayers,
-      // request.query.map,
-      // request.query.playlist,
-      // request.ip,
-      // request.query.port,
-      // request.query.authPort,
-      // request.query.password,
-      // modInfo
 
       const newServer = new GameServer({
         name,
@@ -126,8 +111,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         port: request.query.port,
         authPort: request.query.authPort,
         password: request.query.password,
-        // TODO: Strongly type
-        modInfo: modInfo as Record<string, unknown>,
+        modInfo,
       })
 
       await addGameServer(newServer)

@@ -6,7 +6,17 @@ export type CleanGameServer = Readonly<
   Omit<OnlyProperties<GameServer>, HiddenFields>
 >
 
-type ModInfo = Record<string, unknown>
+export interface Mod {
+  Name: string
+  Version: string
+  RequiredOnClient: boolean
+  Pdiff: string | null
+}
+
+export interface ModInfo {
+  Mods: Mod[]
+}
+
 export interface GameServerOptions {
   name: string
   description: string
@@ -56,7 +66,7 @@ export class GameServer {
     this.authPort = options.authPort
     this.password = options.password ?? ''
     this.hasPassword = Boolean(this.password)
-    this.modInfo = options.modInfo ?? {}
+    this.modInfo = options.modInfo ?? { Mods: [] }
     this.lastHeartbeat = Date.now()
   }
   // #endregion

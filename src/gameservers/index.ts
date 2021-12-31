@@ -7,4 +7,4 @@ const activeManager = localServerManager
 const { getGameServers, getGameServer, addGameServer, removeGameServer } = activeManager
 export { getGameServers, getGameServer, addGameServer, removeGameServer }
 
-export { GameServer, CleanGameServer } from './gameserver.js'
+export { GameServer, CleanGameServer, ModInfo, Mod } from './gameserver.js'

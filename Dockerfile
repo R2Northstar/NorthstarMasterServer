@@ -6,7 +6,11 @@ WORKDIR /app
 COPY ./.yarn ./.yarn
 COPY ./package.json ./yarn.lock ./.yarnrc.yml ./
 
-RUN yarn install --immutable
+RUN \
+  apk add --no-cache --virtual build-deps python3 alpine-sdk autoconf libtool automake && \
+  yarn install --immutable && \
+  yarn cache clean && \
+  apk del build-deps
 
 # ---
 FROM base AS builder

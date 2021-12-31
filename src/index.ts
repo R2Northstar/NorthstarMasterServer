@@ -2,7 +2,9 @@ import 'source-map-support/register.js'
 
 import createFastify from 'fastify'
 import { readdir } from 'node:fs/promises'
-import path from 'node:path'
+import { join as joinPath } from 'node:path'
+import { pathToFileURL } from 'node:url'
+import { ROOT_DIR } from './constants.js'
 import {
   LISTEN_IP,
   LISTEN_PORT,
@@ -20,14 +22,14 @@ const init = async () => {
 
   /* eslint-disable no-await-in-loop */
   for (const routeDir of ROUTE_PATHS) {
-    const cleanDir = path.join('routes', routeDir)
-    const dir = path.join(__dirname, cleanDir)
+    const cleanDir = joinPath('routes', routeDir)
+    const dir = joinPath(ROOT_DIR, cleanDir)
     const files = await readdir(dir)
 
     for (const file of files) {
       if (!file.endsWith('.js')) continue
 
-      const modulePath = path.join(dir, file)
+      const { href: modulePath } = pathToFileURL(joinPath(dir, file))
       const module = (await import(modulePath)) as unknown
 
       // Ensure module has default export
@@ -39,7 +41,7 @@ const init = async () => {
       const { default: route } = module as { default: unknown }
       if (typeof route !== 'function') continue
 
-      const cleanPath = path.join(cleanDir, file)
+      const cleanPath = joinPath(cleanDir, file)
       console.log(`Registering routes from file ${cleanPath}`)
 
       // @ts-expect-error Untyped Function
@@ -52,4 +54,4 @@ const init = async () => {
 }
 
 // Init Application
-void init().catch(console.error)
+await init().catch(console.error)

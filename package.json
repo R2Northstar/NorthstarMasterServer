@@ -2,6 +2,7 @@
 	"name": "NorthstarMasterServer",
 	"author": "BobTheBob#1150",
 	"license": "MIT",
+	"type": "module",
 	"main": "./build/index.js",
 	"scripts": {
     "clean": "rimraf build",

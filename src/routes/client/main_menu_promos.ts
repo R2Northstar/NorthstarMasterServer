@@ -1,22 +1,13 @@
 import { type FastifyPluginAsync } from 'fastify'
 import fastifyStatic from 'fastify-static'
-import path from 'node:path'
+import { PUBLIC_ASSETS_DIR } from '../../constants.js'
 
-const publicAssetsPath = path.join(
-  __dirname,
-  '..',
-  '..',
-  '..',
-  'assets',
-  'public'
-)
+// GET /client/mainmenupromos
+// returns main menu promo info
 
 const register: FastifyPluginAsync = async (fastify, _) => {
-  await fastify.register(fastifyStatic, { root: publicAssetsPath })
-  // exported routes
+  await fastify.register(fastifyStatic, { root: PUBLIC_ASSETS_DIR })
 
-  // GET /client/mainmenupromos
-  // returns main menu promo info
   fastify.get('/client/mainmenupromos', async (_, response) => {
     return response.sendFile('mainmenupromodata.json')
   })

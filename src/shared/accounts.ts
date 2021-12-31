@@ -1,30 +1,8 @@
 import { Buffer } from 'node:buffer'
-import fs from 'node:fs'
-import path from 'node:path'
 import sqliteRaw from 'sqlite3'
-import * as pjson from './pjson.js'
+import { DEFAULT_PDATA_BASELINE, TOKEN_EXPIRATION_TIME } from '../constants.js'
 
 const sqlite = sqliteRaw.verbose()
-const TOKEN_EXPIRATION_TIME = 3_600_000 * 24 // 24 hours
-
-const DEFAULT_PDATA_BASELINE = fs.readFileSync(
-  path.join(__dirname, '..', '..', 'assets', 'default.pdata')
-)
-
-const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition(
-  fs
-    .readFileSync(
-      path.join(
-        __dirname,
-        '..',
-        '..',
-        'assets',
-        'persistent_player_data_version_231.pdef'
-      )
-    )
-    .toString()
-)
-
 const playerDB = new sqlite.Database(
   'playerdata.db',
   sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE,

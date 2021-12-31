@@ -4,11 +4,11 @@ import Filter from 'bad-words'
 import { type FastifyPluginAsync } from 'fastify'
 import multipart from 'fastify-multipart'
 import { createHash } from 'node:crypto'
+import { VERIFY_STRING } from '../../constants.js'
 import { addGameServer, GameServer } from '../../gameservers/index.js'
 import * as pjson from '../../shared/pjson.js'
 
 const filter = new Filter()
-const VERIFY_STRING = 'I am a northstar server!'
 
 // POST /server/add_server
 // adds a gameserver to the server list

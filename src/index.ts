@@ -51,4 +51,5 @@ const init = async () => {
   await fastify.listen(LISTEN_PORT, LISTEN_IP)
 }
 
+// Init Application
 void init().catch(console.error)

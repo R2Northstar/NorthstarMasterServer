@@ -12,9 +12,7 @@ import {
 const register: FastifyPluginAsync = async (fastify, _) => {
   fastify.get('/client/servers', async () => {
     const cleanServers: CleanGameServer[] = []
-
-    // TODO: Move to a mark and sweep system
-    const expiredServers: GameServer[] = []
+    const expiredServers: GameServer[] = [] // TODO: Move to a mark and sweep system
 
     const servers = await getGameServers()
     for (const server of servers) {

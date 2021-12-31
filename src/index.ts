@@ -28,12 +28,22 @@ const init = async () => {
       if (!file.endsWith('.js')) continue
 
       const modulePath = path.join(dir, file)
-      const { default: module } = await import(modulePath)
+      const module = (await import(modulePath)) as unknown
+
+      // Ensure module has default export
+      if (typeof module !== 'object') continue
+      if (module === null) continue
+      if (!('default' in module)) continue
+
+      // Ensure default export is a function
+      const { default: route } = module as { default: unknown }
+      if (typeof route !== 'function') continue
 
       const cleanPath = path.join(cleanDir, file)
       console.log(`Registering routes from file ${cleanPath}`)
 
-      await fastify.register(module)
+      // @ts-expect-error Untyped Function
+      await fastify.register(route)
     }
   }
   /* eslint-enable no-await-in-loop */

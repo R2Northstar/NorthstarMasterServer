@@ -3,7 +3,7 @@ import ms from 'ms'
 import { readFile } from 'node:fs/promises'
 import { dirname as dirName, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { ParseDefinition } from './shared/pjson.js'
+import { parseDefinition } from './shared/pjson.js'
 
 // #region Application
 export const ROOT_DIR = dirName(fileURLToPath(import.meta.url))
@@ -20,5 +20,5 @@ export const DEFAULT_PDATA_BASELINE = await readFile(DEFAULT_PDATA_BASELINE_PATH
 
 const DEFAULT_PDEF_PATH = joinPath(ASSETS_DIR, 'persistent_player_data_version_231.pdef')
 const DEFAULT_PDEF_BUFFER = await readFile(DEFAULT_PDEF_PATH, 'utf8')
-export const DEFAULT_PDEF_OBJECT = ParseDefinition(DEFAULT_PDEF_BUFFER)
+export const DEFAULT_PDEF_OBJECT = parseDefinition(DEFAULT_PDEF_BUFFER)
 // #endregion

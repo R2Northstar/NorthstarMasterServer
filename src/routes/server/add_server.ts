@@ -6,7 +6,7 @@ import multipart from 'fastify-multipart'
 import { createHash } from 'node:crypto'
 import { VERIFY_STRING } from '~constants.js'
 import { addGameServer, GameServer } from '~gameservers/index.js'
-import * as pjson from '../../shared/pjson.js'
+import { parseDefinitionDiff } from '../../shared/pjson.js'
 
 const filter = new Filter()
 
@@ -88,7 +88,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
                 .update(mod.pdiff)
                 .digest('hex')
 
-              mod.pdiff = pjson.ParseDefinitionDiff(mod.pdiff)
+              mod.pdiff = parseDefinitionDiff(mod.pdiff)
               mod.pdiff.hash = pdiffHash
             } catch {
               mod.pdiff = null

@@ -6,7 +6,7 @@ import multipart from 'fastify-multipart'
 import { createHash } from 'node:crypto'
 import { VERIFY_STRING } from '~constants.js'
 import { addGameServer, GameServer } from '~gameservers/index.js'
-import { parseDefinitionDiff } from '../../shared/pjson.js'
+import { parseDefinitionDiff } from '~pjson.js'
 
 const filter = new Filter()
 

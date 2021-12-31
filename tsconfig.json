@@ -21,6 +21,7 @@
       "~routes/*": ["routes/*"],
       "~constants.js": ["constants.js"],
       "~db.js": ["db.js"],
+      "~pjson.js": ["pjson.js"],
       "~utils.js": ["utils.js"]
     }
   },

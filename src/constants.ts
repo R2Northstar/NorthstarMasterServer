@@ -3,7 +3,7 @@ import ms from 'ms'
 import { readFile } from 'node:fs/promises'
 import { dirname as dirName, join as joinPath } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { parseDefinition } from './shared/pjson.js'
+import { parseDefinition } from '~pjson.js'
 
 // #region Application
 export const ROOT_DIR = dirName(fileURLToPath(import.meta.url))

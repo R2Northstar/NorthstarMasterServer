@@ -21,6 +21,11 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
   fastify.post<{ Querystring: Static<typeof UpdateValuesQuery> }>(
     '/server/update_values',
+    {
+      schema: {
+        querystring: UpdateValuesQuery,
+      },
+    },
     async request => {
       const server = await getGameServer(request.query.id)
       if (!server || request.ip !== server.ip) {

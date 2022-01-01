@@ -93,7 +93,8 @@ export class GameServer {
   // #region Constructor
   constructor(options: GameServerOptions) {
     this.id = options.id ?? randomBytes(16).toString('hex')
-    this.serverAuthToken = options.serverAuthToken ?? randomBytes(16).toString('hex')
+    this.serverAuthToken =
+      options.serverAuthToken ?? randomBytes(16).toString('hex')
     this.name = options.name
     this.description = options.description
     this.playerCount = options.playerCount

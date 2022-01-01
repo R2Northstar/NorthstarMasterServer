@@ -10,7 +10,7 @@ interface AccountOptions {
   isBanned?: boolean
   authToken?: string
   authTokenExpireTime?: number
-  currentServerID?: string
+  currentServerId?: string
   persistentDataBaseline?: Buffer
 }
 
@@ -19,7 +19,7 @@ class PlayerAccount {
   public readonly isBanned: boolean
   private _authToken: string
   private _authTokenExpireTime: number
-  private _currentServerID: string | undefined
+  private _currentServerId: string | undefined
   private _persistentDataBaseline: Buffer
 
   constructor(options: AccountOptions) {
@@ -28,7 +28,7 @@ class PlayerAccount {
     this._authToken = options.authToken ?? randomBytes(16).toString('hex')
     this._authTokenExpireTime =
       options.authTokenExpireTime ?? Date.now() + TOKEN_EXPIRATION_TIME
-    this._currentServerID = options.currentServerID ?? undefined
+    this._currentServerId = options.currentServerId ?? undefined
     this._persistentDataBaseline =
       options.persistentDataBaseline ?? DEFAULT_PDATA_BASELINE
   }
@@ -42,8 +42,8 @@ class PlayerAccount {
     return this._authTokenExpireTime
   }
 
-  public get currentServerID(): string | undefined {
-    return this._currentServerID
+  public get currentServerId(): string | undefined {
+    return this._currentServerId
   }
 
   public get persistentDataBaseline(): Buffer {
@@ -68,12 +68,12 @@ class PlayerAccount {
     this._authTokenExpireTime = authTokenExpireTime
   }
 
-  public async updateCurrentServer(serverID: string) {
+  public async updateCurrentServer(serverId: string) {
     await db<AccountProperties>('accounts')
-      .update({ currentServerID: serverID })
+      .update({ currentServerId: serverId })
       .where({ id: this.id })
 
-    this._currentServerID = serverID
+    this._currentServerId = serverId
   }
 
   public async updatePersistentDataBaseline(persistentDataBaseline: Buffer) {
@@ -96,7 +96,7 @@ const accountToModel: (
   isBanned: account.isBanned,
   authToken: account.authToken,
   authTokenExpireTime: account.authTokenExpireTime,
-  currentServerID: account.currentServerID,
+  currentServerId: account.currentServerId,
   persistentDataBaseline: account.persistentDataBaseline,
 })
 

@@ -7,7 +7,7 @@ if (!hasAccountsTable) {
     table.boolean('isBanned').notNullable()
     table.text('authToken').notNullable()
     table.bigInteger('authTokenExpireTime').notNullable()
-    table.text('currentServerID')
+    table.text('currentServerId')
     table.binary('persistentDataBaseline').notNullable()
   })
 }

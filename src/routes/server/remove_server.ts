@@ -23,7 +23,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       if (!server || request.ip !== server.ip) return null
 
       await removeGameServer(server)
-      await response.code(204).send()
+      return null
     }
   )
 }

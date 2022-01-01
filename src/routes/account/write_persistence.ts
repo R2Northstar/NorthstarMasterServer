@@ -25,31 +25,20 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     },
     async (request, response) => {
       const account = await getAccountById(request.query.id)
-      if (account === undefined) {
-        await response.code(204).send()
-        return
-      }
-
-      if (account.isBanned) {
-        await response.code(204).send()
-        return
-      }
+      if (account === undefined) return null
+      if (account.isBanned) return null
 
       // If the client is on their own server then don't check this since their own server might not be on masterserver
       if (account.currentServerID !== 'self') {
         const server = await getGameServer(request.query.serverId)
-        if (server === undefined) {
-          await response.code(204).send()
-          return
-        }
+        if (server === undefined) return null
 
         const isCorrectServer = request.ip !== server.ip
         const isCurrentServer =
           account.currentServerID === request.query.serverId
 
         if (!isCorrectServer || !isCurrentServer) {
-          await response.code(204).send()
-          return
+          return null
         }
       }
 
@@ -61,7 +50,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         await account.updatePersistentDataBaseline(buf)
       }
 
-      await response.code(204).send()
+      return null
     }
   )
 }

@@ -24,8 +24,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     async (request, response) => {
       const server = await getGameServer(request.query.id)
       if (!server || request.ip !== server.ip) {
-        await response.code(204).send()
-        return
+        return null
       }
 
       /* eslint-disable prettier/prettier */
@@ -37,7 +36,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       if (request.query.playlist) server.playlist = request.query.playlist
       /* eslint-enable prettier/prettier */
 
-      await response.code(204).send()
+      return null
     }
   )
 }

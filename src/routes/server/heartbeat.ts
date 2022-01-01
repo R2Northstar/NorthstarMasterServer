@@ -19,7 +19,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: HeartbeatQuery,
       },
     },
-    async (request, response) => {
+    async request => {
       const server = await getGameServer(request.query.id)
       if (!server || request.ip !== server.ip) {
         return null

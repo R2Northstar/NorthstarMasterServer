@@ -17,7 +17,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: RemoveServerQuery,
       },
     },
-    async (request, response) => {
+    async request => {
       const server = await getGameServer(request.query.id)
       // Dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
       if (!server || request.ip !== server.ip) return null

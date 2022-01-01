@@ -23,7 +23,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: WritePersistenceQuery,
       },
     },
-    async (request, response) => {
+    async request => {
       const account = await getAccountById(request.query.id)
       if (account === undefined) return null
       if (account.isBanned) return null

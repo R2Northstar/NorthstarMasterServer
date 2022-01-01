@@ -147,6 +147,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       const parameters = new URLSearchParams()
       parameters.set('id', request.query.id)
       parameters.set('authToken', authToken)
+      parameters.set('serverAuthToken', server.serverAuthToken)
 
       // TODO: handle errors
       const { data: authResponse } = await axios.post<string>(
@@ -158,7 +159,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
 
       if (!authResponse) return { success: false }
 
-      const jsonResponse = JSON.parse(authResponse.toString())
+      const jsonResponse = authResponse as unknown as Record<string, unknown>
       if (!jsonResponse.success) return { success: false }
 
       return {

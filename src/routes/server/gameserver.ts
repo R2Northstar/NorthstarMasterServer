@@ -122,6 +122,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       return {
         success: true,
         id: newServer.id,
+        serverAuthToken: newServer.serverAuthToken,
       }
     }
   )
@@ -141,16 +142,15 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         querystring: HeartbeatQuery,
       },
     },
-    async (request, reply) => {
+    async (request, response) => {
       const server = getGameServer(request.query.id)
-      // Dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-      if (!server || request.ip !== server.ip || !request.query.id) {
-        // Remove !request.playerCount as if playercount==0 it will trigger skip heartbeat update
+      if (!server || request.ip !== server.ip) {
         return null
-      } // Added else so update heartbeat will trigger,Have to add the brackets for me to work for some reason
+      }
 
       server.lastHeartbeat = Date.now()
       server.playerCount = request.query.playerCount
+
       return null
     }
   )

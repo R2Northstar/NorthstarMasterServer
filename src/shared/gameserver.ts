@@ -2,6 +2,7 @@ import { randomBytes } from 'node:crypto'
 
 interface IGameServer {
   readonly id: string
+  readonly serverAuthToken: string
   readonly name: string
   readonly description: string
   readonly playerCount: number
@@ -22,20 +23,22 @@ type CleanGameServer = Omit<
 >
 
 export class GameServer implements IGameServer {
-  // #region Backing Fields
-  private readonly _id: string
-  private readonly _name: string
-  private readonly _description: string
-  private readonly _playerCount: number
-  private readonly _maxPlayers: number
-  private readonly _map: string
-  private readonly _playlist: string
-  private readonly _ip: string
-  private readonly _port: number
-  private readonly _authPort: number
-  private readonly _password: string
-  private readonly _modInfo: Record<string, unknown>
-  private readonly _lastHeartbeat: number
+  // #region Fields
+  public readonly id: string
+  public readonly serverAuthToken: string
+  public name: string
+  public description: string
+  public playerCount: number
+  public maxPlayers: number
+  public map: string
+  public playlist: string
+  public readonly ip: string
+  public readonly port: number
+  public readonly authPort: number
+  public readonly password: string
+  public modInfo: Record<string, unknown>
+  public lastHeartbeat: number
+
   // #endregion
 
   // #region Constructor
@@ -52,92 +55,36 @@ export class GameServer implements IGameServer {
     password = '',
     modInfo = {}
   ) {
-    this._id = randomBytes(16).toString('hex')
-    this._name = name
-    this._description = description
-    this._playerCount = playerCount
-    this._maxPlayers = maxPlayers
-    this._map = map
-    this._playlist = playlist
-    this._ip = ip
-    this._port = port
-    this._authPort = authPort
-    this._password = password
-    this._modInfo = modInfo
-    this._lastHeartbeat = Date.now()
-  }
-  // #endregion
-
-  // #region Readonly Properties
-  public get id(): string {
-    return this._id
-  }
-
-  public get name(): string {
-    return this._id
-  }
-
-  public get description(): string {
-    return this._description
-  }
-
-  public get playerCount(): number {
-    return this._playerCount
-  }
-
-  public get maxPlayers(): number {
-    return this._maxPlayers
-  }
-
-  public get map(): string {
-    return this._map
-  }
-
-  public get playlist(): string {
-    return this._playlist
-  }
-
-  public get ip(): string {
-    return this._ip
-  }
-
-  public get port(): number {
-    return this._port
-  }
-
-  public get authPort(): number {
-    return this._authPort
-  }
-
-  public get password(): string {
-    return this._password
-  }
-
-  public get hasPassword(): boolean {
-    return this._password !== ''
-  }
-
-  public get modInfo(): Record<string, unknown> {
-    return this._modInfo
-  }
-
-  public get lastHeartbeat(): number {
-    return this._lastHeartbeat
+    this.id = randomBytes(16).toString('hex')
+    this.serverAuthToken = randomBytes(16).toString('hex')
+    this.name = name
+    this.description = description
+    this.playerCount = playerCount
+    this.maxPlayers = maxPlayers
+    this.map = map
+    this.playlist = playlist
+    this.ip = ip
+    this.port = port
+    this.authPort = authPort
+    this.password = password
+    this.modInfo = modInfo
+    this.lastHeartbeat = Date.now()
   }
   // #endregion
 
   // #region Methods
   public clean(): CleanGameServer {
     const clean: CleanGameServer = Object.freeze({
-      id: this._id,
-      name: this._name,
-      description: this._description,
-      playerCount: this._playerCount,
-      maxPlayers: this._maxPlayers,
-      map: this._map,
-      playlist: this._playlist,
-      modInfo: this._modInfo,
-      lastHeartbeat: this._lastHeartbeat,
+      id: this.id,
+      name: this.name,
+      description: this.description,
+      playerCount: this.playerCount,
+      maxPlayers: this.maxPlayers,
+      map: this.map,
+      playlist: this.playlist,
+      modInfo: this.modInfo,
+			hasPassword: Boolean(this.password),
+      lastHeartbeat: this.lastHeartbeat,
     })
 
     return clean

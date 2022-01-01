@@ -33,7 +33,7 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         const server = await getGameServer(request.query.serverId)
         if (server === undefined) return null
 
-        const isCorrectServer = request.ip !== server.ip
+        const isCorrectServer = request.ip === server.ip
         const isCurrentServer =
           account.currentServerID === request.query.serverId
 

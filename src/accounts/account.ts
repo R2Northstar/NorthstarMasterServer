@@ -28,6 +28,7 @@ class PlayerAccount {
     this._authToken = options.authToken ?? randomBytes(16).toString('hex')
     this._authTokenExpireTime =
       options.authTokenExpireTime ?? Date.now() + TOKEN_EXPIRATION_TIME
+    this._currentServerID = options.currentServerID ?? undefined
     this._persistentDataBaseline =
       options.persistentDataBaseline ?? DEFAULT_PDATA_BASELINE
   }

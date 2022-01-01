@@ -34,29 +34,32 @@ const register: FastifyPluginAsync = async (fastify, _) => {
     },
     async request => {
       const server = await getGameServer(request.query.server)
+      if (server === undefined) {
+        return { success: false, reason: 'unknown server' }
+      }
 
-      if (
-        !server ||
-        (server.hasPassword && request.query.password !== server.password)
-      ) {
-        return { success: false }
+      if (server.hasPassword && request.query.password !== server.password) {
+        return { success: false, reason: 'incorrect password' }
       }
 
       const account = await getAccountById(request.query.id)
-      if (account === undefined) return { success: false }
+      if (account === undefined) {
+        return { success: false, reason: 'unknown account' }
+      }
+
       if (account.isBanned) {
-        return { success: false }
+        return { success: false, reason: 'you are banned' }
       }
 
       if (REQUIRE_SESSION_TOKEN) {
         // Check token
         if (request.query.playerToken !== account.authToken) {
-          return { success: false }
+          return { success: false, reason: 'incorrect auth token' }
         }
 
         // Check expired token
         if (account.tokenExpired()) {
-          return { success: false }
+          return { success: false, reason: 'session expired' }
         }
       }
 
@@ -79,9 +82,11 @@ const register: FastifyPluginAsync = async (fastify, _) => {
           { params: parameters }
         )
 
-        if (!data.success) return { success: false }
-      } catch {
-        return { success: false }
+        if (!data.success) {
+          return { success: false, reason: 'authentication with server failed' }
+        }
+      } catch (error: unknown) {
+        return { success: false, reason: 'unknown error', error }
       }
 
       return {

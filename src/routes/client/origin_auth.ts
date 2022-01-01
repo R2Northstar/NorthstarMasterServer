@@ -30,7 +30,9 @@ const register: FastifyPluginAsync = async (fastify, _) => {
       // Only do this if we're in an environment that actually requires session tokens
       if (REQUIRE_SESSION_TOKEN) {
         // TODO: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
-        if (request.query.token.includes('&')) return { success: false }
+        if (request.query.token.includes('&')) {
+          return { success: false, reason: 'invalid session token' }
+        }
 
         const parameters = new URLSearchParams()
         parameters.set('qt', 'origin-requesttoken')
@@ -63,13 +65,13 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         const ownsGame = authJson.storeUri.includes('titanfall-2')
 
         if (!hasOnlineAccess || !ownsGame) {
-          return { success: false }
+          return { success: false, reason: 'missing game access' }
         }
       }
 
       const account = await getOrCreateAccount(request.query.id)
       if (account.isBanned) {
-        return { success: false }
+        return { success: false, reason: 'you are banned' }
       }
 
       return {

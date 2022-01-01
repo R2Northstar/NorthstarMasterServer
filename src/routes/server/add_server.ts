@@ -79,10 +79,13 @@ const register: FastifyPluginAsync = async (fastify, _) => {
         )
 
         if (authServerResponse !== VERIFY_STRING) {
-          return { success: false }
+          return {
+            success: false,
+            reason: 'failed to reach server, check port forwarding',
+          }
         }
-      } catch {
-        return { success: false }
+      } catch (error: unknown) {
+        return { success: false, reason: 'unknown error', error }
       }
 
       // Pdiff stuff

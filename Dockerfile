@@ -3,14 +3,18 @@ FROM node:16-alpine as base
 FROM base AS deps
 
 WORKDIR /app
+RUN apk add --no-cache \
+  python2 \
+  python3 \
+  alpine-sdk \
+  autoconf \
+  libtool \
+  automake \
+  sqlite-dev
+
 COPY ./.yarn ./.yarn
 COPY ./package.json ./yarn.lock ./.yarnrc.yml ./
-
-RUN \
-  apk add --no-cache --virtual build-deps python3 alpine-sdk autoconf libtool automake && \
-  yarn install --immutable && \
-  yarn cache clean && \
-  apk del build-deps
+RUN yarn install --immutable
 
 # ---
 FROM base AS builder

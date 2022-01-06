@@ -17,7 +17,8 @@ module.exports = ( fastify, opts, done ) => {
 		schema: {
 			querystring: {
 				id: { type: "string" }, // the authing player's id
-				token: { type: "string" } // the authing player's origin token
+				token: { type: "string" },//the authing player's origin token
+				playerName: { type: "string" }// the authing player's name
 			}
 		}
 	},
@@ -49,10 +50,16 @@ module.exports = ( fastify, opts, done ) => {
 		}
 		
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
+		
 		if ( !account ) // create account for user
 		{
-			await accounts.AsyncCreateAccountForID( request.query.id )
+			await accounts.AsyncCreateAccountForID( request.query.id , request.query.playerName)
 			account = await accounts.AsyncGetPlayerByID( request.query.id )
+		}
+		if (account.playerName != request.query.playerName)
+		{
+			console.log("Player "+account.playerName+" has changed their name to: " +request.query.playerName )
+			await accounts.AsyncUpdatePlayerNameForID(request.query.id , request.query.playerName)
 		}
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
@@ -62,8 +69,8 @@ module.exports = ( fastify, opts, done ) => {
 		{
 		console.log("Rejected banned Player auth request:" + account.id )
 		return {
-			success: false,
-			token: "nope"
+			success: false, //Do not accept the auth request cuz banned
+			token: "nope" //maybe add a proper respond to the client later
 			}
 		}
 		else

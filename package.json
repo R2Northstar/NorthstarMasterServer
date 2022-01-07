@@ -5,7 +5,13 @@
 	"main": "index.js",
 	"scripts": {
 		"start": "node index.js",
-		"dev": "node index.js -devenv"
+		"dev": "node index.js -devenv",
+		"prepare": "husky install"
+	},
+	"lint-staged": {
+		"*.js": [
+			"eslint --fix"
+		]
 	},
 	"dependencies": {
 		"bad-words": "^3.0.4",
@@ -16,6 +22,7 @@
 		"sqlite3": "^5.0.2"
 	},
 	"devDependencies": {
-		"eslint": "^8.6.0"
+		"eslint": "^8.6.0",
+		"husky": "^7.0.0"
 	}
 }

@@ -57,9 +57,22 @@ async function SharedTryAddServer( request )
 		}
 	}
 
+	let playerCount = request.query.playerCount || 0
+	if ( typeof playerCount == 'string' )
+		playerCount = parseInt( playerCount )
+
+	if ( typeof request.query.maxPlayers == 'string' )
+		request.query.maxPlayers = parseInt( request.query.maxPlayers )
+
+	if ( typeof request.query.port == 'string' )
+		request.query.port = parseInt( request.query.port )
+
+	if ( typeof request.query.authPort == 'string' )
+		request.query.authPort = parseInt( request.query.authPort ) 
+
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
 
 	return {

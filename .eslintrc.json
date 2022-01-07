@@ -1,0 +1,52 @@
+{
+    "env": {
+        "commonjs": true,
+        "es2020": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaVersion": 11
+    },
+    "rules": {
+        "quotes": [
+            "error",
+            "double"
+        ],
+        "space-in-parens": [
+            "error",
+            "always"
+        ],
+        "indent": [
+            "error",
+            "tab"
+        ],
+        "brace-style": [
+            "error",
+            "allman"
+        ],
+        "no-mixed-spaces-and-tabs": "error",
+        "eol-last": "error",
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "no-multiple-empty-lines": [
+            "error",
+            {
+                "max": 2,
+                "maxBOF": 1
+            }
+        ],
+        "semi": [
+            "error",
+            "never"
+        ],
+        "no-trailing-spaces": [
+            "error",
+            {
+                "ignoreComments": true
+            }
+        ]
+    }
+}

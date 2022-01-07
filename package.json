@@ -14,5 +14,8 @@
 		"fastify-cors": "^6.0.2",
 		"fastify-multipart": "^5.1.0",
 		"sqlite3": "^5.0.2"
+	},
+	"devDependencies": {
+		"eslint": "^8.6.0"
 	}
 }

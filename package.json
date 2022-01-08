@@ -6,7 +6,8 @@
 	"scripts": {
 		"start": "node index.js",
 		"dev": "node index.js -devenv",
-		"prepare": "husky install"
+		"prepare": "husky install",
+		"watch": "nodemon index.js"
 	},
 	"lint-staged": {
 		"*.js": [
@@ -23,6 +24,7 @@
 	},
 	"devDependencies": {
 		"eslint": "^8.6.0",
-		"husky": "^7.0.0"
+		"husky": "^7.0.0",
+		"nodemon": "^2.0.15"
 	}
 }

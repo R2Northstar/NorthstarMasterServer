@@ -25,7 +25,7 @@ else
 	})
 }
 
-const ROUTE_PATHS = [ "client", "server", "account" ]
+const ROUTE_PATHS = [ "client", "server", "account", "instancing" ]
 
 for ( let routePath of ROUTE_PATHS )
 {

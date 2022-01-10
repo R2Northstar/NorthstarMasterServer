@@ -3,6 +3,7 @@ const crypto = require( "crypto" )
 const { GameServer, GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) ) 
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
+const instancing = require("../datasharing.js")
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -57,6 +58,8 @@ module.exports = ( fastify, opts, done ) => {
 
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
+
+		instancing.playerUpdate({ id: account.id, account });
 
 		return {
 			success: true,
@@ -202,6 +205,9 @@ module.exports = ( fastify, opts, done ) => {
 		// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 		let authToken = crypto.randomBytes( 16 ).toString("hex").substr( 0, 31 )
 		accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
+
+		account = await accounts.AsyncGetPlayerByID( request.query.id )
+		instancing.playerUpdate({ id: account.id, account });
 				
 		return {
 			success: true,

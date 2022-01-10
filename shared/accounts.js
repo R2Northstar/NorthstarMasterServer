@@ -7,7 +7,7 @@ const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
-let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
+let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
 	if ( ex )
 		console.error( ex )
 	else
@@ -97,18 +97,30 @@ class PlayerAccount
 	}
 }
 
+async function AsyncGetPlayerByID( id ) {
+	let row = await asyncDBGet( "SELECT * FROM accounts WHERE id = ?", [ id ] )
+	
+	if ( !row )
+		return null
+	
+	return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
+}
+
 module.exports = {
-	AsyncGetPlayerByID: async function AsyncGetPlayerByID( id ) {
-		let row = await asyncDBGet( "SELECT * FROM accounts WHERE id = ?", [ id ] )
-		
-		if ( !row )
-			return null
-		
-		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
-	},
+	AsyncGetPlayerByID,
 	
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
 		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
+	},
+
+	AsyncCreateAccountFromData: async function AsyncCreateAccountFromData( data ) {
+		let { id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline } = data;
+		await asyncDBRun( "INSERT INTO accounts ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline ) VALUES ( ?, ?, ?, ?, ? )", [ id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline ] )
+	},
+
+	AsyncUpdatePlayer: async function AsyncUpdatePlayer( id, data ) {
+		let { currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline } = Object.assign({}, data, await AsyncGetPlayerByID( id ))
+		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, currentServerId = ?, persistentDataBaseline = ? WHERE id = ?", [ currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, id ] )
 	},
 
 	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token ) {

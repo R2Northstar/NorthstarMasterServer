@@ -1,5 +1,6 @@
 const path = require( "path" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) ) 
+const instancing = require("../datasharing.js")
 
 module.exports = ( fastify, opts, done ) => {	
 	fastify.register( require( "fastify-multipart" ) )
@@ -36,8 +37,10 @@ module.exports = ( fastify, opts, done ) => {
 		// mostly temp
 		let buf = await ( await request.file() ).toBuffer() 
 		
-		if ( buf.length == account.persistentDataBaseline.length )
+		if ( buf.length == account.persistentDataBaseline.length ) {
 			await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
+			instancing.playerWritePersistenceBaseline({ id: request.query.id, buf })
+		}
 		
 		return null
 	})

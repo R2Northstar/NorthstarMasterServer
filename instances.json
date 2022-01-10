@@ -1,0 +1,16 @@
+[
+    {
+        "name": "Test 1",
+        "host": "http://localhost",
+        "port": 80,
+        "password": "1234",
+        "isSelf": true
+    },
+    {
+        "name": "Test 2",
+        "host": "http://localhost",
+        "port": 81,
+        "password": "4321",
+        "isSelf": false
+    }
+]

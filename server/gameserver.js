@@ -1,6 +1,6 @@
 const path = require( "path" )
 const crypto = require( "crypto" )
-const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
+const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const Filter = require('bad-words')
@@ -35,7 +35,7 @@ module.exports = ( fastify, opts, done ) => {
 		// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
 
 		let hasValidModInfo = true
-		let modInfo
+		let modInfo = { Mods: [] }
 		
 		if ( request.isMultipart() )
 		{
@@ -110,8 +110,7 @@ module.exports = ( fastify, opts, done ) => {
 		
 		else								// Added else so update heartbeat will trigger,Have to add the brackets for me to work for some reason
 		{
-			server.lastHeartbeat = Date.now()
-			server.playerCount = request.query.playerCount
+			UpdateGameServer(server, { lastHeartbeat: Date.now(), playerCount: request.query.playerCount })
 			return null
 		}
 	})
@@ -128,21 +127,7 @@ module.exports = ( fastify, opts, done ) => {
 		if ( !server || request.ip != server.ip )
 			return null
 		
-		for ( let key of Object.keys( request.query ) )
-		{
-			if ( key == "id" || !( key in server ) )
-				continue
-			
-			if ( key == "playerCount" || key == "maxPlayers" )
-			{
-				server[ key ] = parseInt( request.query[ key ] )
-			}
-			else						//i suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
-			{
-				server[ key ] = request.query[ key ]
-			}
-		}
-		
+		UpdateGameServer(server, request.query)
 		return null
 	})
 	

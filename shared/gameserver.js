@@ -1,4 +1,5 @@
 const crypto = require( 'crypto' )
+const instancing = require("../datasharing.js")
 
 class GameServer
 {
@@ -71,6 +72,29 @@ module.exports = {
 	GameServer: GameServer,
 	
 	GetGameServers: function() { return gameServers },
-	AddGameServer: function( gameserver ) { gameServers[ gameserver.id ] = gameserver },
-	RemoveGameServer: function( gameserver ) { delete gameServers[ gameserver.id ] }
+	AddGameServer: function( gameserver, broadcast = true ) { 
+		if(broadcast) instancing.serverAdd( gameserver )
+		gameServers[ gameserver.id ] = gameserver
+	},
+	RemoveGameServer: function( gameserver, broadcast = true ) { 
+		if(broadcast) instancing.serverRemove( gameserver )
+		delete gameServers[ gameserver.id ]
+	},
+	UpdateGameServer: function( gameserver, data, broadcast = true ) {
+		if(broadcast) instancing.serverUpdate( { gameserver, data } )
+		for ( let key of Object.keys( data ) )
+		{
+			if ( key == "id" || !( key in gameserver ) )
+				continue
+			
+			if ( key == "playerCount" || key == "maxPlayers" )
+			{
+				gameserver[ key ] = parseInt( data[ key ] )
+			}
+			else						//i suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
+			{
+				gameserver[ key ] = data[ key ]
+			}
+		}
+	}
 }

@@ -1,25 +1,27 @@
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require("../shared/gameserver.js")
 const instancing = require("../datasharing.js")
 const accounts = require("../shared/accounts.js") 
+const crypto = require("crypto");
+
+async function decryptPayload(encryptedData, initVector) {
+    const algorithm = "aes-256-cbc"; 
+    const Securitykey = crypto.scryptSync(await instancing.getOwnPassword(), 'salt', 32);
+    const decipher = crypto.createDecipheriv(algorithm, Securitykey, Buffer.from(initVector));
+    let dataBuf = Buffer.from(encryptedData);
+    let decryptedData = decipher.update(encryptedData, "hex", "utf-8");
+    decryptedData += decipher.final("utf8");
+    return JSON.parse(decryptedData);
+}
 
 module.exports = ( fastify, opts, done ) => {
 	// exported routes
-	
-	// POST /instancing/heartbeat
-	fastify.post( '/instancing/heartbeat',
-	async ( request, reply ) => {
-        if(request.body.password == await instancing.getOwnPassword()) {
-            reply.code(200).send()
-        } else {
-            reply.code(401).send()
-        }
-	})
 
 	// POST /instancing/serverAdd
 	fastify.post( '/instancing/serverAdd',
 	async ( request, reply ) => {
-        if(request.body.password == await instancing.getOwnPassword()) {
-            let { id, name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat } = request.body.payload
+        let data = await decryptPayload(request.body.data, request.body.iv)
+        if(data.password == await instancing.getOwnPassword()) {
+            let { id, name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat } = data.payload;
             let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
             newServer.id = id;
             newServer.lastHeartbeat = lastHeartbeat;
@@ -33,8 +35,9 @@ module.exports = ( fastify, opts, done ) => {
 	// POST /instancing/serverRemove
 	fastify.post( '/instancing/serverRemove',
 	async ( request, reply ) => {
-        if(request.body.password == await instancing.getOwnPassword()) {
-            RemoveGameServer(request.body.payload, false)
+        let data = await decryptPayload(request.body.data, request.body.iv)
+        if(data.password == await instancing.getOwnPassword()) {
+            RemoveGameServer(data.payload, false)
             reply.code(200).send()
         } else {
             reply.code(401).send()
@@ -44,9 +47,10 @@ module.exports = ( fastify, opts, done ) => {
 	// POST /instancing/serverUpdate
 	fastify.post( '/instancing/serverUpdate',
 	async ( request, reply ) => {
-        if(request.body.password == await instancing.getOwnPassword()) {
-            let server = GetGameServers()[ request.body.payload.gameserver.id ]
-            UpdateGameServer(server, request.body.payload.data, false)
+        let data = await decryptPayload(request.body.data, request.body.iv)
+        if(data.password == await instancing.getOwnPassword()) {
+            let server = GetGameServers()[ data.payload.gameserver.id ]
+            UpdateGameServer(server, payload.data, false)
             reply.code(200).send()
         } else {
             reply.code(401).send()
@@ -56,14 +60,15 @@ module.exports = ( fastify, opts, done ) => {
 	// POST /instancing/playerUpdate
 	fastify.post( '/instancing/playerUpdate',
 	async ( request, reply ) => {
-        if(request.body.password == await instancing.getOwnPassword()) {
-            let account = await accounts.AsyncGetPlayerByID( request.body.payload.id )
+        let data = await decryptPayload(request.body.data, request.body.iv)
+        if(data.password == await instancing.getOwnPassword()) {
+            let account = await accounts.AsyncGetPlayerByID( data.payload.id )
             if ( !account ) // create account for user
             {
-                await accounts.AsyncCreateAccountFromData( request.body.payload.account )
-                account = await accounts.AsyncGetPlayerByID( request.body.payload.id )
+                await accounts.AsyncCreateAccountFromData( data.payload.account )
+                account = await accounts.AsyncGetPlayerByID( data.payload.id )
             }
-            accounts.AsyncUpdatePlayer( account.id, request.body.payload.account )
+            accounts.AsyncUpdatePlayer( account.id, data.payload.account )
 
             reply.code(200).send()
         } else {
@@ -74,12 +79,13 @@ module.exports = ( fastify, opts, done ) => {
 	// POST /instancing/playerUpdateCurrentServer
 	fastify.post( '/instancing/playerUpdateCurrentServer',
 	async ( request, reply ) => {
-        if(request.body.password == await instancing.getOwnPassword()) {
-            let account = await accounts.AsyncGetPlayerByID( request.body.payload.id )
+        let data = await decryptPayload(request.body.data, request.body.iv)
+        if(data.password == await instancing.getOwnPassword()) {
+            let account = await accounts.AsyncGetPlayerByID( data.payload.id )
             if ( !account ) {
                 reply.code(500).send()
             } else {
-                accounts.AsyncUpdatePlayerCurrentServer( request.body.payload.id, request.body.payload.serverId )
+                accounts.AsyncUpdatePlayerCurrentServer( data.payload.id, data.payload.serverId )
                 reply.code(200).send()
             }
         } else {
@@ -90,12 +96,13 @@ module.exports = ( fastify, opts, done ) => {
 	// POST /instancing/playerWritePersistenceBaseline
 	fastify.post( '/instancing/playerWritePersistenceBaseline',
 	async ( request, reply ) => {
-        if(request.body.password == await instancing.getOwnPassword()) {
-            let account = await accounts.AsyncGetPlayerByID( request.body.payload.id )
+        let data = await decryptPayload(request.body.data, request.body.iv)
+        if(data.password == await instancing.getOwnPassword()) {
+            let account = await accounts.AsyncGetPlayerByID( data.payload.id )
             if ( !account ) {
                 reply.code(500).send()
             } else {
-                accounts.AsyncWritePlayerPersistenceBaseline( request.body.payload.id, request.body.payload.buf )
+                accounts.AsyncWritePlayerPersistenceBaseline( data.payload.id, Buffer.from(data.payload.buf) )
                 reply.code(200).send()
             }
         } else {

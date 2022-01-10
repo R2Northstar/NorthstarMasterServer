@@ -1,9 +1,11 @@
 const fs = require('fs').promises;
 const http = require('http');
 const https = require('https');
+const crypto = require("crypto");
 
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
 
+// used to verify password of the masterserver remote stuf
 function getOwnPassword() {
     return new Promise(async (resolve, reject) => {
         try {
@@ -16,6 +18,7 @@ function getOwnPassword() {
     });
 }
 
+// gets a list of instances from the json file
 function getAllKnownInstances() {
     return new Promise(async (resolve, reject) => {
         try {
@@ -27,6 +30,7 @@ function getAllKnownInstances() {
     });
 }
 
+// sends a post req to all instances to attempt data propagation
 async function broadcastMessage(endpoint, data) {
     instances = await getAllKnownInstances();
     instances.forEach(instance => {
@@ -34,6 +38,15 @@ async function broadcastMessage(endpoint, data) {
 
         console.log(instance.name + " | " + instance.host+":"+instance.port+"/instancing/"+endpoint)
 
+        const algorithm = "aes-256-cbc"; 
+
+        const initVector = crypto.randomBytes(16);
+        const Securitykey = crypto.scryptSync(instance.password, 'salt', 32);
+        
+        const cipher = crypto.createCipheriv(algorithm, Securitykey, initVector);
+        let encryptedData = cipher.update(JSON.stringify({ password: instance.password, payload: data }), "utf-8", "hex");
+        encryptedData += cipher.final("hex");
+        
         const options = {
             host: instance.host.split("://")[1],
             path: "/instancing/"+endpoint,
@@ -42,7 +55,7 @@ async function broadcastMessage(endpoint, data) {
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({ password: instance.password, payload: data })
+            body: JSON.stringify({ iv: initVector, data: encryptedData })
         }
 
         let lib = http;
@@ -57,7 +70,7 @@ async function broadcastMessage(endpoint, data) {
             })
         })
         
-        req.write(JSON.stringify({ password: instance.password, payload: data }));
+        req.write(JSON.stringify({ iv: initVector, data: encryptedData.toString() }));
         
         req.on('error', error => {
             console.error(error)
@@ -66,10 +79,6 @@ async function broadcastMessage(endpoint, data) {
         req.end()
     });
 }
-
-// setInterval(() => {
-//     broadcastMessage("heartbeat", { msg: "I'm still here!" })
-// }, 5000);
 
 module.exports = {
     getOwnPassword,

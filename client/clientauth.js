@@ -57,8 +57,9 @@ module.exports = ( fastify, opts, done ) => {
 		}
 
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
-		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
+		await accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
+		account = await accounts.AsyncGetPlayerByID( request.query.id )
 		instancing.playerUpdate({ id: account.id, account });
 
 		return {
@@ -204,10 +205,10 @@ module.exports = ( fastify, opts, done ) => {
 
 		// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 		let authToken = crypto.randomBytes( 16 ).toString("hex").substr( 0, 31 )
-		accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
+		await accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
 		account = await accounts.AsyncGetPlayerByID( request.query.id )
-		instancing.playerUpdate({ id: account.id, account });
+		instancing.playerUpdateCurrentServer({ id: account.id, serverId: "self" });
 				
 		return {
 			success: true,

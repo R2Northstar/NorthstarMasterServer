@@ -21,7 +21,8 @@ let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqli
 		currentAuthToken TEXT,
 		currentAuthTokenExpirationTime INTEGER,
 		currentServerId TEXT,
-		persistentDataBaseline BLOB NOT NULL
+		persistentDataBaseline BLOB NOT NULL,
+		lastModified INTEGER DEFAULT 0
 	)
 	`, ex => {
 		if ( ex )
@@ -37,6 +38,7 @@ let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqli
 		id TEXT NOT NULL,
 		pdiffHash TEXT NOT NULL,
 		data TEXT NOT NULL,
+		lastModified INTEGER DEFAULT 0,
 		PRIMARY KEY ( id, pdiffHash )
 	)
 	`, ex => {
@@ -110,29 +112,29 @@ module.exports = {
 	AsyncGetPlayerByID,
 	
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
-		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
+		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline, lastModified ) VALUES ( ?, ?, ? )", [ id, DEFAULT_PDATA_BASELINE, Date.now() ] )
 	},
 
 	AsyncCreateAccountFromData: async function AsyncCreateAccountFromData( data ) {
 		let { id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline } = data;
-		await asyncDBRun( "INSERT INTO accounts ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline ) VALUES ( ?, ?, ?, ?, ? )", [ id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline ] )
+		await asyncDBRun( "INSERT INTO accounts ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, lastModified ) VALUES ( ?, ?, ?, ?, ?, ? )", [ id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, Date.now() ] )
 	},
 
 	AsyncUpdatePlayer: async function AsyncUpdatePlayer( id, data ) {
 		let { currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline } = Object.assign({}, data, await AsyncGetPlayerByID( id ))
-		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, currentServerId = ?, persistentDataBaseline = ? WHERE id = ?", [ currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, id ] )
+		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, currentServerId = ?, persistentDataBaseline = ?, lastModified = ? WHERE id = ?", [ currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, Date.now(), id ] )
 	},
 
 	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token ) {
-		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
+		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, lastModified = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, Date.now(), id ] )
 	},
 
 	AsyncUpdatePlayerCurrentServer: async function AsyncUpdatePlayerCurrentServer( id, serverId ) {
-		await asyncDBRun( "UPDATE accounts SET currentServerId = ? WHERE id = ?", [ serverId, id ] )
+		await asyncDBRun( "UPDATE accounts SET currentServerId = ?, lastModified = ? WHERE id = ?", [ serverId, Date.now(), id ] )
 	},
 	
 	AsyncWritePlayerPersistenceBaseline: async function AsyncWritePlayerPersistenceBaseline( id, persistentDataBaseline ) {
-		await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ? WHERE id = ?", [ persistentDataBaseline, id ] )
+		await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ?, lastModified = ? WHERE id = ?", [ persistentDataBaseline, Date.now(), id ] )
 	},
 
 	AsyncGetPlayerModPersistence: async function AsyncGetPlayerModPersistence( id, pdiffHash ) {

@@ -3,7 +3,33 @@ const http = require('http');
 const https = require('https');
 const crypto = require("crypto");
 
+// 0=Starting, 1=Syncing, 2=Running
+let state = 0
+
+const accounts = require("./shared/accounts.js") 
+
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
+
+
+async function decryptPayload(body, password) {
+    try {
+        if(!password) password = await getOwnPassword()
+
+        const encryptedData = body.data;
+        const initVector = body.iv;
+
+        const algorithm = "aes-256-cbc"; 
+        const Securitykey = crypto.scryptSync(password, 'salt', 32);
+
+        const decipher = crypto.createDecipheriv(algorithm, Securitykey, Buffer.from(initVector));
+        let decryptedData = decipher.update(encryptedData, "hex", "utf-8");
+        decryptedData += decipher.final("utf8");
+        let json = JSON.parse(decryptedData);
+        return json
+    } catch(e) {
+        return {}
+    }
+}
 
 // used to verify password of the masterserver remote stuf
 function getOwnPassword() {
@@ -36,7 +62,7 @@ async function broadcastMessage(endpoint, data) {
     instances.forEach(instance => {
         if(instance.isSelf) return;
 
-        console.log(instance.name + " | " + instance.host+":"+instance.port+"/instancing/"+endpoint)
+        // console.log(instance.name + " | " + instance.host+":"+instance.port+"/instancing/"+endpoint)
 
         const algorithm = "aes-256-cbc"; 
 
@@ -63,11 +89,11 @@ async function broadcastMessage(endpoint, data) {
             lib = https;
         }
         const req = lib.request(options, res => {
-            console.log(`Status Code: ${res.statusCode}`)
+            // console.log(`Status Code: ${res.statusCode}`)
             
-            res.on('data', d => {
-                console.log(JSON.parse(d.toString()))
-            })
+            // res.on('data', d => {
+            //     console.log(d.toString())
+            // })
         })
         
         req.write(JSON.stringify({ iv: initVector, data: encryptedData.toString() }));
@@ -80,8 +106,21 @@ async function broadcastMessage(endpoint, data) {
     });
 }
 
+// used to verify password of the masterserver remote stuf
+function getOwnState() {
+    return state
+}
+function setOwnState(val) {
+    state = val
+}
+
+
 module.exports = {
+    decryptPayload,
+    getOwnState,
+    setOwnState,
     getOwnPassword,
+    getAllKnownInstances,
     serverAdd: function(data) { broadcastMessage("serverAdd", data) },
     serverRemove: function(data) { broadcastMessage("serverRemove", data) },
     serverUpdate: function(data) { broadcastMessage("serverUpdate", data) },

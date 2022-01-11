@@ -14,6 +14,13 @@ module.exports = ( fastify, opts, done ) => {
     async ( request, reply ) => {
         reply.redirect( "https://discord.gg/GYVRKC9pJh" )
     })
+    
+    // GET /wiki
+    // redirect anyone going to northstar.tf/wiki to the wiki
+    fastify.get( '/wiki',
+    async ( request, reply ) => {
+        reply.redirect( "https://r2northstar.gitbook.io/" )
+    })
 
     done()
 }

@@ -27,6 +27,7 @@ class GameServer
 			this.lastHeartbeat = nameOrServer.lastHeartbeat
 			
 			this.id = nameOrServer.id
+			this.serverAuthToken = nameOrServer.serverAuthToken
 			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.pdiffs )
 		}
 		else // normal constructor
@@ -34,6 +35,7 @@ class GameServer
 			this.lastHeartbeat = Date.now()
 			
 			this.id = crypto.randomBytes(16).toString( "hex" )
+			this.serverAuthToken = crypto.randomBytes(16).toString( "hex" )
 			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
 		}
 	}
@@ -84,16 +86,16 @@ module.exports = {
 		if(broadcast) instancing.serverUpdate( { gameserver, data } )
 		for ( let key of Object.keys( data ) )
 		{
-			if ( key == "id" || !( key in gameserver ) )
+			if ( key == "id" || key == "port" || key == "authport" || !( key in server ) || data[ key ].length >= 512 )
 				continue
-			
+
 			if ( key == "playerCount" || key == "maxPlayers" )
 			{
-				gameserver[ key ] = parseInt( data[ key ] )
+				server[ key ] = parseInt( data[ key ] )
 			}
 			else						//i suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
 			{
-				gameserver[ key ] = data[ key ]
+				server[ key ] = data[ key ]
 			}
 		}
 	}

@@ -8,6 +8,80 @@ let filter = new Filter();
 
 const VERIFY_STRING = "I am a northstar server!"
 
+async function SharedTryAddServer( request )
+{
+	// check server's verify endpoint on their auth server, make sure it's fine
+	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
+
+	let hasValidModInfo = true
+	let modInfo
+
+	if ( request.isMultipart() )
+	{
+		try
+		{
+			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+			hasValidModInfo = Array.isArray( modInfo.Mods )
+		}
+		catch ( ex ) {}
+	}
+
+	let authServerResponse = await asyncHttp.request( {
+		method: "GET",
+		host: request.ip,
+		port: request.query.authPort,
+		path: "/verify"
+	})
+
+	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
+		return { success: false }
+
+	// pdiff stuff
+	if ( modInfo && modInfo.Mods )
+	{
+		for ( let mod of modInfo.Mods )
+		{
+			if ( !!mod.pdiff )
+			{
+				try
+				{
+					let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
+					mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
+					mod.pdiff.hash = pdiffHash
+				}
+				catch ( ex ) 
+				{
+					mod.pdiff = null
+				}
+			}
+		}
+	}
+
+	let playerCount = request.query.playerCount || 0
+	if ( typeof playerCount == 'string' )
+		playerCount = parseInt( playerCount )
+
+	if ( typeof request.query.maxPlayers == 'string' )
+		request.query.maxPlayers = parseInt( request.query.maxPlayers )
+
+	if ( typeof request.query.port == 'string' )
+		request.query.port = parseInt( request.query.port )
+
+	if ( typeof request.query.authPort == 'string' )
+		request.query.authPort = parseInt( request.query.authPort ) 
+
+	let name = filter.clean( request.query.name )
+	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+	AddGameServer( newServer )
+
+	return {
+		success: true,
+		id: newServer.id,
+		serverAuthToken: newServer.serverAuthToken
+	}
+}
+
 module.exports = ( fastify, opts, done ) => {
 	fastify.register( require( "fastify-multipart" ) )
 
@@ -31,62 +105,7 @@ module.exports = ( fastify, opts, done ) => {
 		}
 	},
 	async ( request, reply ) => {
-		// check server's verify endpoint on their auth server, make sure it's fine
-		// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
-
-		let hasValidModInfo = true
-		let modInfo = { Mods: [] }
-		
-		if ( request.isMultipart() )
-		{
-			try
-			{
-				modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
-				hasValidModInfo = Array.isArray( modInfo.Mods )
-			}
-			catch ( ex ) {}
-		}
-
-		let authServerResponse = await asyncHttp.request( {
-			method: "GET",
-			host: request.ip,
-			port: request.query.authPort,
-			path: "/verify"
-		})
-		
-		if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
-			return { success: false }
-		
-		// pdiff stuff
-		if ( modInfo && modInfo.Mods )
-		{
-			for ( let mod of modInfo.Mods )
-			{
-				if ( !!mod.pdiff )
-				{
-					try
-					{
-						let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
-						mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
-						mod.pdiff.hash = pdiffHash
-					}
-					catch ( ex ) 
-					{
-						mod.pdiff = null
-					}
-				}
-			}
-		}
-
-		let name = filter.clean( request.query.name )
-		let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-		let newServer = new GameServer( name, description, 0, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
-		AddGameServer( newServer )
-		
-		return {
-			success: true,
-			id: newServer.id
-		}
+		return SharedTryAddServer( request )
 	})
 	
 	// POST /server/heartbeat
@@ -123,9 +142,17 @@ module.exports = ( fastify, opts, done ) => {
 			return null
 		
 		let server = GetGameServers()[ request.query.id ]
-		// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-		if ( !server || request.ip != server.ip )
+		
+		// if server doesn't exist, try adding it
+		if ( !server )
+		{
+			return SharedTryAddServer( request )
+		}
+		else if ( request.ip != server.ip ) // dont update if the server isnt the one sending the heartbeat
 			return null
+			
+		// update heartbeat
+		server.lastHeartbeat = Date.now()
 		
 		UpdateGameServer(server, request.query)
 		return null

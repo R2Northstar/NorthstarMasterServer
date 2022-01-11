@@ -18,6 +18,8 @@ function shuffleArray(array) {
 }
 
 async function attemptSyncWithAny() {
+    accounts.BackupDatabase() // backup DB on startup in case of big oopsie
+
     console.log("Attempting to sync with first available server")
     setOwnState(1)
     // Attempt to sync with any up-and-running masterserver
@@ -77,6 +79,12 @@ async function attemptSyncWithAny() {
         console.log("Sync could not be completed")
         setOwnState(2)
     }
+
+    // backup server every n minutes in case of oopsie
+    console.log(`Will attempt to backup DB every ${process.env.DB_BACKUP_MINUTES || 30} minutes`)
+    setInterval(() => {
+        accounts.BackupDatabase()
+    }, (process.env.DB_BACKUP_MINUTES || 30)*60000)
 }
 
 async function getInstanceState(instance) {

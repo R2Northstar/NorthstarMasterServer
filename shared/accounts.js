@@ -7,47 +7,51 @@ const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
-let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
-	if ( ex )
-		console.error( ex )
-	else
-		console.log( "Connected to player database successfully" )
-	
-	// create account table
-	// this should mirror the PlayerAccount class's	properties
-	playerDB.run( `
-	CREATE TABLE IF NOT EXISTS accounts (
-		id TEXT PRIMARY KEY NOT NULL,
-		currentAuthToken TEXT,
-		currentAuthTokenExpirationTime INTEGER,
-		currentServerId TEXT,
-		persistentDataBaseline BLOB NOT NULL,
-		lastModified INTEGER DEFAULT 0
-	)
-	`, ex => {
+let playerDB;
+function openDB() {
+	playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
 		if ( ex )
 			console.error( ex )
 		else
-			console.log( "Created player account table successfully" )
-	})
+			console.log( "Connected to player database successfully" )
+		
+		// create account table
+		// this should mirror the PlayerAccount class's	properties
+		playerDB.run( `
+		CREATE TABLE IF NOT EXISTS accounts (
+			id TEXT PRIMARY KEY NOT NULL,
+			currentAuthToken TEXT,
+			currentAuthTokenExpirationTime INTEGER,
+			currentServerId TEXT,
+			persistentDataBaseline BLOB NOT NULL,
+			lastModified INTEGER DEFAULT 0
+		)
+		`, ex => {
+			if ( ex )
+				console.error( ex )
+			else
+				console.log( "Created player account table successfully" )
+		})
 
-	// create mod persistent data table
-	// this should mirror the PlayerAccount class's	properties
-	playerDB.run( `
-	CREATE TABLE IF NOT EXISTS modPersistentData (
-		id TEXT NOT NULL,
-		pdiffHash TEXT NOT NULL,
-		data TEXT NOT NULL,
-		lastModified INTEGER DEFAULT 0,
-		PRIMARY KEY ( id, pdiffHash )
-	)
-	`, ex => {
-		if ( ex )
-			console.error( ex )
-		else
-			console.log( "Created mod persistent data table successfully" )
+		// create mod persistent data table
+		// this should mirror the PlayerAccount class's	properties
+		playerDB.run( `
+		CREATE TABLE IF NOT EXISTS modPersistentData (
+			id TEXT NOT NULL,
+			pdiffHash TEXT NOT NULL,
+			data TEXT NOT NULL,
+			lastModified INTEGER DEFAULT 0,
+			PRIMARY KEY ( id, pdiffHash )
+		)
+		`, ex => {
+			if ( ex )
+				console.error( ex )
+			else
+				console.log( "Created mod persistent data table successfully" )
+		})
 	})
-})
+}
+openDB()
 
 function asyncDBGet( sql, params = [] )
 {
@@ -192,5 +196,16 @@ module.exports = {
 		}
 		
 		return PdataJsonToBuffer( newPdataJson, pdefCopy )*/
+	},
+
+	BackupDatabase: async function BackupDatabase() {
+		console.log("Backing up database")
+		await playerDB.close()
+		var dir = './backups';
+		if (!fs.existsSync(dir)){
+			fs.mkdirSync(dir, { recursive: true });
+		}
+		fs.copyFileSync(process.env.DB_PATH || 'playerdata.db', dir+'/'+(process.env.DB_PATH || 'playerdata.db')+'_'+new Date().toISOString().replace(/:/g, "-")+'.bak')
+		openDB()
 	}
 }

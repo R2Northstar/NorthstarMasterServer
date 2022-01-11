@@ -121,6 +121,7 @@ dist
 .db
 playerdata.db
 
-# Added by barnaby for testing
+# Instancing stuff
 playerdata[0-9].db
 instances*.json
+backups

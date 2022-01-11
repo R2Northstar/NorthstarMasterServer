@@ -15,7 +15,6 @@ async function SharedTryAddServer( request )
 
 	let hasValidModInfo = true
 	let modInfo
-
 	if ( request.isMultipart() )
 	{
 		try

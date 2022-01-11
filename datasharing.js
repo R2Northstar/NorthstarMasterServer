@@ -1,6 +1,5 @@
 const fs = require('fs').promises;
-const http = require('http');
-const https = require('https');
+const asyncHttp = require("./shared/asynchttp.js") 
 const crypto = require("crypto");
 
 // 0=Starting, 1=Syncing, 2=Running
@@ -59,7 +58,7 @@ function getAllKnownInstances() {
 // sends a post req to all instances to attempt data propagation
 async function broadcastMessage(endpoint, data) {
     instances = await getAllKnownInstances();
-    instances.forEach(instance => {
+    instances.forEach(async instance => {
         if(instance.isSelf) return;
 
         // console.log(instance.name + " | " + instance.host+":"+instance.port+"/instancing/"+endpoint)
@@ -80,29 +79,10 @@ async function broadcastMessage(endpoint, data) {
             method: "POST",
             headers: {
                 'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ iv: initVector, data: encryptedData })
+            }
         }
 
-        let lib = http;
-        if(instance.host.startsWith("https://")) {
-            lib = https;
-        }
-        const req = lib.request(options, res => {
-            // console.log(`Status Code: ${res.statusCode}`)
-            
-            // res.on('data', d => {
-            //     console.log(d.toString())
-            // })
-        })
-        
-        req.write(JSON.stringify({ iv: initVector, data: encryptedData.toString() }));
-        
-        req.on('error', error => {
-            console.error(error)
-        })
-
-        req.end()
+        let res = await asyncHttp.request(options, JSON.stringify({ iv: initVector, data: encryptedData.toString() })).catch(err => { /* console.log(err) */ })
     });
 }
 
@@ -113,7 +93,6 @@ function getOwnState() {
 function setOwnState(val) {
     state = val
 }
-
 
 module.exports = {
     decryptPayload,

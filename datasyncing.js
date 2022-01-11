@@ -1,6 +1,7 @@
 const http = require('http');
 const https = require('https');
 const crypto = require("crypto");
+const asyncHttp = require("./shared/asynchttp.js") 
 
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require("./shared/gameserver.js")
 const { decryptPayload, getAllKnownInstances, getOwnState, setOwnState } = require("./datasharing.js")
@@ -103,28 +104,10 @@ function askForData(endpoint, instance) {
                 body: JSON.stringify({ iv: initVector, data: encryptedData })
             }
 
-            let lib = http;
-            if(instance.host.startsWith("https://")) {
-                lib = https;
-            }
-            const req = lib.request(options, res => {
-                // console.log(`Status Code: ${res.statusCode}`)
-                
-                res.on('data', async d => {
-                    let decryptedData = await decryptPayload(JSON.parse(d.toString()), instance.password);
-                    // console.log(decryptedData)
-                    resolve(decryptedData);
-                })
-            })
+            let res = await asyncHttp.request(options, JSON.stringify({ iv: initVector, data: encryptedData.toString() }))
             
-            req.write(JSON.stringify({ iv: initVector, data: encryptedData.toString() }));
-            
-            req.on('error', error => {
-                // console.log(error)
-                reject(error)
-            })
-
-            req.end()
+            let decryptedData = await decryptPayload(JSON.parse(res.toString()), instance.password);
+            resolve(decryptedData);
         } catch(e) {
             // console.log(e)
             reject(e)

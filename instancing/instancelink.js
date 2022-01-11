@@ -75,12 +75,12 @@ module.exports = ( fastify, opts, done ) => {
         let data = await decryptPayload(request.body)
         if(data.password == await instancing.getOwnPassword()) {
             let account = await accounts.AsyncGetPlayerByID( data.payload.id )
+            if(data.payload.account.persistentDataBaseline) data.payload.account.persistentDataBaseline = Buffer.from(data.payload.account.persistentDataBaseline)
             if ( !account ) // create account for user
             {
                 await accounts.AsyncCreateAccountFromData( data.payload.account )
                 account = await accounts.AsyncGetPlayerByID( data.payload.id )
             }
-            if(data.payload.account.persistentDataBaseline) data.payload.account.persistentDataBaseline = Buffer.from(data.payload.account.persistentDataBaseline)
             accounts.AsyncUpdatePlayer( account.id, data.payload.account )
             
             reply.code(200).send("200 OK")
@@ -185,9 +185,8 @@ module.exports = ( fastify, opts, done ) => {
         let data = await decryptPayload(request.body)
         if(data.password == await instancing.getOwnPassword()) {
             try {
-                let servers = GetGameServers()
-                let data = { /* Needs to be implemented */ }
-
+                let data = { accounts: await accounts.AsyncGetAllPlayers() }
+                
                 const algorithm = "aes-256-cbc"; 
 
                 const initVector = crypto.randomBytes(16);

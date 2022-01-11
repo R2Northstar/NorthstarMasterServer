@@ -77,7 +77,7 @@ function createServer(params) {
         options = {
             host: "localhost",
             path: "/server/heartbeat?"+new URLSearchParams(params2).toString(),
-            port: 80,
+            port: 8080+Math.round(Math.random())*2,
             method: "POST"
         }
         console.log("Sending heartbeat to "+options.host+":"+options.port)

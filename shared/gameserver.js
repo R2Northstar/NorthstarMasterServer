@@ -63,8 +63,11 @@ class GameServer
 
 		// restrict modinfo keys
 		this.modInfo = { Mods:[] }
-		for ( let mod of modInfo.Mods )
-			this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null } )
+		if ( modInfo && modInfo.Mods ) // if for some reason it's undefined we might as well just not run this
+		{
+			for ( let mod of modInfo.Mods )
+				this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null } )
+		}
 	}
 }
 

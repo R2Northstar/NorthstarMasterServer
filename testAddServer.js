@@ -87,7 +87,7 @@ function createServer(params) {
             console.log(`Status Code: ${res.statusCode}`)
             
             res.on('data', d => {
-                console.log(JSON.parse(d.toString()))
+                // console.log(JSON.parse(d.toString()))
             })
         });
         

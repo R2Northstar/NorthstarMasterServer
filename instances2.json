@@ -4,13 +4,13 @@
         "host": "http://localhost",
         "port": 80,
         "password": "1234",
-        "isSelf": false
+        "isSelf": true
     },
     {
         "name": "Test 2",
         "host": "http://localhost",
-        "port": 81,
+        "port": 8080,
         "password": "4321",
-        "isSelf": true
+        "isSelf": false
     }
 ]

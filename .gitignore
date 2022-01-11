@@ -122,4 +122,5 @@ dist
 playerdata.db
 
 # Added by barnaby for testing
-playerdata2.db
+playerdata[0-9].db
+instances*.json

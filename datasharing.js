@@ -2,6 +2,11 @@ const fs = require('fs').promises;
 const asyncHttp = require("./shared/asynchttp.js") 
 const crypto = require("crypto");
 
+// DNS lookup :)
+const util = require('util');
+const dns = require('dns');
+const lookup = util.promisify(dns.lookup);
+
 // 0=Starting, 1=Syncing, 2=Running
 let state = 0
 
@@ -54,6 +59,17 @@ function getAllKnownInstances() {
         }
     });
 }
+// gets a list of addresses from the json file
+function getAllKnownAddresses() {
+    return new Promise(async (resolve, reject) => {
+        try {
+            let data = await fs.readFile(instanceListPath);
+            resolve( await Promise.all( JSON.parse(data).map( async instance => (await lookup(instance.host.split("://")[1])).address ) ) );
+        } catch(e) {
+            reject(e);
+        }
+    });
+}
 
 // sends a post req to all instances to attempt data propagation
 async function broadcastMessage(endpoint, data) {
@@ -100,6 +116,7 @@ module.exports = {
     setOwnState,
     getOwnPassword,
     getAllKnownInstances,
+    getAllKnownAddresses,
     serverAdd: function(data) { broadcastMessage("serverAdd", data) },
     serverRemove: function(data) { broadcastMessage("serverRemove", data) },
     serverUpdate: function(data) { broadcastMessage("serverUpdate", data) },

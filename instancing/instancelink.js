@@ -29,7 +29,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/serverAdd',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             let { id, name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat } = data.payload;
             let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
             newServer.id = id;
@@ -46,7 +46,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/serverRemove',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             RemoveGameServer(data.payload, false)
 
             reply.code(200).send("200 OK")
@@ -59,7 +59,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/serverUpdate',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             let server = GetGameServers()[ data.payload.gameserver.id ]
             UpdateGameServer(server, data.payload.data, false)
             
@@ -73,7 +73,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/playerUpdate',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             let account = await accounts.AsyncGetPlayerByID( data.payload.id )
             if(data.payload.account.persistentDataBaseline) data.payload.account.persistentDataBaseline = Buffer.from(data.payload.account.persistentDataBaseline)
             if ( !account ) // create account for user
@@ -93,7 +93,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/playerUpdateCurrentServer',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             let account = await accounts.AsyncGetPlayerByID( data.payload.id )
             if ( !account ) {
                 reply.code(500).send()
@@ -111,7 +111,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/playerWritePersistenceBaseline',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             let account = await accounts.AsyncGetPlayerByID( data.payload.id )
             if ( !account ) {
                 reply.code(500).send()
@@ -129,7 +129,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/state',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             try {
                 let data = { state: instancing.getOwnState() }
 
@@ -156,7 +156,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/sync/servers',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             try {
                 let servers = GetGameServers()
                 let data = { servers }
@@ -183,7 +183,7 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.post( '/instancing/sync/accounts',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
-        if(data.password == await instancing.getOwnPassword()) {
+        if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             try {
                 let data = { accounts: await accounts.AsyncGetAllPlayers() }
                 

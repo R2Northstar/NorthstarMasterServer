@@ -31,42 +31,48 @@ async function attemptSyncWithAny() {
                 let instanceState = await getInstanceState(instance);
 
                 if(instanceState == 2) {
-                    console.log("Attempting sync with instance "+instance.name)
-                    // Sync game servers
-                    let currentServers = GetGameServers();
+                    try {
+                        console.log("Attempting sync with instance "+instance.name)
+                        // Sync game servers
+                        let currentServers = GetGameServers();
 
-                    let servers = await serverSyncWithInstance(instance);
+                        let servers = await serverSyncWithInstance(instance);
 
-                    for(let i = 0; i < Object.keys(servers).length; i++) {
-                        let id = Object.keys(servers)[i]
-                        if(currentServers[id]) {
-                            UpdateGameServer(currentServers[id], servers[id], false)
-                        } else {
-                            let { name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat } = servers[id];
-                            let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
-                            newServer.id = id;
-                            newServer.lastHeartbeat = lastHeartbeat;
-                            AddGameServer(newServer, false)
+                        for(let i = 0; i < Object.keys(servers).length; i++) {
+                            let id = Object.keys(servers)[i]
+                            if(currentServers[id]) {
+                                UpdateGameServer(currentServers[id], servers[id], false)
+                            } else {
+                                let { name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat } = servers[id];
+                                let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
+                                newServer.id = id;
+                                newServer.lastHeartbeat = lastHeartbeat;
+                                AddGameServer(newServer, false)
+                            }
                         }
+                        console.log("Synced servers with instance "+instance.name)
+
+                        // Sync accounts in DB
+                        let accountList = await accountSyncWithInstance(instance);
+                        accountList.forEach(async accountJson => {
+                            let account = await accounts.AsyncGetPlayerByID( accountJson.id )
+                            if(accountJson.persistentDataBaseline) accountJson.persistentDataBaseline = Buffer.from(accountJson.persistentDataBaseline)
+                            if ( !account ) // create account for user
+                            {
+                                await accounts.AsyncCreateAccountFromData( accountJson )
+                                account = await accounts.AsyncGetPlayerByID( accountJson.id )
+                            } else {
+                                if(accountJson.lastModified > account.lastModified) accounts.AsyncUpdatePlayer( account.id, accountJson.account )
+                            }
+                        });
+                        console.log("Synced accounts with instance "+instance.name)
+
+                        console.log("Completed sync with instance "+instance.name)
+                        setOwnState(2)
+                        hasSynced = true;
+                    } catch(e) {
+                        console.log("Failed to complete sync with instance "+instance.name)
                     }
-
-                    // Sync accounts in DB
-                    let accountList = await accountSyncWithInstance(instance);
-                    accountList.forEach(async accountJson => {
-                        let account = await accounts.AsyncGetPlayerByID( accountJson.id )
-                        if(accountJson.persistentDataBaseline) accountJson.persistentDataBaseline = Buffer.from(accountJson.persistentDataBaseline)
-                        if ( !account ) // create account for user
-                        {
-                            await accounts.AsyncCreateAccountFromData( accountJson )
-                            account = await accounts.AsyncGetPlayerByID( accountJson.id )
-                        } else {
-                            if(accountJson.lastModified > account.lastModified) accounts.AsyncUpdatePlayer( account.id, accountJson.account )
-                        }
-                    });
-
-                    console.log("Successfully synced with instance "+instance.name)
-                    setOwnState(2)
-                    hasSynced = true;
                 }
             } catch(e) {
                 // console.log(e)

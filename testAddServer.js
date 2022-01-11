@@ -84,10 +84,10 @@ function createServer(params) {
         
         let lib = http;
         const req = lib.request(options, res => {
-            // console.log(`Status Code: ${res.statusCode}`)
+            console.log(`Status Code: ${res.statusCode}`)
             
             res.on('data', d => {
-                // console.log(JSON.parse(d.toString()))
+                console.log(JSON.parse(d.toString()))
             })
         });
         
@@ -96,5 +96,5 @@ function createServer(params) {
         })
         
         req.end()
-    }, 20000)
+    }, 5000)
 }

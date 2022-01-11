@@ -89,16 +89,16 @@ module.exports = {
 		if(broadcast) instancing.serverUpdate( { gameserver, data } )
 		for ( let key of Object.keys( data ) )
 		{
-			if ( key == "id" || key == "port" || key == "authport" || !( key in server ) || data[ key ].length >= 512 )
+			if ( key == "id" || key == "port" || key == "authport" || !( key in gameserver ) || data[ key ].length >= 512 )
 				continue
 
 			if ( key == "playerCount" || key == "maxPlayers" )
 			{
-				server[ key ] = parseInt( data[ key ] )
+				gameserver[ key ] = parseInt( data[ key ] )
 			}
 			else						//i suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
 			{
-				server[ key ] = data[ key ]
+				gameserver[ key ] = data[ key ]
 			}
 		}
 	}

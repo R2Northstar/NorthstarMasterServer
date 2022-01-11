@@ -63,6 +63,20 @@ function asyncDBGet( sql, params = [] )
 		})
 	})
 }
+function asyncDBAll( sql, params = [] )
+{
+	return new Promise( ( resolve, reject ) => {
+		playerDB.all( sql, params, ( ex, rows ) => {
+			if ( ex )
+			{
+				console.error( "Encountered error querying player database: " + ex )
+				reject( ex )
+			}
+			else 
+				resolve( rows )
+		})
+	})
+}
 
 function asyncDBRun( sql, params = [] )
 {
@@ -110,6 +124,14 @@ async function AsyncGetPlayerByID( id ) {
 
 module.exports = {
 	AsyncGetPlayerByID,
+
+	AsyncGetAllPlayers: async function AsyncGetAllPlayers() {
+		let rows = await asyncDBAll( "SELECT * FROM accounts" )
+		if ( !rows )
+			return null
+		
+		return rows
+	},
 	
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
 		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline, lastModified ) VALUES ( ?, ?, ? )", [ id, DEFAULT_PDATA_BASELINE, Date.now() ] )

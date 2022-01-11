@@ -3,6 +3,7 @@ const https = require('https');
 const crypto = require("crypto");
 const asyncHttp = require("./shared/asynchttp.js") 
 
+const accounts = require("./shared/accounts.js") 
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require("./shared/gameserver.js")
 const { decryptPayload, getAllKnownInstances, getOwnState, setOwnState } = require("./datasharing.js")
 
@@ -49,7 +50,18 @@ async function attemptSyncWithAny() {
                 }
 
                 // Sync accounts in DB
-                let accounts = await accountSyncWithInstance(instance);
+                let accountList = await accountSyncWithInstance(instance);
+                accountList.forEach(async accountJson => {
+                    let account = await accounts.AsyncGetPlayerByID( accountJson.id )
+                    if(accountJson.persistentDataBaseline) accountJson.persistentDataBaseline = Buffer.from(accountJson.persistentDataBaseline)
+                    if ( !account ) // create account for user
+                    {
+                        await accounts.AsyncCreateAccountFromData( accountJson )
+                        account = await accounts.AsyncGetPlayerByID( accountJson.id )
+                    } else {
+                        if(accountJson.lastModified > account.lastModified) accounts.AsyncUpdatePlayer( account.id, accountJson.account )
+                    }
+                });
 
                 console.log("Successfully synced with instance "+instance.name)
                 setOwnState(2)
@@ -78,7 +90,7 @@ async function serverSyncWithInstance(instance) {
     return (await askForData("sync/servers", instance)).servers
 }
 async function accountSyncWithInstance(instance) {
-    return (await askForData("sync/accounts", instance)).servers
+    return (await askForData("sync/accounts", instance)).accounts
 }
 
 function askForData(endpoint, instance) {

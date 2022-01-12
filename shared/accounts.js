@@ -7,6 +7,7 @@ const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
+let playerDBOpen = false;
 let playerDB;
 function openDB() {
 	playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
@@ -15,6 +16,8 @@ function openDB() {
 		else
 			console.log( "Connected to player database successfully" )
 		
+		playerDBOpen = true;
+
 		// create account table
 		// this should mirror the PlayerAccount class's	properties
 		playerDB.run( `
@@ -55,7 +58,8 @@ openDB()
 
 function asyncDBGet( sql, params = [] )
 {
-	return new Promise( ( resolve, reject ) => {
+	return new Promise( async ( resolve, reject ) => {
+		await playerDBIsOpen();
 		playerDB.get( sql, params, ( ex, row ) => {
 			if ( ex )
 			{
@@ -69,7 +73,8 @@ function asyncDBGet( sql, params = [] )
 }
 function asyncDBAll( sql, params = [] )
 {
-	return new Promise( ( resolve, reject ) => {
+	return new Promise( async ( resolve, reject ) => {
+		await playerDBIsOpen();
 		playerDB.all( sql, params, ( ex, rows ) => {
 			if ( ex )
 			{
@@ -84,7 +89,8 @@ function asyncDBAll( sql, params = [] )
 
 function asyncDBRun( sql, params = [] )
 {
-	return new Promise( ( resolve, reject ) => {
+	return new Promise( async ( resolve, reject ) => {
+		await playerDBIsOpen();
 		playerDB.run( sql, params, ex => {
 			if ( ex )
 			{
@@ -172,7 +178,7 @@ module.exports = {
 	},
 
 	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs ) {
-		let player = await module.exports.AsyncGetPlayerByID( id )
+		let player = await AsyncGetPlayerByID( id )
 		return player.persistentDataBaseline
 
 		// disabling this for now
@@ -200,6 +206,7 @@ module.exports = {
 
 	BackupDatabase: async function BackupDatabase() { // closes db, copies it, then opens db. hopefully doesn't break anything
 		console.log("Backing up database")
+		playerDBOpen = false;
 		await playerDB.close()
 		var dir = './backups';
 		if (!fs.existsSync(dir)){
@@ -208,4 +215,13 @@ module.exports = {
 		fs.copyFileSync(process.env.DB_PATH || 'playerdata.db', dir+'/'+(process.env.DB_PATH || 'playerdata.db')+'_'+new Date().toISOString().replace(/:/g, "-")+'.bak')
 		openDB()
 	}
+}
+
+function playerDBIsOpen() {
+    return new Promise(function (resolve, reject) {
+        (function waitForPlayerDBOpen(){
+            if (playerDBOpen) return resolve();
+            setTimeout(waitForPlayerDBOpen, 30);
+        })();
+    });
 }

@@ -71,10 +71,13 @@ function getAllKnownAddresses() {
 // sends a post req to all instances to attempt data propagation
 async function broadcastMessage(endpoint, data) {
     instances = await getAllKnownInstances();
+    if(process.env.USE_DATASYNC_LOGGER) console.log(`Sharing '${endpoint}' data with [${instances.map(i => '\"'+i.name+'\"').join(", ")}]`)
     instances.forEach(async instance => {
         if(instance.isSelf) return;
 
         // console.log(instance.name + " | " + instance.host+":"+instance.port+"/instancing/"+endpoint)
+
+        let timestamp = data.lastModified || Date.now()
 
         const algorithm = "aes-256-cbc"; 
 
@@ -82,7 +85,7 @@ async function broadcastMessage(endpoint, data) {
         const Securitykey = crypto.scryptSync(instance.password, 'salt', 32);
         
         const cipher = crypto.createCipheriv(algorithm, Securitykey, initVector);
-        let encryptedData = cipher.update(JSON.stringify({ password: instance.password, payload: data, timestamp: Date.now() }), "utf-8", "hex");
+        let encryptedData = cipher.update(JSON.stringify({ password: instance.password, payload: data, timestamp }), "utf-8", "hex");
         encryptedData += cipher.final("hex");
         
         const options = {
@@ -95,7 +98,7 @@ async function broadcastMessage(endpoint, data) {
             }
         }
 
-        asyncHttp.request(options, JSON.stringify({ iv: initVector, timestamp: Date.now(), data: encryptedData.toString() })).catch(err => { /* console.log(err) */ })
+        asyncHttp.request(options, JSON.stringify({ iv: initVector, data: encryptedData.toString() })).catch(err => { /* console.log(err) */ })
     });
 }
 

@@ -47,7 +47,7 @@ function createServer(params) {
     let options = {
         host: "localhost",
         path: "/server/add_server?"+new URLSearchParams(params).toString(),
-        port: 80,
+        port: 8080,
         method: "POST"
     }
     

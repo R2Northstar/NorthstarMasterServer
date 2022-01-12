@@ -113,13 +113,14 @@ class PlayerAccount
 	// string currentServerId
 	// Buffer persistentDataBaseline
 	
-	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline )
+	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, lastModified )
 	{
 		this.id = id
 		this.currentAuthToken = currentAuthToken
 		this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
 		this.currentServerId = currentServerId
 		this.persistentDataBaseline = persistentDataBaseline
+		this.lastModified = lastModified
 	}
 }
 
@@ -129,7 +130,7 @@ async function AsyncGetPlayerByID( id ) {
 	if ( !row )
 		return null
 	
-	return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
+	return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastModified )
 }
 
 module.exports = {

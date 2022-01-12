@@ -82,7 +82,7 @@ async function broadcastMessage(endpoint, data) {
         const Securitykey = crypto.scryptSync(instance.password, 'salt', 32);
         
         const cipher = crypto.createCipheriv(algorithm, Securitykey, initVector);
-        let encryptedData = cipher.update(JSON.stringify({ password: instance.password, payload: data }), "utf-8", "hex");
+        let encryptedData = cipher.update(JSON.stringify({ password: instance.password, payload: data, timestamp: Date.now() }), "utf-8", "hex");
         encryptedData += cipher.final("hex");
         
         const options = {

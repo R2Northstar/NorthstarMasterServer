@@ -152,7 +152,7 @@ module.exports = ( fastify, opts, done ) => {
 
                 reply.code(200).send(JSON.stringify({ iv: initVector, data: encryptedData }))
             } catch(e) {
-                console.log(e)
+                // console.log(e)
                 reply.code(500).send()
             }
         } else {
@@ -181,6 +181,7 @@ module.exports = ( fastify, opts, done ) => {
 
                 reply.code(200).send(JSON.stringify({ iv: initVector, data: encryptedData }))
             } catch(e) {
+                // console.log(e)
                 reply.code(500).send()
             }
         } else {
@@ -208,6 +209,7 @@ module.exports = ( fastify, opts, done ) => {
 
                 reply.code(200).send(JSON.stringify({ iv: initVector, data: encryptedData }))
             } catch(e) {
+                // console.log(e)
                 reply.code(500).send()
             }
         } else {

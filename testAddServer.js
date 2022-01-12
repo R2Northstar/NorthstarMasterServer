@@ -70,7 +70,6 @@ function createServer(params) {
     req.end()
     
     setInterval(() => {
-        return
         let params2 = {
             id: id,
             playerCount: Math.floor(Math.random()*16)

@@ -34,6 +34,7 @@ module.exports = ( fastify, opts, done ) => {
             let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
             newServer.id = id;
             newServer.lastHeartbeat = lastHeartbeat;
+            newServer.lastModified = data.timestamp;
             AddGameServer(newServer, false);
             
             reply.code(200).send("200 OK")
@@ -61,7 +62,7 @@ module.exports = ( fastify, opts, done ) => {
         let data = await decryptPayload(request.body)
         if(data.password == await instancing.getOwnPassword() && (await instancing.getAllKnownAddresses()).indexOf(request.ip) != -1) {
             let server = GetGameServers()[ data.payload.gameserver.id ]
-            UpdateGameServer(server, data.payload.data, false)
+            UpdateGameServer(server, Object.assign(data.payload.data, { lastModified: data.timestamp }) , false)
             
             reply.code(200).send("200 OK")
         } else {
@@ -78,10 +79,10 @@ module.exports = ( fastify, opts, done ) => {
             if(data.payload.account.persistentDataBaseline) data.payload.account.persistentDataBaseline = Buffer.from(data.payload.account.persistentDataBaseline)
             if ( !account ) // create account for user
             {
-                await accounts.AsyncCreateAccountFromData( data.payload.account )
+                await accounts.AsyncCreateAccountFromData( data.payload.account, data.timestamp )
                 account = await accounts.AsyncGetPlayerByID( data.payload.id )
             }
-            accounts.AsyncUpdatePlayer( account.id, data.payload.account )
+            accounts.AsyncUpdatePlayer( account.id, data.payload.account, data.timestamp )
             
             reply.code(200).send("200 OK")
         } else {
@@ -98,7 +99,7 @@ module.exports = ( fastify, opts, done ) => {
             if ( !account ) {
                 reply.code(500).send()
             } else {
-                accounts.AsyncUpdatePlayerCurrentServer( data.payload.id, data.payload.serverId )
+                accounts.AsyncUpdatePlayerCurrentServer( data.payload.id, data.payload.serverId, data.timestamp )
             
                 reply.code(200).send("200 OK")
             }
@@ -116,7 +117,7 @@ module.exports = ( fastify, opts, done ) => {
             if ( !account ) {
                 reply.code(500).send()
             } else {
-                accounts.AsyncWritePlayerPersistenceBaseline( data.payload.id, Buffer.from(data.payload.buf) )
+                accounts.AsyncWritePlayerPersistenceBaseline( data.payload.id, Buffer.from(data.payload.buf), data.timestamp )
             
                 reply.code(200).send("200 OK")
             }

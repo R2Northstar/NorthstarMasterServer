@@ -33,7 +33,8 @@ class GameServer
 		else // normal constructor
 		{
 			this.lastHeartbeat = Date.now()
-			
+			this.lastModified = Date.now()
+
 			this.id = crypto.randomBytes(16).toString( "hex" )
 			this.serverAuthToken = crypto.randomBytes(16).toString( "hex" )
 			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )

@@ -122,11 +122,10 @@ function askForData(endpoint, instance) {
                 method: "POST",
                 headers: {
                     'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ iv: initVector, data: encryptedData })
+                }
             }
 
-            let res = await asyncHttp.request(options, JSON.stringify({ iv: initVector, data: encryptedData.toString() }))
+            let res = await asyncHttp.request(options, JSON.stringify({ iv: initVector, timestamp: Date.now(), data: encryptedData.toString() }))
             
             let decryptedData = await decryptPayload(JSON.parse(res.toString()), instance.password);
             resolve(decryptedData);

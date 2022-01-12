@@ -137,30 +137,30 @@ module.exports = {
 		return rows
 	},
 	
-	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
-		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline, lastModified ) VALUES ( ?, ?, ? )", [ id, DEFAULT_PDATA_BASELINE, Date.now() ] )
+	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id, timestamp = Date.now() ) {
+		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline, lastModified ) VALUES ( ?, ?, ? )", [ id, DEFAULT_PDATA_BASELINE, timestamp ] )
 	},
 
-	AsyncCreateAccountFromData: async function AsyncCreateAccountFromData( data ) {
+	AsyncCreateAccountFromData: async function AsyncCreateAccountFromData( data, timestamp = Date.now() ) {
 		let { id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline } = data;
-		await asyncDBRun( "INSERT INTO accounts ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, lastModified ) VALUES ( ?, ?, ?, ?, ?, ? )", [ id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, Date.now() ] )
+		await asyncDBRun( "INSERT INTO accounts ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, lastModified ) VALUES ( ?, ?, ?, ?, ?, ? )", [ id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, timestamp ] )
 	},
 
-	AsyncUpdatePlayer: async function AsyncUpdatePlayer( id, data ) {
+	AsyncUpdatePlayer: async function AsyncUpdatePlayer( id, data, timestamp = Date.now() ) {
 		let { currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline } = Object.assign({}, data, await AsyncGetPlayerByID( id ))
-		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, currentServerId = ?, persistentDataBaseline = ?, lastModified = ? WHERE id = ?", [ currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, Date.now(), id ] )
+		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, currentServerId = ?, persistentDataBaseline = ?, lastModified = ? WHERE id = ?", [ currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, timestamp, id ] )
 	},
 
-	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token ) {
-		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, lastModified = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, Date.now(), id ] )
+	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token, timestamp = Date.now() ) {
+		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ?, lastModified = ? WHERE id = ?", [ token, timestamp + TOKEN_EXPIRATION_TIME, timestamp, id ] )
 	},
 
-	AsyncUpdatePlayerCurrentServer: async function AsyncUpdatePlayerCurrentServer( id, serverId ) {
-		await asyncDBRun( "UPDATE accounts SET currentServerId = ?, lastModified = ? WHERE id = ?", [ serverId, Date.now(), id ] )
+	AsyncUpdatePlayerCurrentServer: async function AsyncUpdatePlayerCurrentServer( id, serverId, timestamp = Date.now() ) {
+		await asyncDBRun( "UPDATE accounts SET currentServerId = ?, lastModified = ? WHERE id = ?", [ serverId, timestamp, id ] )
 	},
 	
-	AsyncWritePlayerPersistenceBaseline: async function AsyncWritePlayerPersistenceBaseline( id, persistentDataBaseline ) {
-		await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ?, lastModified = ? WHERE id = ?", [ persistentDataBaseline, Date.now(), id ] )
+	AsyncWritePlayerPersistenceBaseline: async function AsyncWritePlayerPersistenceBaseline( id, persistentDataBaseline, timestamp = Date.now() ) {
+		await asyncDBRun( "UPDATE accounts SET persistentDataBaseline = ?, lastModified = ? WHERE id = ?", [ persistentDataBaseline, timestamp, id ] )
 	},
 
 	AsyncGetPlayerModPersistence: async function AsyncGetPlayerModPersistence( id, pdiffHash ) {

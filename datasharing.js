@@ -98,7 +98,7 @@ async function broadcastMessage(endpoint, data) {
             }
         }
 
-        let res = await asyncHttp.request(options, JSON.stringify({ iv: initVector, data: encryptedData.toString() })).catch(err => { /* console.log(err) */ })
+        let res = await asyncHttp.request(options, JSON.stringify({ iv: initVector, timestamp: Date.now(), data: encryptedData.toString() })).catch(err => { /* console.log(err) */ })
     });
 }
 

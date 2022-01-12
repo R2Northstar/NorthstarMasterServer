@@ -54,7 +54,7 @@ async function start()
 	}
 }
 
-start()
-
 const syncing = require("./datasyncing.js")
-syncing.attemptSyncWithAny()
+syncing.attemptSyncWithAny().then(() => {
+	start()
+})

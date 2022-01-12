@@ -54,6 +54,7 @@ async function start()
 	}
 }
 
+// ensure completion of data with instances before listening for http requests
 const syncing = require("./datasyncing.js")
 syncing.attemptSyncWithAny().then(() => {
 	start()

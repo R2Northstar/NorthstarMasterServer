@@ -9,12 +9,9 @@ const lookup = util.promisify(dns.lookup);
 
 // 0=Starting, 1=Syncing, 2=Running
 let state = 0
-
-const accounts = require("./shared/accounts.js") 
-
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
 
-
+// decrypts encrypted payloads
 async function decryptPayload(body, password) {
     try {
         if(!password) password = await getOwnPassword()
@@ -31,7 +28,7 @@ async function decryptPayload(body, password) {
         let json = JSON.parse(decryptedData);
         return json
     } catch(e) {
-        return {}
+        return {} // don't ever error cause i'm nice
     }
 }
 
@@ -59,7 +56,7 @@ function getAllKnownInstances() {
         }
     });
 }
-// gets a list of addresses from the json file
+// gets a list of resolved addresses from the hosts in the json file
 function getAllKnownAddresses() {
     return new Promise(async (resolve, reject) => {
         try {
@@ -98,11 +95,11 @@ async function broadcastMessage(endpoint, data) {
             }
         }
 
-        let res = await asyncHttp.request(options, JSON.stringify({ iv: initVector, timestamp: Date.now(), data: encryptedData.toString() })).catch(err => { /* console.log(err) */ })
+        asyncHttp.request(options, JSON.stringify({ iv: initVector, timestamp: Date.now(), data: encryptedData.toString() })).catch(err => { /* console.log(err) */ })
     });
 }
 
-// used to verify password of the masterserver remote stuf
+// used to justify rejecting bad sync requests
 function getOwnState() {
     return state
 }

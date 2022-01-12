@@ -100,16 +100,17 @@ async function attemptSyncWithAny() {
     })
 }
 
-async function getInstanceState(instance) {
+async function getInstanceState(instance) { // ask an instance for its state
     return (await askForData("state", instance)).state
 }
-async function serverSyncWithInstance(instance) {
+async function serverSyncWithInstance(instance) { // grab server list
     return (await askForData("sync/servers", instance)).servers
 }
-async function accountSyncWithInstance(instance) {
+async function accountSyncWithInstance(instance) { // request accounts list from another instance's db
     return (await askForData("sync/accounts", instance)).accounts
 }
 
+// the function to handle general data acquisition requests, encrypts out and decrypts in
 function askForData(endpoint, instance) {
     return new Promise(async (resolve, reject) => {
         try {

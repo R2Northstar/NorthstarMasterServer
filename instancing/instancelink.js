@@ -26,6 +26,7 @@ module.exports = ( fastify, opts, done ) => {
 	// exported routes
 
 	// POST /instancing/serverAdd
+    // used to receive new server broadcasts
 	fastify.post( '/instancing/serverAdd',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -44,6 +45,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
 	// POST /instancing/serverRemove
+    // used to receive broadcasts of server removal
 	fastify.post( '/instancing/serverRemove',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -57,6 +59,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
 	// POST /instancing/serverUpdate
+    // used to receive broadcasts for server changes
 	fastify.post( '/instancing/serverUpdate',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -71,6 +74,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
 	// POST /instancing/playerUpdate
+    // receive broadcasts for player changes
 	fastify.post( '/instancing/playerUpdate',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -91,6 +95,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
 	// POST /instancing/playerUpdateCurrentServer
+    // receive broadcasts for when the player's server changes
 	fastify.post( '/instancing/playerUpdateCurrentServer',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -109,6 +114,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
 	// POST /instancing/playerWritePersistenceBaseline
+    // used to receive broadcasts for saving a player's pdata
 	fastify.post( '/instancing/playerWritePersistenceBaseline',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -127,6 +133,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
 	// POST /instancing/state
+    // inform other instances of the current sync state on request (0=Starting, 1=Syncing, 2=Running), they should only proceed with syncing if state=2
 	fastify.post( '/instancing/state',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -154,6 +161,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
     // POST /instancing/sync/servers
+    // instances can ask for an entire server list from this one
 	fastify.post( '/instancing/sync/servers',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)
@@ -181,6 +189,7 @@ module.exports = ( fastify, opts, done ) => {
 	})
 
     // POST /instancing/sync/accounts
+    // another instance can yoink the account data in the db so it can be up-to-date
 	fastify.post( '/instancing/sync/accounts',
 	async ( request, reply ) => {
         let data = await decryptPayload(request.body)

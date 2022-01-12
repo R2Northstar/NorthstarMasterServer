@@ -61,7 +61,7 @@ module.exports = ( fastify, opts, done ) => {
 		await accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
 		account = await accounts.AsyncGetPlayerByID( request.query.id )
-		instancing.playerUpdate({ id: account.id, account });
+		instancing.playerUpdate({ id: account.id, account }); // data sharing
 
 		return {
 			success: true,
@@ -166,7 +166,7 @@ module.exports = ( fastify, opts, done ) => {
 		await accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
 		account = await accounts.AsyncGetPlayerByID( request.query.id )
-		instancing.playerUpdateCurrentServer({ id: account.id, serverId: "self" });
+		instancing.playerUpdateCurrentServer({ id: account.id, serverId: "self" }); // data sharing
 				
 		return {
 			success: true,

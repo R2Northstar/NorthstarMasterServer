@@ -198,7 +198,7 @@ module.exports = {
 		return PdataJsonToBuffer( newPdataJson, pdefCopy )*/
 	},
 
-	BackupDatabase: async function BackupDatabase() {
+	BackupDatabase: async function BackupDatabase() { // closes db, copies it, then opens db. hopefully doesn't break anything
 		console.log("Backing up database")
 		await playerDB.close()
 		var dir = './backups';

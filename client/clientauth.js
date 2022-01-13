@@ -3,7 +3,7 @@ const crypto = require( "crypto" )
 const { GameServer, GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) ) 
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
-const { broadcastEvent } = require('../sync/socket.js')
+const { broadcastEvent } = require('../sync/broadcast.js')
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 

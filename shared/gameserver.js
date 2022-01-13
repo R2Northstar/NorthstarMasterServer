@@ -1,5 +1,5 @@
 const crypto = require( 'crypto' )
-const { broadcastEvent } = require('../sync/socket.js')
+const { broadcastEvent } = require('../sync/broadcast.js')
 
 class GameServer
 {

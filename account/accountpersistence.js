@@ -1,6 +1,6 @@
 const path = require( "path" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) ) 
-const { broadcastEvent } = require('../sync/socket.js')
+const { broadcastEvent } = require('../sync/broadcast.js')
 
 module.exports = ( fastify, opts, done ) => {	
 	fastify.register( require( "fastify-multipart" ) )

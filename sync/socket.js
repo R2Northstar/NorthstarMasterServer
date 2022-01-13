@@ -19,9 +19,9 @@ wss.on('connection', async function connection(ws) {
     let instance = await getInstanceById(ws.id)
     console.log("Connection from "+instance.name)
     if(!instanceSockets[ws.id]) connectTo(instance)
-    ws.on('message', function message(data) {
-        handlePotentialPayload(data)
-    });
+    // ws.on('message', function message(data) {
+    //     handlePotentialPayload(data)
+    // });
 });
 
 function connectTo(instance) {
@@ -31,6 +31,9 @@ function connectTo(instance) {
     ws.on('open', async function open() {
         ws.everOpen = true;
         console.log('Opened WebSocket connection to',instance.name)
+    });
+    ws.on('message', function message(data) {
+        handlePotentialPayload(data)
     });
     ws.on('close', () => {
         if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')
@@ -66,7 +69,6 @@ async function start(server) {
     })
 }
 
-// HOW TF DO I REMOVE THIS CIRCULAR DEPENDENCY
 async function broadcastEvent(event, payload) {
     wss.clients.forEach(async function each(ws) {
         if (ws.readyState === WebSocket.OPEN) {
@@ -75,6 +77,11 @@ async function broadcastEvent(event, payload) {
         }
     });
 }
+
+const broadcastEmitter = require('./broadcast.js').emitter
+broadcastEmitter.addListener('event', (data) => {
+    broadcastEvent(data.event, data.payload);
+})
 
 module.exports = {
     start,

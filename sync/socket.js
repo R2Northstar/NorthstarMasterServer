@@ -1,4 +1,4 @@
-const { getAllKnownInstances, getInstanceById, getInstanceAddress } = require('./util.js');
+const { getAllKnownInstances, getInstanceById, getInstanceAddress, encryptPayload, handlePotentialPayload } = require('./util.js');
 const { WebSocket, WebSocketServer } = require('ws');
 let instanceSockets = {}
 let instanceClients = {}
@@ -16,29 +16,31 @@ const wss = new WebSocketServer({ noServer: true });
 console.log("Created WebSocket server")
 
 wss.on('connection', async function connection(ws) {
-    console.log("Connection from "+ws.id)
-    if(!instanceSockets[ws.id]) connectTo(await getInstanceById(ws.id))
+    let instance = await getInstanceById(ws.id)
+    console.log("Connection from "+instance.name)
+    if(!instanceSockets[ws.id]) connectTo(instance)
     ws.on('message', function message(data) {
-      handlePotentialPayload(data)
+        handlePotentialPayload(data)
     });
-  
-    ws.send('something');
 });
 
 function connectTo(instance) {
     const ws = new WebSocket('ws://'+instance.host+':'+instance.port+'/sync?id='+process.env.DATASYNC_OWN_ID);
     ws.everOpen = false;
     instanceSockets[instance.id] = ws;
-    ws.on('open', function open() {
+    ws.on('open', async function open() {
         ws.everOpen = true;
-        console.log('Opened WebSocket connection to',instance.id)
+        console.log('Opened WebSocket connection to',instance.name)
+        
+        let data = JSON.stringify(await encryptPayload({ event: 'serverAdd', payload: {} }, instance.password));
+        ws.send(data);
     });
     ws.on('close', () => {
-        if(ws.everOpen) console.log('WebSocket connection to',instance.id,'closed')
+        if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')
         delete instanceSockets[instance.id]
     })
     ws.on('error', (err) => {
-        if(err.code == 'ECONNREFUSED') console.log('WebSocket connection refused by',instance.id)
+        if(err.code == 'ECONNREFUSED') console.log('WebSocket connection refused by',instance.name)
         else console.log(err)
     })
 }
@@ -51,12 +53,12 @@ async function start(server) {
             let instanceIp = await getInstanceAddress(instance);
             let isAuthorized = request.socket.remoteAddress == instanceIp && !instanceClients[reqUrl.searchParams.get('id')];
             if (reqUrl.pathname === '/sync' && isAuthorized) {
-                wss.handleUpgrade(request, socket, head, function done(ws) {
+                wss.handleUpgrade(request, socket, head, async function done(ws) {
                     ws.id = reqUrl.searchParams.get('id')
                     wss.emit('connection', ws, request);
                 });
             } else {
-                console.log('WebSocket attempt refused for',request.socket.remoteAddress,'acting as',instance.id)
+                console.log('WebSocket attempt refused for',request.socket.remoteAddress,'acting as',instance.name)
                 socket.destroy();
             }
         });
@@ -70,7 +72,7 @@ async function start(server) {
 function broadcastData(data) {
     wss.clients.forEach(function each(client) {
         if (client.readyState === WebSocket.OPEN) {
-          client.send(encryptPayload(data));
+          client.send(JSON.stringify(encryptPayload(data)));
         }
     });
 }

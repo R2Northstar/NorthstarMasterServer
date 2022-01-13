@@ -8,6 +8,9 @@ const fs = require("fs");
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
 let instances = JSON.parse(fs.readFileSync(instanceListPath, 'utf-8'));
 
+const dataSync = require('./datasync.js');
+const dataShare = require('./datashare.js');
+
 fs.watch(instanceListPath, (eventType, filename) => {
     try {
         if(eventType == "change") {
@@ -101,7 +104,7 @@ async function encryptPayload(body, password) {
         const Securitykey = crypto.scryptSync(password, 'salt', 32);
         
         const cipher = crypto.createCipheriv(algorithm, Securitykey, initVector);
-        let encryptedData = cipher.update(JSON.stringify({ password, payload: body, timestamp }), "utf-8", "hex");
+        let encryptedData = cipher.update(JSON.stringify({ password, data: body, timestamp }), "utf-8", "hex");
         encryptedData += cipher.final("hex");
 
         return { iv: initVector, data: encryptedData.toString() }
@@ -126,7 +129,23 @@ async function decryptPayload(body, password) {
         let json = JSON.parse(decryptedData);
         return json
     } catch(e) {
+        console.log(e)
         return {} // don't ever error cause i'm nice
+    }
+}
+
+async function handlePotentialPayload(body) {
+    let { password, data, timestamp } = await decryptPayload(JSON.parse(body))
+    if(password == await getOwnPassword()) {
+        // Is valid payload, act upon it
+        if(dataSync.hasOwnProperty(data.event)) {
+            // If it is a dataSync function run it 
+            dataSync[data.event]({ timestamp, payload: data.payload });
+        } else if(dataShare.hasOwnProperty(data.event)) {
+            // If it is a dataShare function run it
+            dataShare[data.event]({ timestamp, payload: data.payload });
+        }
+        // If it is neither, ignore it
     }
 }
 

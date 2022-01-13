@@ -5,6 +5,8 @@ const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
 module.exports = ( fastify, opts, done ) => {
+	fastify.register(require( "fastify-cors" ))
+
 	// exported routes
 	
 	// GET /client/servers 
@@ -34,6 +36,7 @@ module.exports = ( fastify, opts, done ) => {
 			delete copy.port
 			delete copy.authPort
 			delete copy.password
+			delete copy.serverAuthToken
 			
 			displayServerArray.push( copy )
 		}

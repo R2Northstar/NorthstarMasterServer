@@ -33,7 +33,7 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 	// create mod persistent data table
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
-	CREATE TABLE IF NOT EXISTS modPeristentData (
+	CREATE TABLE IF NOT EXISTS modPersistentData (
 		id TEXT NOT NULL,
 		pdiffHash TEXT NOT NULL,
 		data TEXT NOT NULL,

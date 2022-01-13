@@ -5,13 +5,26 @@
 	"main": "index.js",
 	"scripts": {
 		"start": "node index.js",
-		"dev": "node index.js -devenv"
+		"dev": "node index.js -devenv",
+		"prepare": "husky install",
+		"watch": "nodemon index.js"
+	},
+	"lint-staged": {
+		"*.js": [
+			"eslint --fix"
+		]
 	},
 	"dependencies": {
 		"bad-words": "^3.0.4",
 		"dotenv": "^10.0.0",
 		"fastify": "^3.24.0",
+		"fastify-cors": "^6.0.2",
 		"fastify-multipart": "^5.1.0",
 		"sqlite3": "^5.0.2"
+	},
+	"devDependencies": {
+		"eslint": "^8.6.0",
+		"husky": "^7.0.0",
+		"nodemon": "^2.0.15"
 	}
 }

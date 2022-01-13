@@ -25,6 +25,7 @@ module.exports = ( fastify, opts, done ) => {
 		// only do this if we're in an environment that actually requires session tokens
 		if ( shouldRequireSessionToken )
 		{
+			// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
 			if ( request.query.token.includes( "&" ) )
 				return { success: false }
 
@@ -109,7 +110,7 @@ module.exports = ( fastify, opts, done ) => {
 			method: "POST", 
 			host: server.ip, 
 			port: server.authPort, 
-			path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}`
+			path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
 		}, pdata )
 		
 		if ( !authResponse )

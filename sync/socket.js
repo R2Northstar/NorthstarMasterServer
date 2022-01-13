@@ -31,9 +31,6 @@ function connectTo(instance) {
     ws.on('open', async function open() {
         ws.everOpen = true;
         console.log('Opened WebSocket connection to',instance.name)
-        
-        let data = JSON.stringify(await encryptPayload({ event: 'serverAdd', payload: {} }, instance.password));
-        ws.send(data);
     });
     ws.on('close', () => {
         if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')
@@ -69,14 +66,16 @@ async function start(server) {
     })
 }
 
-function broadcastData(data) {
-    wss.clients.forEach(function each(client) {
-        if (client.readyState === WebSocket.OPEN) {
-          client.send(JSON.stringify(encryptPayload(data)));
+async function broadcastEvent(event, payload) {
+    wss.clients.forEach(async function each(ws) {
+        if (ws.readyState === WebSocket.OPEN) {
+            let instance = await getInstanceById(ws.id)
+            ws.send(JSON.stringify(await encryptPayload({ event, payload }, instance.password)));
         }
     });
 }
 
 module.exports = {
-    start
+    start,
+    broadcastEvent
 }

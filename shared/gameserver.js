@@ -1,5 +1,5 @@
 const crypto = require( 'crypto' )
-const instancing = require("../datasharing.js")
+const { broadcastEvent } = require('../sync/socket.js')
 
 class GameServer
 {
@@ -79,15 +79,15 @@ module.exports = {
 	
 	GetGameServers: function() { return gameServers },
 	AddGameServer: function( gameserver, broadcast = true ) { 
-		if(broadcast) instancing.serverAdd( gameserver ) // data sharing
+		if(broadcast) broadcastEvent('serverAdd', gameserver) // data sharing
 		gameServers[ gameserver.id ] = gameserver
 	},
 	RemoveGameServer: function( gameserver, broadcast = true ) { 
-		if(broadcast) instancing.serverRemove( gameserver ) // data sharing
+		if(broadcast) broadcastEvent('serverRemove', gameserver) // data sharing
 		delete gameServers[ gameserver.id ]
 	},
 	UpdateGameServer: function( gameserver, data, broadcast = true ) {
-		if(broadcast) instancing.serverUpdate( { gameserver, data } ) // data sharing
+		if(broadcast) broadcastEvent('serverUpdate', { gameserver, data } ) // data sharing
 		for ( let key of Object.keys( data ) )
 		{
 			if ( key == "id" || key == "port" || key == "authport" || !( key in gameserver ) || data[ key ].length >= 512 )

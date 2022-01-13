@@ -70,12 +70,19 @@ function getInstanceAddress(instance) {
         }
     });
 }
+
+let ownPassword;
 // used to verify password of the masterserver remote stuf
 function getOwnPassword() {
     return new Promise(async (resolve, reject) => {
         try {
-            let self = instances.find(inst => inst.id == process.env.DATASYNC_OWN_ID);
-            resolve(self.password);
+            if(ownPassword) {
+                resolve(ownPassword);
+            } else {
+                let self = instances.find(inst => inst.id == process.env.DATASYNC_OWN_ID);
+                ownPassword = self.password;
+                resolve(self.password);
+            }
         } catch(e) {
             reject(e);
         }

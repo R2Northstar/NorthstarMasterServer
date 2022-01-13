@@ -66,6 +66,7 @@ async function start(server) {
     })
 }
 
+// HOW TF DO I REMOVE THIS CIRCULAR DEPENDENCY
 async function broadcastEvent(event, payload) {
     wss.clients.forEach(async function each(ws) {
         if (ws.readyState === WebSocket.OPEN) {

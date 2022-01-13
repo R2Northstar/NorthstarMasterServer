@@ -88,7 +88,7 @@ async function encryptPayload(body, password) {
 
         let timestamp = body.lastModified || Date.now()
 
-        const algorithm = "aes-256-cbc"; 
+        const algorithm = process.env.ENCRYPT_ALGO || "aes-256-cbc"; 
 
         const initVector = crypto.randomBytes(16);
         const Securitykey = crypto.scryptSync(password, 'salt', 32);
@@ -110,7 +110,7 @@ async function decryptPayload(body, password) {
         const encryptedData = body.data;
         const initVector = body.iv;
 
-        const algorithm = "aes-256-cbc"; 
+        const algorithm = process.env.ENCRYPT_ALGO || "aes-256-cbc"; 
         const Securitykey = crypto.scryptSync(password, 'salt', 32);
 
         const decipher = crypto.createDecipheriv(algorithm, Securitykey, Buffer.from(initVector));
@@ -131,5 +131,6 @@ module.exports = {
     getInstanceAddress,
     getAllKnownAddresses,
     encryptPayload,
-    decryptPayload
+    decryptPayload,
+    handlePotentialPayload
 }

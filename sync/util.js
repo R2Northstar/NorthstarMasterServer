@@ -4,7 +4,7 @@ const util = require('util');
 const dns = require('dns');
 const lookup = util.promisify(dns.lookup);
 
-const { WebSocket, WebSocketServer } = require('ws');
+const { WebSocket } = require('ws');
 
 const fs = require("fs");
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"

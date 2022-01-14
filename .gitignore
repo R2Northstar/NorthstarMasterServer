@@ -125,3 +125,5 @@ playerdata.db
 playerdata[0-9].db
 instances*.json
 backups
+
+*.pem

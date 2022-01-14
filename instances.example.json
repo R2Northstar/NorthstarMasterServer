@@ -1,0 +1,30 @@
+[
+    {
+        "id": "A",
+        "name": "Test 1",
+        "host": "http://localhost",
+        "port": 80,
+        "password": "1234"
+    },
+    {
+        "id": "B",
+        "name": "Test 2",
+        "host": "http://localhost",
+        "port": 81,
+        "password": "2345"
+    },
+    {
+        "id": "C",
+        "name": "Test 3",
+        "host": "http://localhost",
+        "port": 82,
+        "password": "3456"
+    },
+    {
+        "id": "D",
+        "name": "Test 4",
+        "host": "http://localhost",
+        "port": 83,
+        "password": "4567"
+    }
+]

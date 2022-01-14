@@ -136,7 +136,7 @@ async function decryptPayload(body, password) {
 
 async function handlePotentialPayload(body, ws) {
     let { password, data, timestamp } = await decryptPayload(JSON.parse(body))
-    const replyFunc = (event, json) => {
+    const replyFunc = async (event, json) => {
         if (ws.readyState === WebSocket.OPEN) {
             let instance = await getInstanceById(ws.id)
             ws.send(JSON.stringify(await encryptPayload({ event, data: json }, instance.password)));

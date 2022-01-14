@@ -16,13 +16,22 @@ const wss = new WebSocketServer({ noServer: true });
 console.log("Created WebSocket server")
 
 wss.on('connection', async function connection(ws) {
+    ws.everOpen = true;
     let instance = await getInstanceById(ws.id)
-    console.log("Connection from "+instance.name)
+    console.log("WebSocket connection opened from "+instance.name)
     // if(!instanceSockets[ws.id]) connectTo(instance)
-    if(!instanceSockets[ws.id]) instanceSockets[ws.id] = ws;
+    if(!instanceSockets[ws.id]) instanceSockets[instance.id] = ws;
     ws.on('message', function message(data) {
         handlePotentialPayload(data)
     });
+    ws.on('close', () => {
+        if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')
+        delete instanceSockets[instance.id]
+    })
+    ws.on('error', (err) => {
+        if(err.code == 'ECONNREFUSED') console.log('WebSocket connection refused by',instance.name)
+        else console.log(err)
+    })
 });
 
 function connectTo(instance) {

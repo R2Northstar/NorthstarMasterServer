@@ -8,8 +8,8 @@ const fs = require("fs");
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
 let instances = JSON.parse(fs.readFileSync(instanceListPath, 'utf-8'));
 
-const dataSync = require('./datasync.js');
-const dataShare = require('./datashare.js');
+const dataSync = require('./sync.js');
+const dataShare = require('./share.js');
 
 fs.watch(instanceListPath, (eventType, filename) => {
     try {

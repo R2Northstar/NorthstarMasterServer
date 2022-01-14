@@ -18,10 +18,11 @@ console.log("Created WebSocket server")
 wss.on('connection', async function connection(ws) {
     let instance = await getInstanceById(ws.id)
     console.log("Connection from "+instance.name)
-    if(!instanceSockets[ws.id]) connectTo(instance)
-    // ws.on('message', function message(data) {
-    //     handlePotentialPayload(data)
-    // });
+    // if(!instanceSockets[ws.id]) connectTo(instance)
+    if(!instanceSockets[ws.id]) instanceSockets[ws.id] = ws;
+    ws.on('message', function message(data) {
+        handlePotentialPayload(data)
+    });
 });
 
 function connectTo(instance) {

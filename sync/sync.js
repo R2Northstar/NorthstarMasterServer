@@ -60,5 +60,12 @@ module.exports = {
         } catch(e) {
             if(process.env.USE_DATASYNC_LOGGING) console.log(e)
         }
+    },
+    getState: async (data, reply) => {
+        try { 
+            reply('getState_reply', { state: getSyncState() })
+        } catch(e) {
+            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+        }
     }
 }

@@ -33,7 +33,7 @@ function connectTo(instance) {
         console.log('Opened WebSocket connection to',instance.name)
     });
     ws.on('message', function message(data) {
-        handlePotentialPayload(data)
+        handlePotentialPayload(data, instanceSockets[instance.id])
     });
     ws.on('close', () => {
         if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')

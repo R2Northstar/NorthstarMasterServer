@@ -134,16 +134,22 @@ async function decryptPayload(body, password) {
     }
 }
 
-async function handlePotentialPayload(body) {
+async function handlePotentialPayload(body, ws) {
     let { password, data, timestamp } = await decryptPayload(JSON.parse(body))
+    const replyFunc = (event, json) => {
+        if (ws.readyState === WebSocket.OPEN) {
+            let instance = await getInstanceById(ws.id)
+            ws.send(JSON.stringify(await encryptPayload({ event, data: json }, instance.password)));
+        }
+    }
     if(password == await getOwnPassword()) {
         // Is valid payload, act upon it
         if(dataSync.hasOwnProperty(data.event)) {
             // If it is a dataSync function run it 
-            dataSync[data.event]({ timestamp, payload: data.payload });
+            dataSync[data.event]({ timestamp, payload: data.payload }, replyFunc);
         } else if(dataShare.hasOwnProperty(data.event)) {
             // If it is a dataShare function run it
-            dataShare[data.event]({ timestamp, payload: data.payload });
+            dataShare[data.event]({ timestamp, payload: data.payload }, replyFunc);
         }
         // If it is neither, ignore it
     }

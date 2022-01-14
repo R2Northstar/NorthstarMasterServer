@@ -11,17 +11,15 @@ let instances = JSON.parse(fs.readFileSync(instanceListPath, 'utf-8'));
 const dataSync = require('./sync.js');
 const dataShare = require('./share.js');
 
-fs.watch(instanceListPath, (eventType, filename) => {
+fs.watch( instanceListPath, ( curr, prev ) => {
     try {
-        if(eventType == "change") {
-            let fileData = fs.readFileSync(instanceListPath, 'utf-8');
-            let fileJson = JSON.parse(fileData);
-            instances = fileJson;
-        }
-    } catch(e) {
-        console.log(e)
+        instances = JSON.parse(fs.readFileSync(instanceListPath).toString())
+        console.log( "updated instance data successfully!" )
     }
-});
+    catch (e) {
+        console.log( `encountered error updating instance data: ${e}` )
+    }
+})
 
 // gets a list of instances from the json file
 function getAllKnownInstances() {

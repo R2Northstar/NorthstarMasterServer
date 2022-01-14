@@ -5,18 +5,8 @@
 
 const { getAllKnownInstances, getInstanceById, getInstanceAddress, encryptPayload, handlePotentialPayload, handleAuthMessage, handleIncomingMessage } = require('./util.js');
 const { WebSocket, WebSocketServer } = require('ws');
-// const { JoinRequestBuffer } = require("./auth.js")
 let instanceSockets = {}
 let instanceClients = {}
-
-// async function connectToInstances() {
-//     let instances = await getAllKnownInstances();
-//     for (const instance of instances) {
-//         if(instance.id != process.env.DATASYNC_OWN_ID) {
-//             connectTo(instance)
-//         }
-//     }
-// }
 
 var timeoutCycles = 50
 var checkDelay = 10
@@ -32,9 +22,8 @@ async function checkValue(ws, resolve) {
 }
 
 async function initializeServer() {
-    // let workingIP = "localhost"
     let initClient = undefined
-    for (let instance in await getAllKnownInstances()) {
+    for (let instance of await getAllKnownInstances()) {
         if (instance.id == process.env.DATASYNC_OWN_ID) {
             continue
         }
@@ -55,6 +44,7 @@ async function initializeServer() {
         let epayload = { method: "auth", payload: { event:"serverRequestJoin", id:process.env.DATASYNC_OWN_ID }}
         initClient.send(JSON.stringify(epayload));
     }
+    // Once auth is done, master server should send over list of active servers in network and do symmetric key exchange
 }
 
 const wss = new WebSocketServer({ port:process.env.LISTEN_PORT }, id=process.env.DATASYNC_OWN_ID);
@@ -135,7 +125,6 @@ async function start(server) {
 
         if (process.env.LISTEN_PORT != 8080) {
             initializeServer()
-            //connectToInstances()
         }
         
         resolve()
@@ -152,8 +141,6 @@ async function broadcastEvent(event, payload) {
 }
 
 const broadcastEmitter = require('./broadcast.js').emitter;
-// const { extendTrace } = require('sqlite3/lib/trace');
-// const { kWebSocket } = require('ws/lib/constants');
 broadcastEmitter.addListener('event', (data) => {
     broadcastEvent(data.event, data.payload);
 })

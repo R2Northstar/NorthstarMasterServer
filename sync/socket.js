@@ -60,15 +60,16 @@ async function start(server) {
         server.on('upgrade', async function upgrade(request, socket, head) {
             const reqUrl = new URL('http://localhost'+request.url);
             let instance = await getInstanceById(reqUrl.searchParams.get('id'))
-            let instanceIp = await getInstanceAddress(instance);
-            let isAuthorized = request.socket.remoteAddress == instanceIp && !instanceClients[reqUrl.searchParams.get('id')];
+            let instanceIp = instance ? await getInstanceAddress(instance) : '';
+            let isAuthorized = instance && request.socket.remoteAddress == instanceIp && !instanceClients[reqUrl.searchParams.get('id')];
             if (reqUrl.pathname === '/sync' && isAuthorized) {
                 wss.handleUpgrade(request, socket, head, async function done(ws) {
                     ws.id = reqUrl.searchParams.get('id')
                     wss.emit('connection', ws, request);
                 });
             } else {
-                console.log('WebSocket attempt refused for',request.socket.remoteAddress,'acting as',instance.name)
+                if(instance) console.log('WebSocket attempt refused for',request.socket.remoteAddress,'acting as',instance.name)
+                else console.log('WebSocket attempt refused for',request.socket.remoteAddress,'acting as unknown instance')
                 socket.destroy();
             }
         });

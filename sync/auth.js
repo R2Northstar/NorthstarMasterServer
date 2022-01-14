@@ -1,7 +1,5 @@
-const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require("../shared/gameserver.js")
 const crypto = require("crypto")
 const fs = require("fs")
-const path = require("path")
 
 let publicKey = fs.readFileSync("./rsa_4096_pub.pem").toString()
 let privateKey = fs.readFileSync("./rsa_4096_priv.pem").toString()
@@ -68,21 +66,21 @@ module.exports = {
             else {
                 console.log("Authorisation request from " + id + " was incorrect, denying!")
             }
-            replyFunc("serverJoinChallengeResponse", {correct: correct})
+            replyFunc("serverJoinChallengeResponse", { correct })
         }
         catch (e) {
             if(process.env.USE_AUTH_LOGGING) console.log(e)
         }
     },
 
-    serverJoinChallengeResponse: async (data, replyFunc) => {
+    serverJoinChallengeResponse: async (data) => {
         try {
             let { correct } = data.data
             if (correct) {
-                console.log("Authorisation request from " + id + " was correct, authorizing!")
+                console.log("Authorisation was correct, authorized!")
             }
             else {
-                console.log("Authorisation request from " + id + " was incorrect, denying!")
+                console.log("Authorisation was incorrect, unauthorized!")
             }
         }
         catch (e) {

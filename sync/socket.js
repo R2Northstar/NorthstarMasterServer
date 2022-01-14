@@ -5,24 +5,24 @@
 
 const { getAllKnownInstances, getInstanceById, getInstanceAddress, encryptPayload, handlePotentialPayload, handleAuthMessage, handleIncomingMessage } = require('./util.js');
 const { WebSocket, WebSocketServer } = require('ws');
-const { JoinRequestBuffer } = require("./auth.js")
+// const { JoinRequestBuffer } = require("./auth.js")
 let instanceSockets = {}
 let instanceClients = {}
 
-async function connectToInstances() {
-    let instances = await getAllKnownInstances();
-    for (const instance of instances) {
-        if(instance.id != process.env.DATASYNC_OWN_ID) {
-            connectTo(instance)
-        }
-    }
-}
+// async function connectToInstances() {
+//     let instances = await getAllKnownInstances();
+//     for (const instance of instances) {
+//         if(instance.id != process.env.DATASYNC_OWN_ID) {
+//             connectTo(instance)
+//         }
+//     }
+// }
 
 var timeoutCycles = 50
 var checkDelay = 10
 
 async function checkValue(ws, resolve) {
-    for (i = 0; i < timeoutCycles; i++) {
+    for (let i = 0; i < timeoutCycles; i++) {
         await new Promise( res => setTimeout(res, checkDelay))
         if (ws.readyState != 0) {
             break
@@ -32,9 +32,9 @@ async function checkValue(ws, resolve) {
 }
 
 async function initializeServer() {
-    let workingIP = "localhost"
+    // let workingIP = "localhost"
     let initClient = undefined
-    for (instance of await getAllKnownInstances()) {
+    for (let instance in await getAllKnownInstances()) {
         if (instance.id == process.env.DATASYNC_OWN_ID) {
             continue
         }
@@ -42,7 +42,6 @@ async function initializeServer() {
             // Wait for the client to connect using async/await
             console.log("Testing connection to " + instance.id)
             initClient = await connectTo(instance)
-            initClient.id = instance.id
             //await new Promise(resolve => initClient.once('open', resolve));
             await new Promise(res => checkValue(initClient, res))
             if (initClient.readyState == 1) { // Found a working instance
@@ -68,7 +67,7 @@ wss.on('connection', async function connection(ws) {
     let instance = await getInstanceById(ws.id)
     try {
         console.log("WebSocket connection opened from "+instance.name)
-        if(!instanceSockets[ws.id]) instanceSockets[instance.id] = ws;
+        if(!instanceSockets[ws.id]) instanceSockets[ws.id] = ws;
     }
     catch (e) {
         console.log("WebSocket connection opened from unknown instance")
@@ -90,6 +89,7 @@ wss.on('connection', async function connection(ws) {
 function connectTo(instance) {
     const ws = new WebSocket('ws://'+instance.host+':'+instance.port+'/sync?id='+process.env.DATASYNC_OWN_ID, {handshakeTimeout: 200});
     ws.everOpen = false;
+    ws.id = instance.id;
     instanceSockets[instance.id] = ws;
     ws.on('open', async function open() {
         ws.everOpen = true;
@@ -116,7 +116,7 @@ function connectTo(instance) {
 }
 
 async function start(server) {
-    return new Promise((resolve, reject) => {
+    return new Promise(resolve => {
         server.on('upgrade', async function upgrade(request, socket, head) {
             const reqUrl = new URL('http://localhost'+request.url);
             let instance = await getInstanceById(reqUrl.searchParams.get('id'))
@@ -152,7 +152,7 @@ async function broadcastEvent(event, payload) {
 }
 
 const broadcastEmitter = require('./broadcast.js').emitter;
-const { extendTrace } = require('sqlite3/lib/trace');
+// const { extendTrace } = require('sqlite3/lib/trace');
 // const { kWebSocket } = require('ws/lib/constants');
 broadcastEmitter.addListener('event', (data) => {
     broadcastEvent(data.event, data.payload);

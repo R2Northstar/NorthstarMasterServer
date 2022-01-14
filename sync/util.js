@@ -149,14 +149,6 @@ async function handlePotentialPayload(body) {
     }
 }
 
-let syncState = 0;
-function getSyncState() {
-    return syncState;
-}
-function setSyncState(state) {
-    syncState = state;
-}
-
 module.exports = {
     getAllKnownInstances,
     getInstanceById,
@@ -166,7 +158,5 @@ module.exports = {
     getAllKnownAddresses,
     encryptPayload,
     decryptPayload,
-    handlePotentialPayload,
-    getSyncState,
-    setSyncState
+    handlePotentialPayload
 }

@@ -8,7 +8,11 @@ module.exports = ( fastify, opts, done ) => {
 	
 	// GET /client/servers 
 	// returns a list of available servers
-	fastify.get( '/client/servers', async ( request, response ) => {
+	fastify.get( '/client/servers',
+    {
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__CLIENT_SERVERS) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
+    },
+	async ( request, response ) => {
 		let displayServerArray = []
 		let expiredServers = [] // might be better to move this to another function at some point, but easiest to do here atm
 		

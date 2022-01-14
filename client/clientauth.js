@@ -14,6 +14,7 @@ module.exports = ( fastify, opts, done ) => {
 	// returns the user's northstar session token
 	fastify.get( '/client/origin_auth', 
 	{
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__CLIENT_ORIGINAUTH) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
 		schema: {
 			querystring: {
 				id: { type: "string" }, // the authing player's id
@@ -70,6 +71,7 @@ module.exports = ( fastify, opts, done ) => {
 	// authentication includes giving them a 1-time token to join the gameserver, as well as sending their persistent data to the gameserver
 	fastify.post( '/client/auth_with_server', 
 	{
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__CLIENT_AUTHWITHSERVER) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
 		schema: {
 			querystring: {
 				id: { type: "string" }, // id of the player trying to auth
@@ -134,6 +136,7 @@ module.exports = ( fastify, opts, done ) => {
 	// note: atm, this just sends pdata to clients and doesn't do any kind of auth stuff, potentially rewrite later
 	fastify.post( '/client/auth_with_self',
 	{
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__CLIENT_AUTHWITHSELF) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
 		schema: {
 			querystring: {
 				id: { type: "string" }, // id of the player trying to auth

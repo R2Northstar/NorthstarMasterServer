@@ -11,6 +11,7 @@ module.exports = ( fastify, opts, done ) => {
 	// note: this is entirely insecure atm, at the very least, we should prevent it from being called on servers that the account being written to isn't currently connected to
 	fastify.post( '/accounts/write_persistence', 
 	{
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__ACCOUNT_WRITEPERSISTENCE) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
 		schema: {
 			querystring: {
 				"id": { type: "string" },

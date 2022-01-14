@@ -29,6 +29,8 @@ else
 
 const ROUTE_PATHS = [ "client", "server", "account" ]
 
+if(!!(process.env.USE_RATELIMIT)) fastify.register(require('fastify-rate-limit'));
+
 for ( let routePath of ROUTE_PATHS )
 {
 	for ( let file of fs.readdirSync( routePath ) )

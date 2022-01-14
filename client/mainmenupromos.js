@@ -28,7 +28,9 @@ module.exports = ( fastify, opts, done ) => {
     // GET /client/mainmenupromos
     // returns main menu promo info
     fastify.get( '/client/mainmenupromos', 
-    {},
+    {
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__CLIENT_MAINMENUPROMOS) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
+    },
     async ( request, reply ) => {
         return mainMenuPromoData
     })

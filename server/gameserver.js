@@ -91,6 +91,7 @@ module.exports = ( fastify, opts, done ) => {
 	// adds a gameserver to the server list
 	fastify.post( '/server/add_server', 
 	{
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__SERVER_ADDSERVER) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
 		schema: {
 			querystring: {
 				port: { type: "integer" }, // the port the gameserver is being hosted on ( for connect )
@@ -112,6 +113,7 @@ module.exports = ( fastify, opts, done ) => {
 	// refreshes a gameserver's last heartbeat time, gameservers are removed after 30 seconds without a heartbeat
 	fastify.post( '/server/heartbeat',
 	{
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__SERVER_HEARTBEAT) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
 		schema: {
 			querystring: {
 				id: { type: "string" }, // the id of the server sending this message
@@ -138,7 +140,11 @@ module.exports = ( fastify, opts, done ) => {
 	// POST /server/update_values
 	// updates values shown on the server list, such as map, playlist, or player count
 	// no schema for this one, since it's fully dynamic and fastify doesnt do optional params
-	fastify.post( '/server/update_values', async ( request, reply ) => {
+	fastify.post( '/server/update_values', 
+    {
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__SERVER_UPDATEVALUES) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
+    },
+	async ( request, reply ) => {
 		if ( !( "id" in request.query ) )
 			return null
 		
@@ -177,6 +183,7 @@ module.exports = ( fastify, opts, done ) => {
 	// removes a gameserver from the server list
 	fastify.delete( '/server/remove_server',
 	{
+		config: { rateLimit: { max: Number(process.env.REQ_PER_MINUTE__SERVER_REMOVESERVER) || (Number(process.env.REQ_PER_MINUTE__GLOBAL) || 9999) } }, // ratelimit
 		schema: {
 			querystring: {
 				id: { type: "string" }

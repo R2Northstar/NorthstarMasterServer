@@ -4,12 +4,32 @@ const util = require('util');
 const dns = require('dns');
 const lookup = util.promisify(dns.lookup);
 
+const { WebSocket, WebSocketServer } = require('ws');
+
 const fs = require("fs");
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
 let instances = JSON.parse(fs.readFileSync(instanceListPath, 'utf-8'));
 
 const dataSync = require('./sync.js');
 const dataShare = require('./share.js');
+const dataAuth = require('./auth.js');
+
+const timer = ms => new Promise( res => setTimeout(res, ms));
+class JoinRequestBuffer {
+    constructor() {
+        this.buffer = {}
+    }
+    generateSecret(id) {
+        var secret = crypto.randomBytes(64).toString("hex") // Generate a random secret
+        this.buffer[id] = secret
+        timer(60000).then(_=>delete this.buffer[id]); // Make sure requests expire after 60s
+        return secret
+    }
+    checkSecret(response, id) {
+        return response === this.buffer[id]
+    }
+}
+joinBuffer = new JoinRequestBuffer()
 
 fs.watch(instanceListPath, (eventType, filename) => {
     try {
@@ -155,6 +175,34 @@ async function handlePotentialPayload(body, ws) {
     }
 }
 
+async function handleAuthMessage(body, ws) {
+    let { event, data } = body
+    //console.log(event + " " + data)
+    const replyFunc = async (event, json) => {
+        if (ws.readyState === WebSocket.OPEN) {
+            let instance = await getInstanceById(ws.id)
+            ws.send(JSON.stringify({ method: "auth", payload: { event, data: json }}));
+        }
+    }
+    if(dataAuth.hasOwnProperty(event)) {
+        dataAuth[event]({ data:data, id:ws.id, buffer: joinBuffer}, replyFunc);
+    }
+}
+
+async function handleIncomingMessage(data, ws) {
+    //console.log("Checking if ws is not undefined")
+    //console.log(ws)
+    //console.log(data.toString())
+    var msg = JSON.parse(data)
+    //console.log(msg)
+    if (msg.method == "auth") {
+        handleAuthMessage(msg.payload, ws)
+    }
+    else {
+        handlePotentialPayload(msg.payload, ws)
+    }
+}
+
 module.exports = {
     getAllKnownInstances,
     getInstanceById,
@@ -164,5 +212,7 @@ module.exports = {
     getAllKnownAddresses,
     encryptPayload,
     decryptPayload,
-    handlePotentialPayload
+    handlePotentialPayload,
+    handleAuthMessage,
+    handleIncomingMessage
 }

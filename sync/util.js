@@ -131,11 +131,7 @@ async function handleAuthMessage(body, ws) {
 }
 
 async function handleIncomingMessage(data, ws) {
-    //console.log("Checking if ws is not undefined")
-    //console.log(ws)
-    // console.log(data.toString())
     var msg = JSON.parse(data)
-    // console.log(msg)
     if (msg.method == "auth") {
         handleAuthMessage(msg.payload, ws)
     }

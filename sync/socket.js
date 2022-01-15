@@ -5,8 +5,9 @@
 
 const { getAllKnownInstances, getInstanceById, getInstanceAddress, handleIncomingMessage } = require('./util.js');
 const { encryptPayload } = require('./encryption.js');
-const { getInstanceToken, removeToken, hasToken, setToken, generateToken } = require('./tokens.js');
+const { getInstanceToken, removeToken, hasToken, setToken, generateToken, getOwnToken } = require('./tokens.js');
 const { attemptSyncWithAny, setOwnSyncState, getOwnSyncState } = require('./syncutil.js');
+const { addNetworkNode, getNetworkNode, removeNetworkNode, getNetworkNodes } = require("./network.js")
 
 const { WebSocket, WebSocketServer } = require('ws');
 let instanceSockets = {}
@@ -22,6 +23,16 @@ async function checkValue(ws, resolve) {
         }
     }
     resolve()
+}
+
+async function initializeAsNewNetwork() {
+    // Could not find another active server, starting new network
+    console.log("Unable to find active server from instances. Creating new network")
+    setOwnSyncState(2);
+    await setToken(process.env.DATASYNC_OWN_ID, generateToken())
+    await addNetworkNode(process.env.DATASYNC_OWN_ID, await getOwnToken())
+    console.log(getNetworkNodes())
+    // set sync state here maybe?
 }
 
 async function initializeServer() {
@@ -46,6 +57,9 @@ async function initializeServer() {
         console.log("Found working instance " + initClient.id)
         let epayload = { method: "auth", payload: { event:"serverRequestJoin", id:process.env.DATASYNC_OWN_ID }}
         initClient.send(JSON.stringify(epayload));
+    }
+    else {
+        initializeAsNewNetwork()
     }
     // Once auth is done, master server should send over list of active servers in network and do symmetric key exchange
 }
@@ -125,8 +139,7 @@ async function start(server) {
         if (process.env.LISTEN_PORT != 8080) {
             initializeServer()
         } else {
-            setOwnSyncState(2);
-            setToken(process.env.DATASYNC_OWN_ID, generateToken());
+            initializeAsNewNetwork()
         }
         
         resolve()

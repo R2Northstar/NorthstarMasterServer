@@ -1,5 +1,8 @@
 const crypto = require("crypto")
 const fs = require("fs")
+const { broadcastEvent } = require("./broadcast")
+
+const { setToken, getAllTokens, generateToken, bulkSetTokens, hasToken } = require("./tokens")
 
 let publicKey = fs.readFileSync("./rsa_4096_pub.pem").toString()
 let privateKey = fs.readFileSync("./rsa_4096_priv.pem").toString()
@@ -59,14 +62,23 @@ module.exports = {
     serverJoinChallengeAttempt: async (data, replyFunc) => {
         try {
             let { response, id } = data.data
-            let correct = data.buffer.checkSecret(response, id)
+            let correct = data.buffer.checkSecret(response, id) && !hasToken(id)
+            let token;
+            let encryptedToken;
             if (correct) {
                 console.log("Authorisation request from " + id + " was correct, authorizing!")
+                token = generateToken();
+                encryptedToken = encrypt(token, publicKey);
+                setToken(id, token)
             }
             else {
                 console.log("Authorisation request from " + id + " was incorrect, denying!")
             }
-            replyFunc("serverJoinChallengeResponse", { correct })
+            replyFunc("serverJoinChallengeResponse", { correct, token: (correct ? encrypt(token, publicKey) : undefined) })
+
+            if(correct) {
+                broadcastEvent('tokenUpdate', { id, tokens: getAllTokens() })
+            }
         }
         catch (e) {
             if(process.env.USE_AUTH_LOGGING) console.log(e)
@@ -75,9 +87,11 @@ module.exports = {
 
     serverJoinChallengeResponse: async (data) => {
         try {
-            let { correct } = data.data
+            let { correct, token } = data.data
             if (correct) {
                 console.log("Authorisation was correct, authorized!")
+                tokenDecrypted = decrypt(token, privateKey);
+                setToken(process.env.DATASYNC_OWN_ID, tokenDecrypted);
             }
             else {
                 console.log("Authorisation was incorrect, unauthorized!")

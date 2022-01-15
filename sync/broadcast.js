@@ -8,5 +8,8 @@ module.exports = {
     emitter,
     broadcastEvent: function(event, payload) {
         emitter.emit('event', { event, payload })
+    },
+    startSync: function() {
+        emitter.emit('startSync');
     }
 }

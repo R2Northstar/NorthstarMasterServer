@@ -1,7 +1,8 @@
-const { getSyncState } = require('./syncutil.js')
+const { getOwnSyncState } = require('./syncutil.js')
 const accounts = require('../shared/accounts.js')
-const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require("../shared/gameserver.js")
-
+const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require("../shared/gameserver.js");
+const { setToken, bulkSetTokens } = require('./tokens.js');
+const { startSync } = require('./broadcast.js');
 module.exports = {
     // eventName: async (data) => {
     //     try { 
@@ -62,10 +63,30 @@ module.exports = {
         }
     },
     getState: async (data, reply) => {
-        try { 
-            reply('getState_reply', { state: getSyncState() })
+        try {
+            reply('getStateReply', { state: getOwnSyncState() })
         } catch(e) {
             if(process.env.USE_DATASYNC_LOGGING) console.log(e)
         }
-    }
+    },
+    getStateReply: async (data, reply, ws) => {
+        try {
+            ws.syncState = data.payload.state
+        } catch(e) {
+            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+        }
+    },
+
+    tokenUpdate: async (data, reply) => {
+        try { 
+            console.log('Token received for '+data.payload.id)
+            setToken(data.payload.id, data.payload.tokens[data.payload.id])
+            if(data.payload.id == process.env.DATASYNC_OWN_ID) {
+                bulkSetTokens(data.payload.tokens);
+                startSync()
+            }
+        } catch(e) {
+            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+        }
+    },
 }

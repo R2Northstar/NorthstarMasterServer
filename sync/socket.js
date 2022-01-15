@@ -3,7 +3,11 @@
 // Before it can start syncing, it has to join a network
 // This is handled by auth.js
 
-const { getAllKnownInstances, getInstanceById, getInstanceAddress, encryptPayload, handlePotentialPayload, handleAuthMessage, handleIncomingMessage } = require('./util.js');
+const { getAllKnownInstances, getInstanceById, getInstanceAddress, handleIncomingMessage } = require('./util.js');
+const { encryptPayload } = require('./encryption.js');
+const { getInstanceToken, removeToken, hasToken, setToken, generateToken } = require('./tokens.js');
+const { attemptSyncWithAny, setOwnSyncState, getOwnSyncState } = require('./syncutil.js');
+
 const { WebSocket, WebSocketServer } = require('ws');
 let instanceSockets = {}
 
@@ -68,6 +72,7 @@ wss.on('connection', async function connection(ws) {
     ws.on('close', () => {
         if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')
         delete instanceSockets[instance.id]
+        removeToken(instance.id)
     })
     ws.on('error', (err) => {
         if(err.code == 'ECONNREFUSED') console.log('WebSocket connection refused by',instance.name)
@@ -85,13 +90,7 @@ function connectTo(instance) {
         console.log('Opened WebSocket connection to',instance.name)
     });
     ws.on('message', function message(data) {
-        let { method, payload } = JSON.parse(data)
-        if (method == "auth") {
-            handleAuthMessage(payload, instanceSockets[instance.id])
-        }
-        else {
-            handlePotentialPayload(payload, instanceSockets[instance.id])
-        }
+        handleIncomingMessage(data, ws)
     });
     ws.on('close', () => {
         if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')
@@ -122,8 +121,12 @@ async function start(server) {
             }
         });
 
+        // Need to add proper detection for first server
         if (process.env.LISTEN_PORT != 8080) {
             initializeServer()
+        } else {
+            setOwnSyncState(2);
+            setToken(process.env.DATASYNC_OWN_ID, generateToken());
         }
         
         resolve()
@@ -131,17 +134,21 @@ async function start(server) {
 }
 
 async function broadcastEvent(event, payload) {
-    wss.clients.forEach(async function each(ws) {
+    for (const [id, ws] of Object.entries(instanceSockets)) {
         if (ws.readyState === WebSocket.OPEN) {
-            let instance = await getInstanceById(ws.id)
-            ws.send(JSON.stringify(await encryptPayload(payload, instance.password)));
+            if(hasToken(id))
+                ws.send(JSON.stringify({ method: 'sync', payload: await encryptPayload({ event, payload }, await getInstanceToken(id)) }));
         }
-    });
+    }
 }
 
 const broadcastEmitter = require('./broadcast.js').emitter;
+
 broadcastEmitter.addListener('event', (data) => {
     broadcastEvent(data.event, data.payload);
+})
+broadcastEmitter.addListener('startSync', async (data) => {
+    attemptSyncWithAny(instanceSockets)
 })
 
 module.exports = {

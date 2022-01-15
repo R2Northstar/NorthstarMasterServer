@@ -140,7 +140,7 @@ async function handleIncomingMessage(data, ws) {
         handleAuthMessage(msg.payload, ws)
     }
     else {
-        if(getOwnSyncState() != 2) handlePotentialPayload(msg.payload, ws)
+        if(getOwnSyncState() == 2) handlePotentialPayload(msg.payload, ws)
     }
 }
 

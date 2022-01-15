@@ -38,10 +38,7 @@ async function initializeAsNewNetwork() {
 async function initializeServer() {
     let initClient = undefined
     for (let instance of await getAllKnownInstances()) {
-        if (instance.id == process.env.DATASYNC_OWN_ID) {
-            continue
-        }
-        else {
+        if (instance.id != process.env.DATASYNC_OWN_ID) {
             // Wait for the client to connect using async/await
             console.log("Testing connection to " + instance.id)
             initClient = await connectTo(instance)

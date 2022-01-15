@@ -14,8 +14,8 @@ function setReceivedSyncData( hasReceived )
 	receivedSyncData = hasReceived
 }
 
-var stateTimeoutCycles = 5
-var stateCheckDelay = 100
+var stateTimeoutCycles = 50
+var stateCheckDelay = 10
 
 async function getInstanceState( ws, resolve )
 {

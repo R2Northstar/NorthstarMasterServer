@@ -19,7 +19,7 @@ async function encryptPayload(body, token) {
 
         return { iv: initVector, data: encryptedData.toString() }
     } catch(e) {
-        // console.log(e)
+        console.log(e)
         return {} // don't ever error cause i'm nice
     }
 }
@@ -40,7 +40,7 @@ async function decryptPayload(body, token) {
         let json = JSON.parse(decryptedData);
         return json
     } catch(e) {
-        // console.log(e)
+        console.log(e)
         return {} // don't ever error cause i'm nice
     }
 }

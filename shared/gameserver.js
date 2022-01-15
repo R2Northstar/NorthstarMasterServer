@@ -1,5 +1,5 @@
-const crypto = require( 'crypto' )
-const { broadcastEvent } = require('../sync/broadcast.js')
+const crypto = require( "crypto" )
+const { broadcastEvent } = require( "../sync/broadcast.js" )
 
 class GameServer
 {
@@ -9,23 +9,23 @@ class GameServer
 	// int maxPlayers
 	// string map
 	// string playlist
-	
+
 	// string ip
 	// int port
 	// int authPort
-	
+
 	// bool hasPassword
 	// string password
 
 	// object modInfo
 	// object pdiff
-	
+
 	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = {} )
 	{
 		if ( nameOrServer instanceof( GameServer ) ) // copy constructor
 		{
 			this.lastHeartbeat = nameOrServer.lastHeartbeat
-			
+
 			this.id = nameOrServer.id
 			this.serverAuthToken = nameOrServer.serverAuthToken
 			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.pdiffs )
@@ -35,8 +35,8 @@ class GameServer
 			this.lastHeartbeat = Date.now()
 			this.lastModified = Date.now()
 
-			this.id = crypto.randomBytes(16).toString( "hex" )
-			this.serverAuthToken = crypto.randomBytes(16).toString( "hex" )
+			this.id = crypto.randomBytes( 16 ).toString( "hex" )
+			this.serverAuthToken = crypto.randomBytes( 16 ).toString( "hex" )
 			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
 		}
 	}
@@ -49,14 +49,14 @@ class GameServer
 		this.maxPlayers = maxPlayers
 		this.map = map
 		this.playlist = playlist
-		
+
 		this.ip = ip
 		this.port = port
 		this.authPort = authPort
-		
+
 		this.hasPassword = false
-		
-		if ( !!password )
+
+		if ( password )
 		{
 			this.password = password
 			this.hasPassword = true
@@ -76,18 +76,25 @@ let gameServers = {}
 
 module.exports = {
 	GameServer: GameServer,
-	
-	GetGameServers: function() { return gameServers },
-	AddGameServer: function( gameserver, broadcast = true ) { 
-		if(broadcast) broadcastEvent('serverAdd', gameserver) // data sharing
+
+	GetGameServers: function()
+	{
+		return gameServers
+	},
+	AddGameServer: function( gameserver, broadcast = true )
+	{
+		if( broadcast ) broadcastEvent( "serverAdd", gameserver ) // data sharing
 		gameServers[ gameserver.id ] = gameserver
 	},
-	RemoveGameServer: function( gameserver, broadcast = true ) { 
-		if(broadcast) broadcastEvent('serverRemove', gameserver) // data sharing
+	RemoveGameServer: function( gameserver, broadcast = true )
+	{
+		if( broadcast ) broadcastEvent( "serverRemove", gameserver ) // data sharing
 		delete gameServers[ gameserver.id ]
 	},
-	UpdateGameServer: function( gameserver, data, broadcast = true ) {
-		if(broadcast) broadcastEvent('serverUpdate', { gameserver, data } ) // data sharing
+	UpdateGameServer: function( gameserver, data, broadcast = true )
+	{
+		if( !gameserver ) return
+		if( broadcast ) broadcastEvent( "serverUpdate", { gameserver, data } ) // data sharing
 		for ( let key of Object.keys( data ) )
 		{
 			if ( key == "id" || key == "port" || key == "authport" || !( key in gameserver ) || data[ key ].length >= 512 )

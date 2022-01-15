@@ -1,5 +1,9 @@
 const crypto = require('crypto');
-const { lookup } = require('dns');
+
+const util = require('util');
+const dns = require('dns');
+const lookup = util.promisify(dns.lookup);
+
 const { WebSocket } = require('ws');
 
 const { getOwnToken, getInstanceToken } = require('./tokens.js');

@@ -1,3 +1,5 @@
+// MessageHandling.js is a utility file that takes in a message and routes it to the correct handler
+
 const { getOwnToken, getInstanceToken } = require('./network.js');
 const { getOwnSyncState } = require('./syncutil.js');
 const { encryptPayload, decryptPayload } = require('./encryption.js');
@@ -10,6 +12,8 @@ const crypto = require('crypto');
 
 const { WebSocket } = require('ws');
 
+// The Join Request Buffer is a rolling buffer that holds secrets pertaining to the authentication process
+// During the authentication process, a secret is generated every time a node attempts to join the network
 const timer = ms => new Promise( res => setTimeout(res, ms));
 class JoinRequestBuffer {
     constructor() {
@@ -51,7 +55,6 @@ async function handlePotentialPayload(body, ws) {
 
 async function handleAuthMessage(body, ws) {
     let { event, data } = body
-    //console.log(event + " " + data)
     const replyFunc = async (event, json) => {
         if (ws.readyState === WebSocket.OPEN) {
             // let instance = await getInstanceById(ws.id)

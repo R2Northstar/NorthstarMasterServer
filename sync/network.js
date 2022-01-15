@@ -1,3 +1,5 @@
+// Network.js holds data about the network the node is in
+
 const crypto = require('crypto');
 
 let network = {}

@@ -1,3 +1,6 @@
+// Sync.js is responsible for handling all the actual sync messages sent within the network
+// It contains the message handlers for all types of sync messages
+
 const { getOwnSyncState, setReceivedSyncData } = require( "./syncutil.js" )
 const accounts = require( "../shared/accounts.js" )
 const { GameServer, GetGameServers, AddGameServer, UpdateGameServer } = require( "../shared/gameserver.js" )

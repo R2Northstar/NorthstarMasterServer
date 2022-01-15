@@ -1,3 +1,6 @@
+// Encryption.js is the utility file for encrypting and decrypting sync messages
+// Sync messages are encrypted using a symmetric key generated and established during the authentication process
+
 const crypto = require('crypto')
 const { getOwnToken } = require('./network.js')
 

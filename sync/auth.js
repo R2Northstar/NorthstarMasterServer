@@ -1,3 +1,6 @@
+// Auth.js is the file responsible for authenticating a new node to a network
+// For more information on the authentication protocol, see auth.md in the root directory of the project
+
 const crypto = require("crypto")
 const fs = require("fs")
 const { broadcastEvent, startSync, connectTo } = require("./broadcast")

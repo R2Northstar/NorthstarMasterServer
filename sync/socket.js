@@ -16,6 +16,9 @@ let instanceSockets = {}
 var timeoutCycles = 50
 var checkDelay = 10
 
+
+// This is some code for handling the command line arguments
+// This is just to overwrite .env when debugging
 const args = process.argv.slice(2);
 console.log('Command line arguments: ', args);
 for (let arg of args) {
@@ -32,6 +35,7 @@ for (let arg of args) {
     }
 }
 
+// Check state of websocket until timeout
 async function checkValue( ws, resolve )
 {
 	for ( let i = 0; i < timeoutCycles; i++ )
@@ -50,11 +54,13 @@ async function initializeAsNewNetwork()
 	// Could not find another active server, starting new network
 	console.log( "Unable to find active server from instances. Creating new network" )
 	setOwnSyncState( 2 )
-	await addNetworkNode( process.env.DATASYNC_OWN_ID, process.env.NETWORK_EXTERNAL_IP, parseInt(process.env.LISTEN_PORT), generateToken() )
-	// console.log(getNetworkNodes())
-	// set sync state here maybe?
+	addNetworkNode( process.env.DATASYNC_OWN_ID, process.env.NETWORK_EXTERNAL_IP, parseInt(process.env.LISTEN_PORT), generateToken() )
 }
 
+// When the master server is initiated, this function is called
+// It loops through all nodes in instances.json and tries to connect to one of them
+// If it finds one, it starts the initiation process
+// If it cant, it assumes it is the first node of the network and creates a new network
 async function initializeServer()
 {
 	let initClient = undefined
@@ -75,7 +81,6 @@ async function initializeServer()
 	}
 	if ( initClient.readyState == 1 )
 	{
-		//initClient.on('message', msg => handleIncomingMessage(msg, initClient) );
 		console.log( "Found working instance " + initClient.id )
 		let epayload = { method: "auth", payload: { event:"serverRequestJoin", id:process.env.DATASYNC_OWN_ID }}
 		initClient.send( JSON.stringify( epayload ) )
@@ -84,9 +89,12 @@ async function initializeServer()
 	{
 		initializeAsNewNetwork()
 	}
-	// Once auth is done, master server should send over list of active servers in network and do symmetric key exchange
 }
 
+// Each node has a WebSocketServer so that it can accept new connections.
+// When a new node joins the network, it connects to all other nodes
+// Since websockets are full-duplex, that node doesnt need to connect back
+// TODO: we should really handle dropped connections and server outages
 const wss = new WebSocketServer( { port:process.env.LISTEN_PORT } )
 console.log( "Created WebSocket server on port " + process.env.LISTEN_PORT.toString() )
 console.log( "Self-registering with ID " + process.env.DATASYNC_OWN_ID )
@@ -125,6 +133,7 @@ wss.on( "connection", async function connection( ws )
 	} )
 } )
 
+// A fairly simple wrapper function that takes in an instance object and returns a websocket connection
 function connectTo( instance )
 {
 	const ws = new WebSocket( ( instance.secure ? "wss://" : "ws://" )+instance.host+":"+instance.port+"/sync?id="+process.env.DATASYNC_OWN_ID, {handshakeTimeout: 200} )
@@ -180,20 +189,14 @@ async function start( server )
 			}
 		} )
 
-		// Need to add proper detection for first server
-		if ( process.env.LISTEN_PORT != 8080 )
-		{
-			initializeServer()
-		}
-		else
-		{
-			initializeAsNewNetwork()
-		}
+		initializeServer()
 
 		resolve()
 	} )
 }
 
+// Because of dependency reasons, the message handlers cannot call functions from socket.js directly
+// Instead, we use the workaround of event listeners to make sure this can still happen
 async function broadcastEvent( event, payload )
 {
 	console.log("Broadcasting message to all sockets")
@@ -209,6 +212,7 @@ async function broadcastEvent( event, payload )
 
 const broadcastEmitter = require( "./broadcast.js" ).emitter
 
+// The generic function for sending out events to the whole network
 broadcastEmitter.addListener( "event", ( data ) =>
 {
 	broadcastEvent( data.event, data.payload )
@@ -217,9 +221,10 @@ broadcastEmitter.addListener( "startSync", async () =>
 {
 	attemptSyncWithAny( instanceSockets )
 } )
+// When a new node joins, it needs to connect to all nodes in the network
+// Since this is done from a message handler in auth.js, we use this eventlistener
 broadcastEmitter.addListener( "connectTo", ( instance ) =>
 {
-	console.log(instance)
 	return connectTo(instance)
 } )
 module.exports = {

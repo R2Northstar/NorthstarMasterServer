@@ -3,8 +3,7 @@ const fs = require("fs")
 const { broadcastEvent, startSync } = require("./broadcast")
 const { encryptPayload, decryptPayload } = require("./encryption")
 
-const { setToken, getAllTokens, hasToken, getOwnToken } = require("./tokens")
-const { addNetworkNode, getNetworkNodes, setNetworkNodes, generateToken } = require("./network")
+const { addNetworkNode, getNetworkNodes, setNetworkNodes, generateToken, hasNetworkNode } = require("./network")
 
 let publicKey = fs.readFileSync("./rsa_4096_pub.pem").toString()
 let privateKey = fs.readFileSync("./rsa_4096_priv.pem").toString()
@@ -71,14 +70,13 @@ module.exports = {
     serverJoinChallengeAttempt: async (data, replyFunc) => { // Received by Master from Client
         try {
             let { response, id } = data.data
-            let correct = data.buffer.checkSecret(response, id) && !hasToken(id)
+            let correct = data.buffer.checkSecret(response, id) && !hasNetworkNode(id)
             let token;
             let encryptedToken;
             if (correct) {
                 console.log("Authorisation request from " + id + " was correct, authorizing!")
                 token = generateToken();
                 encryptedToken = encrypt(token, publicKey); // Send new master server token to network
-                setToken(id, token)
                 // console.log(token)
                 // console.log(id)
                 addNetworkNode(id, token)
@@ -105,9 +103,8 @@ module.exports = {
             if (correct) {
                 console.log("Authorisation was correct, authorized!")
                 tokenDecrypted = decrypt(token, privateKey);
-                setToken(process.env.DATASYNC_OWN_ID, tokenDecrypted);
 
-                let decNetwork = await decryptPayload(data.data.network, await getOwnToken())
+                let decNetwork = await decryptPayload(data.data.network, tokenDecrypted)
                 // console.log("Network is " + JSON.stringify(decNetwork.data))
                 setNetworkNodes(JSON.parse(decNetwork.data))
                 console.log("Received network data from master")

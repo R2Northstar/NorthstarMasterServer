@@ -1,7 +1,6 @@
 const { getOwnSyncState, setReceivedSyncData } = require( "./syncutil.js" )
 const accounts = require( "../shared/accounts.js" )
 const { GameServer, GetGameServers, AddGameServer, UpdateGameServer } = require( "../shared/gameserver.js" )
-const { setToken } = require( "./tokens.js" )
 const { startSync } = require( "./broadcast.js" )
 module.exports = {
 	// eventName: async (data) => {

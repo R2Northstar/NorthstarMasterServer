@@ -1,9 +1,5 @@
 const crypto = require('crypto');
-
-const util = require('util');
-const dns = require('dns');
-const lookup = util.promisify(dns.lookup);
-
+const { lookup } = require('dns');
 const { WebSocket } = require('ws');
 
 const { getOwnToken, getInstanceToken } = require('./tokens.js');
@@ -16,6 +12,7 @@ let instances = JSON.parse(fs.readFileSync(instanceListPath, 'utf-8'));
 const dataSync = require('./sync.js');
 const dataShare = require('./share.js');
 const dataAuth = require('./auth.js');
+const { getOwnSyncState } = require('./syncutil.js');
 
 const timer = ms => new Promise( res => setTimeout(res, ms));
 class JoinRequestBuffer {
@@ -25,16 +22,16 @@ class JoinRequestBuffer {
     generateSecret(id) {
         var secret = crypto.randomBytes(64).toString("hex") // Generate a random secret
         this.buffer[id] = secret
-        timer(60000).then(_=>delete this.buffer[id]); // Make sure requests expire after 60s
+        timer(60000).then(()=>delete this.buffer[id]); // Make sure requests expire after 60s
         return secret
     }
     checkSecret(response, id) {
         return response === this.buffer[id]
     }
 }
-joinBuffer = new JoinRequestBuffer()
+let joinBuffer = new JoinRequestBuffer()
 
-fs.watch(instanceListPath, (eventType, filename) => {
+fs.watch(instanceListPath, eventType => {
     try {
         if(eventType == "change") {
             let fileData = fs.readFileSync(instanceListPath, 'utf-8');
@@ -58,7 +55,7 @@ function getAllKnownInstances() {
 }
 // gets a specific instance from the json file
 function getInstanceById(id) {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         try {
             resolve(instances.find(inst => inst.id == id));
         } catch(e) {
@@ -68,7 +65,7 @@ function getInstanceById(id) {
 }
 // gets own instance from the json file based on id env var
 function getOwnInstance() {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         try {
             resolve(instances.find(inst => inst.id == process.env.DATASYNC_OWN_ID));
         } catch(e) {
@@ -143,7 +140,7 @@ async function handleIncomingMessage(data, ws) {
         handleAuthMessage(msg.payload, ws)
     }
     else {
-        handlePotentialPayload(msg.payload, ws)
+        if(getOwnSyncState() != 2) handlePotentialPayload(msg.payload, ws)
     }
 }
 

@@ -1,39 +1,12 @@
-const crypto = require('crypto');
-
 const util = require('util');
 const dns = require('dns');
 const lookup = util.promisify(dns.lookup);
 
-const { WebSocket } = require('ws');
-
-const { getOwnToken, getInstanceToken } = require('./network.js');
 const { encryptPayload, decryptPayload } = require('./encryption.js');
 
 const fs = require("fs");
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
 let instances = JSON.parse(fs.readFileSync(instanceListPath, 'utf-8'));
-
-const dataSync = require('./sync.js');
-const dataShare = require('./share.js');
-const dataAuth = require('./auth.js');
-const { getOwnSyncState } = require('./syncutil.js');
-
-const timer = ms => new Promise( res => setTimeout(res, ms));
-class JoinRequestBuffer {
-    constructor() {
-        this.buffer = {}
-    }
-    generateSecret(id) {
-        var secret = crypto.randomBytes(64).toString("hex") // Generate a random secret
-        this.buffer[id] = secret
-        timer(60000).then(()=>delete this.buffer[id]); // Make sure requests expire after 60s
-        return secret
-    }
-    checkSecret(response, id) {
-        return response === this.buffer[id]
-    }
-}
-let joinBuffer = new JoinRequestBuffer()
 
 fs.watch(instanceListPath, eventType => {
     try {
@@ -98,53 +71,6 @@ function getInstanceAddress(instance) {
     });
 }
 
-async function handlePotentialPayload(body, ws) {
-    let { token, data, timestamp } = await decryptPayload(body)
-    // console.log(data)
-    const replyFunc = async (event, json) => {
-        if (ws.readyState === WebSocket.OPEN) {
-            let token = await getInstanceToken(ws.id);
-            let encrypted = await encryptPayload({ event, payload: json }, token)
-            ws.send(JSON.stringify({ method: 'sync', payload: encrypted }));
-        }
-    }
-    if(token == await getOwnToken()) {
-        // Is valid payload, act upon it
-        if(dataSync.hasOwnProperty(data.event)) {
-            // If it is a dataSync function run it 
-            dataSync[data.event]({ timestamp, payload: data.payload }, replyFunc, ws);
-        } else if(dataShare.hasOwnProperty(data.event) && getOwnSyncState() == 2) {
-            // If it is a dataShare function run it
-            dataShare[data.event]({ timestamp, payload: data.payload }, replyFunc, ws);
-        }
-        // If it is neither, ignore it
-    }
-}
-
-async function handleAuthMessage(body, ws) {
-    let { event, data } = body
-    //console.log(event + " " + data)
-    const replyFunc = async (event, json) => {
-        if (ws.readyState === WebSocket.OPEN) {
-            // let instance = await getInstanceById(ws.id)
-            ws.send(JSON.stringify({ method: "auth", payload: { event, data: json }}));
-        }
-    }
-    if(dataAuth.hasOwnProperty(event)) {
-        dataAuth[event]({ data:data, id:ws.id, buffer: joinBuffer}, replyFunc, ws);
-    }
-}
-
-async function handleIncomingMessage(data, ws) {
-    var msg = JSON.parse(data)
-    if (msg.method == "auth") {
-        handleAuthMessage(msg.payload, ws)
-    }
-    else {
-        handlePotentialPayload(msg.payload, ws)
-    }
-}
-
 module.exports = {
     getAllKnownInstances,
     getInstanceById,
@@ -152,8 +78,5 @@ module.exports = {
     getInstanceAddress,
     getAllKnownAddresses,
     encryptPayload,
-    decryptPayload,
-    handlePotentialPayload,
-    handleAuthMessage,
-    handleIncomingMessage
+    decryptPayload
 }

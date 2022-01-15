@@ -11,5 +11,8 @@ module.exports = {
     },
     startSync: function() {
         emitter.emit('startSync');
+    },
+    connectTo: function(instance) {
+        emitter.emit('connectTo', instance);
     }
 }

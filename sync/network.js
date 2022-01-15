@@ -2,8 +2,8 @@ const crypto = require('crypto');
 
 let network = {}
 
-function addNetworkNode(id, token) {
-    network[id] = {id, token}
+function addNetworkNode(id, ip, port, token) {
+    network[id] = {id, ip, port, token}
 }
 
 function getNetworkNode(id) {

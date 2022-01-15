@@ -1,7 +1,9 @@
 const crypto = require("crypto")
 const fs = require("fs")
-const { broadcastEvent, startSync } = require("./broadcast")
+const { broadcastEvent, startSync, connectTo } = require("./broadcast")
 const { encryptPayload, decryptPayload } = require("./encryption")
+
+const { getInstanceById } = require("./util")
 
 const { addNetworkNode, getNetworkNodes, setNetworkNodes, generateToken, hasNetworkNode } = require("./network")
 
@@ -67,7 +69,7 @@ module.exports = {
         }
     },
 
-    serverJoinChallengeAttempt: async (data, replyFunc) => { // Received by Master from Client
+    serverJoinChallengeAttempt: async (data, replyFunc, socket) => { // Received by Master from Client
         try {
             let { response, id } = data.data
             let correct = data.buffer.checkSecret(response, id) && !hasNetworkNode(id)
@@ -77,10 +79,9 @@ module.exports = {
                 console.log("Authorisation request from " + id + " was correct, authorizing!")
                 token = generateToken();
                 encryptedToken = encrypt(token, publicKey); // Send new master server token to network
-                // console.log(token)
-                // console.log(id)
-                addNetworkNode(id, token)
-                // console.log(getNetworkNodes())
+                addNetworkNode(id, socket._socket._peername.address, (await getInstanceById(id)).port, token)
+                broadcastEvent("addNetworkNode", {id, host: socket._socket._peername.address, port: (await getInstanceById(id)).port, token})
+                console.log("Updated network! Current network: " + Object.keys(await getNetworkNodes()))
             }
             else {
                 console.log("Authorisation request from " + id + " was incorrect, denying!")
@@ -95,7 +96,7 @@ module.exports = {
         }
     },
 
-    serverJoinChallengeResponse: async (data) => { // Received by Client from Master
+    serverJoinChallengeResponse: async (data, replyFunc, socket) => { // Received by Client from Master
         try {
             let { correct, token, id, network } = data.data
             // console.log(data.data)
@@ -108,6 +109,12 @@ module.exports = {
                 // console.log("Network is " + JSON.stringify(decNetwork.data))
                 setNetworkNodes(JSON.parse(decNetwork.data))
                 console.log("Received network data from master")
+                for (let node of Object.values( await getNetworkNodes())) {
+                    if (node.id != process.env.DATASYNC_OWN_ID && node.id != socket.id) {
+                        connectTo(await getInstanceById(node.id))
+                    }
+                }
+                console.log(await getNetworkNodes())
 
                 startSync();
             }

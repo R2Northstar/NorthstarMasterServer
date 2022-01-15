@@ -3,16 +3,34 @@
 // Before it can start syncing, it has to join a network
 // This is handled by auth.js
 
-const { getAllKnownInstances, getInstanceById, getInstanceAddress, handleIncomingMessage } = require( "./util.js" )
-const { encryptPayload } = require( "./encryption.js" )
-const { attemptSyncWithAny, setOwnSyncState } = require( "./syncutil.js" )
-const { getInstanceToken, addNetworkNode, removeNetworkNode, hasNetworkNode, generateToken } = require( "./network.js" )
+const { getAllKnownInstances, getInstanceById, getInstanceAddress } = require("./util.js");
+const { handleIncomingMessage } = require("./messageHandling.js");
+const { encryptPayload } = require("./encryption.js");
+const { attemptSyncWithAny, setOwnSyncState } = require("./syncutil.js");
+const { getInstanceToken, addNetworkNode, removeNetworkNode, hasNetworkNode, generateToken, getNetworkNodes } = require("./network.js")
+const http = require("http");
 
 const { WebSocket, WebSocketServer } = require( "ws" )
 let instanceSockets = {}
 
 var timeoutCycles = 50
 var checkDelay = 10
+
+const args = process.argv.slice(2);
+console.log('Command line arguments: ', args);
+for (let arg of args) {
+    let s = arg.split(":")
+    switch (s[0]) {
+        case 'id':
+            process.env.DATASYNC_OWN_ID = s[1]
+            break;
+        case 'port':
+            process.env.LISTEN_PORT = s[1]
+            break;
+        default:
+            console.log('Unknown flag or option ' + s);
+    }
+}
 
 async function checkValue( ws, resolve )
 {
@@ -32,7 +50,7 @@ async function initializeAsNewNetwork()
 	// Could not find another active server, starting new network
 	console.log( "Unable to find active server from instances. Creating new network" )
 	setOwnSyncState( 2 )
-	await addNetworkNode( process.env.DATASYNC_OWN_ID, generateToken() )
+	await addNetworkNode( process.env.DATASYNC_OWN_ID, process.env.NETWORK_EXTERNAL_IP, parseInt(process.env.LISTEN_PORT), generateToken() )
 	// console.log(getNetworkNodes())
 	// set sync state here maybe?
 }
@@ -78,6 +96,8 @@ wss.on( "connection", async function connection( ws )
 {
 	ws.everOpen = true
 	let instance = await getInstanceById( ws.id )
+	console.log("Incoming connection from " + instance.id)
+	console.log("Updated network! Current network: " + Object.keys(await getNetworkNodes()))
 	try
 	{
 		console.log( "WebSocket connection opened from "+instance.name )
@@ -148,6 +168,8 @@ async function start( server )
 				wss.handleUpgrade( request, socket, head, async function done( ws )
 				{
 					ws.id = reqUrl.searchParams.get( "id" )
+					console.log("upgrading connection here")
+					if( !instanceSockets[instance.id] ) instanceSockets[instance.id] = ws
 					wss.emit( "connection", ws, request )
 				} )
 			}
@@ -174,6 +196,7 @@ async function start( server )
 
 async function broadcastEvent( event, payload )
 {
+	console.log("Broadcasting message to all sockets")
 	for ( const [id, ws] of Object.entries( instanceSockets ) )
 	{
 		if ( ws.readyState === WebSocket.OPEN )
@@ -194,7 +217,11 @@ broadcastEmitter.addListener( "startSync", async () =>
 {
 	attemptSyncWithAny( instanceSockets )
 } )
-
+broadcastEmitter.addListener( "connectTo", ( instance ) =>
+{
+	console.log(instance)
+	return connectTo(instance)
+} )
 module.exports = {
 	start,
 	broadcastEvent

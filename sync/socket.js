@@ -5,9 +5,8 @@
 
 const { getAllKnownInstances, getInstanceById, getInstanceAddress, handleIncomingMessage } = require('./util.js');
 const { encryptPayload } = require('./encryption.js');
-const { getInstanceToken, removeToken, hasToken, setToken, generateToken, getOwnToken } = require('./tokens.js');
-const { attemptSyncWithAny, setOwnSyncState, getOwnSyncState } = require('./syncutil.js');
-const { addNetworkNode, getNetworkNode, removeNetworkNode, getNetworkNodes } = require("./network.js")
+const { attemptSyncWithAny, setOwnSyncState } = require('./syncutil.js');
+const { getInstanceToken, addNetworkNode, removeNetworkNode, hasNetworkNode, generateToken } = require("./network.js")
 
 const { WebSocket, WebSocketServer } = require('ws');
 let instanceSockets = {}
@@ -29,9 +28,8 @@ async function initializeAsNewNetwork() {
     // Could not find another active server, starting new network
     console.log("Unable to find active server from instances. Creating new network")
     setOwnSyncState(2);
-    await setToken(process.env.DATASYNC_OWN_ID, generateToken())
-    await addNetworkNode(process.env.DATASYNC_OWN_ID, await getOwnToken())
-    console.log(getNetworkNodes())
+    await addNetworkNode(process.env.DATASYNC_OWN_ID, generateToken())
+    // console.log(getNetworkNodes())
     // set sync state here maybe?
 }
 
@@ -83,7 +81,7 @@ wss.on('connection', async function connection(ws) {
     ws.on('close', () => {
         if(ws.everOpen) console.log('WebSocket connection to',instance.name,'closed')
         delete instanceSockets[instance.id]
-        removeToken(instance.id)
+        removeNetworkNode(instance.id)
     })
     ws.on('error', (err) => {
         if(err.code == 'ECONNREFUSED') console.log('WebSocket connection refused by',instance.name)
@@ -146,7 +144,7 @@ async function start(server) {
 async function broadcastEvent(event, payload) {
     for (const [id, ws] of Object.entries(instanceSockets)) {
         if (ws.readyState === WebSocket.OPEN) {
-            if(hasToken(id))
+            if(hasNetworkNode(id))
                 ws.send(JSON.stringify({ method: 'sync', payload: await encryptPayload({ event, payload }, await getInstanceToken(id)) }));
         }
     }

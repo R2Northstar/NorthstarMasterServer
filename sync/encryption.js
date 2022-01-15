@@ -1,5 +1,5 @@
 const crypto = require('crypto')
-const { getOwnToken } = require('./tokens.js')
+const { getOwnToken } = require('./network.js')
 
 // encrypts payloads
 async function encryptPayload(body, token) {

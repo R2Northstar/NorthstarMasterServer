@@ -1,7 +1,7 @@
 const { getOwnSyncState, setReceivedSyncData } = require( "./syncutil.js" )
 const accounts = require( "../shared/accounts.js" )
 const { GameServer, GetGameServers, AddGameServer, UpdateGameServer } = require( "../shared/gameserver.js" )
-const { setToken, bulkSetTokens } = require( "./tokens.js" )
+const { setToken } = require( "./tokens.js" )
 const { startSync } = require( "./broadcast.js" )
 module.exports = {
 	// eventName: async (data) => {
@@ -108,23 +108,5 @@ module.exports = {
 		{
 			if( process.env.USE_DATASYNC_LOGGING ) console.log( e )
 		}
-	},
-
-	tokenUpdate: async ( data ) =>
-	{
-		try
-		{
-			console.log( "Token received for "+data.payload.id )
-			setToken( data.payload.id, data.payload.tokens[data.payload.id] )
-			if( data.payload.id == process.env.DATASYNC_OWN_ID )
-			{
-				bulkSetTokens( data.payload.tokens )
-				startSync()
-			}
-		}
-		catch( e )
-		{
-			if( process.env.USE_DATASYNC_LOGGING ) console.log( e )
-		}
-	},
+	}
 }

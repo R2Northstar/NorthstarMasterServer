@@ -46,7 +46,7 @@ async function waitForSyncDataReceived( resolve )
 }
 
 const { encryptPayload } = require( "./encryption.js" )
-const { getInstanceToken } = require( "./tokens.js" )
+const { getInstanceToken } = require( "./network.js" )
 const accounts = require( "../shared/accounts.js" )
 
 async function attemptSyncWithAny( sockets )

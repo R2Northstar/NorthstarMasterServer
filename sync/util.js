@@ -6,7 +6,7 @@ const lookup = util.promisify(dns.lookup);
 
 const { WebSocket } = require('ws');
 
-const { getOwnToken, getInstanceToken } = require('./tokens.js');
+const { getOwnToken, getInstanceToken } = require('./network.js');
 const { encryptPayload, decryptPayload } = require('./encryption.js');
 
 const fs = require("fs");
@@ -103,7 +103,8 @@ async function handlePotentialPayload(body, ws) {
     // console.log(data)
     const replyFunc = async (event, json) => {
         if (ws.readyState === WebSocket.OPEN) {
-            let encrypted = await encryptPayload({ event, payload: json }, await getInstanceToken(ws.id))
+            let token = await getInstanceToken(ws.id);
+            let encrypted = await encryptPayload({ event, payload: json }, token)
             ws.send(JSON.stringify({ method: 'sync', payload: encrypted }));
         }
     }
@@ -112,7 +113,7 @@ async function handlePotentialPayload(body, ws) {
         if(dataSync.hasOwnProperty(data.event)) {
             // If it is a dataSync function run it 
             dataSync[data.event]({ timestamp, payload: data.payload }, replyFunc, ws);
-        } else if(dataShare.hasOwnProperty(data.event)) {
+        } else if(dataShare.hasOwnProperty(data.event) && getOwnSyncState() == 2) {
             // If it is a dataShare function run it
             dataShare[data.event]({ timestamp, payload: data.payload }, replyFunc, ws);
         }
@@ -140,7 +141,7 @@ async function handleIncomingMessage(data, ws) {
         handleAuthMessage(msg.payload, ws)
     }
     else {
-        if(getOwnSyncState() == 2) handlePotentialPayload(msg.payload, ws)
+        handlePotentialPayload(msg.payload, ws)
     }
 }
 

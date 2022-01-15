@@ -1,10 +1,10 @@
 const crypto = require("crypto")
 const fs = require("fs")
-const { broadcastEvent } = require("./broadcast")
+const { broadcastEvent, startSync } = require("./broadcast")
 const { encryptPayload, decryptPayload } = require("./encryption")
 
-const { setToken, getAllTokens, generateToken, bulkSetTokens, hasToken, getOwnToken } = require("./tokens")
-const { addNetworkNode, getNetworkNodes, setNetworkNodes } = require("./network")
+const { setToken, getAllTokens, hasToken, getOwnToken } = require("./tokens")
+const { addNetworkNode, getNetworkNodes, setNetworkNodes, generateToken } = require("./network")
 
 let publicKey = fs.readFileSync("./rsa_4096_pub.pem").toString()
 let privateKey = fs.readFileSync("./rsa_4096_priv.pem").toString()
@@ -79,22 +79,18 @@ module.exports = {
                 token = generateToken();
                 encryptedToken = encrypt(token, publicKey); // Send new master server token to network
                 setToken(id, token)
-                console.log(token)
-                console.log(id)
+                // console.log(token)
+                // console.log(id)
                 addNetworkNode(id, token)
-                console.log(getNetworkNodes())
+                // console.log(getNetworkNodes())
             }
             else {
                 console.log("Authorisation request from " + id + " was incorrect, denying!")
             }
-            console.log("Encrypting with token " + token)
+            // console.log("Encrypting with token " + token)
             let encNet = await encryptPayload(JSON.stringify(getNetworkNodes()), token)
-            console.log(encNet)
+            // console.log(encNet)
             replyFunc("serverJoinChallengeResponse", { correct, token: (correct ? encrypt(token, publicKey) : undefined), network: (correct ? encNet : undefined) })
-
-            if(correct) {
-                broadcastEvent('tokenUpdate', { id, tokens: getAllTokens() })
-            }
         }
         catch (e) {
             if(process.env.USE_AUTH_LOGGING) console.log(e)
@@ -104,17 +100,19 @@ module.exports = {
     serverJoinChallengeResponse: async (data) => { // Received by Client from Master
         try {
             let { correct, token, id, network } = data.data
-            console.log(data.data)
-            console.log(data.data.network.data)
+            // console.log(data.data)
+            // console.log(data.data.network.data)
             if (correct) {
                 console.log("Authorisation was correct, authorized!")
                 tokenDecrypted = decrypt(token, privateKey);
                 setToken(process.env.DATASYNC_OWN_ID, tokenDecrypted);
 
-                console.log("Network is " + network.toString())
                 let decNetwork = await decryptPayload(data.data.network, await getOwnToken())
+                // console.log("Network is " + JSON.stringify(decNetwork.data))
                 setNetworkNodes(JSON.parse(decNetwork.data))
                 console.log("Received network data from master")
+
+                startSync();
             }
             else {
                 console.log("Authorisation was incorrect, unauthorized!")

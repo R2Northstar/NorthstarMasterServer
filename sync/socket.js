@@ -81,7 +81,7 @@ wss.on('connection', async function connection(ws) {
 });
 
 function connectTo(instance) {
-    const ws = new WebSocket('ws://'+instance.host+':'+instance.port+'/sync?id='+process.env.DATASYNC_OWN_ID, {handshakeTimeout: 200});
+    const ws = new WebSocket((instance.secure ? 'wss://' : 'ws://')+instance.host+':'+instance.port+'/sync?id='+process.env.DATASYNC_OWN_ID, {handshakeTimeout: 200});
     ws.everOpen = false;
     ws.id = instance.id;
     instanceSockets[instance.id] = ws;
@@ -106,7 +106,7 @@ function connectTo(instance) {
 async function start(server) {
     return new Promise(resolve => {
         server.on('upgrade', async function upgrade(request, socket, head) {
-            const reqUrl = new URL('http://localhost'+request.url);
+            const reqUrl = new URL('http://localhost'+request.url); // jank solution but it works as all we need to do is get query params
             let instance = await getInstanceById(reqUrl.searchParams.get('id'))
             let instanceIp = await getInstanceAddress(instance);
             let isAuthorized = request.socket.remoteAddress == instanceIp && !instanceSockets[reqUrl.searchParams.get('id')];

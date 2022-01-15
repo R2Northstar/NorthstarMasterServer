@@ -36,7 +36,6 @@ async function attemptSyncWithAny(sockets) {
             if(!hasSynced) {
                 try {
                     let token = await getInstanceToken(id);
-                    console.log(token)
                     let encrypted = await encryptPayload({ event: 'getState', payload: { from: process.env.DATASYNC_OWN_ID } }, await getInstanceToken(ws.id))
                     ws.send(JSON.stringify({ method: 'sync', payload: encrypted }));
 

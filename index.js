@@ -1,30 +1,30 @@
 
 if ( process.argv.includes( "-devenv" ) )
-	require( 'dotenv' ).config({ path: "./dev.env" })
+	require( "dotenv" ).config( { path: "./dev.env" } )
 else
-	require( 'dotenv' ).config()
-	
+	require( "dotenv" ).config()
+
 const fs = require( "fs" )
 const path = require( "path" )
 
 let fastify = require( "fastify" )
 if ( process.env.USE_HTTPS )
 {
-	fastify = fastify({ 
+	fastify = fastify( {
 		logger: process.env.USE_FASTIFY_LOGGER || false,
 		https: {
 			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
 			cert: fs.readFileSync( process.env.SSL_CERT_PATH )
 		},
-		trustProxy: !!(process.env.TRUST_PROXY)
-	})
+		trustProxy: !!( process.env.TRUST_PROXY )
+	} )
 }
 else
 {
-	fastify = fastify({ 
+	fastify = fastify( {
 		logger: process.env.USE_FASTIFY_LOGGER || false,
-		trustProxy: !!(process.env.TRUST_PROXY)
-	})
+		trustProxy: !!( process.env.TRUST_PROXY )
+	} )
 }
 
 const ROUTE_PATHS = [ "client", "server", "account" ]
@@ -41,12 +41,12 @@ for ( let routePath of ROUTE_PATHS )
 	}
 }
 
-async function start() 
+async function start()
 {
-	try 
+	try
 	{
 		await fastify.listen( process.env.LISTEN_PORT || 80, process.env.LISTEN_IP || "0.0.0.0" )
-	} 
+	}
 	catch ( ex )
 	{
 		console.error( ex )
@@ -55,7 +55,15 @@ async function start()
 }
 
 // ensure completion of data with instances before listening for http requests
-const syncing = require("./sync/socket.js")
-syncing.start(fastify.server).then(() => {
+if( process.env.USE_INSTANCING )
+{
+	const syncing = require( "./sync/socket.js" )
+	syncing.start( fastify.server ).then( () =>
+	{
+		start()
+	} )
+}
+else
+{
 	start()
-})
+}

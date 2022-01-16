@@ -10,6 +10,8 @@ const { attemptSyncWithAny, setOwnSyncState } = require( "./syncutil.js" )
 const { getInstanceToken, addNetworkNode, removeNetworkNode, getNetworkNodes, hasNetworkNode, generateToken } = require( "./network.js" )
 const accounts = require( "../shared/accounts.js" )
 
+const isOnline = require( "is-online" )
+
 const { WebSocket, WebSocketServer } = require( "ws" )
 let instanceSockets = {}
 
@@ -75,7 +77,7 @@ async function initializeServer()
 	}
 	else
 	{
-		initializeAsNewNetwork()
+		if( await isOnline() ) initializeAsNewNetwork()
 	}
 }
 

@@ -104,7 +104,7 @@ async function initializeServer()
 // When a new node joins the network, it connects to all other nodes
 // Since websockets are full-duplex, that node doesnt need to connect back
 // TODO: we should really handle dropped connections and server outages
-const wss = new WebSocketServer( { port:process.env.LISTEN_PORT } )
+const wss = new WebSocketServer( { noServer: true } )
 console.log( "Created WebSocket server on port " + process.env.LISTEN_PORT.toString() )
 console.log( "Self-registering with ID " + process.env.DATASYNC_OWN_ID )
 

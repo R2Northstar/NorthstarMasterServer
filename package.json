@@ -20,6 +20,7 @@
 		"fastify": "^3.25.3",
 		"fastify-cors": "^6.0.2",
 		"fastify-multipart": "^5.2.1",
+		"minimist": "^1.2.5",
 		"sqlite3": "^5.0.2",
 		"ws": "^8.4.2"
 	},

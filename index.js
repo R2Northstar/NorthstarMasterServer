@@ -1,8 +1,7 @@
-
-if ( process.argv.includes( "-devenv" ) )
-	require( "dotenv" ).config( { path: "./dev.env" } )
-else
-	require( "dotenv" ).config()
+// This is some code for handling the command line arguments
+// This is just to overwrite .env when debugging
+const args = require( "minimist" )( process.argv.slice( 2 ) )
+require( "dotenv" ).config( { path: "./"+( args.env || args.devenv ? "dev.env" : ".env" ) } )
 
 const fs = require( "fs" )
 const path = require( "path" )

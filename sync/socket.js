@@ -16,27 +16,6 @@ let instanceSockets = {}
 var timeoutCycles = 50
 var checkDelay = 10
 
-
-// This is some code for handling the command line arguments
-// This is just to overwrite .env when debugging
-const args = process.argv.slice( 2 )
-console.log( "Command line arguments: ", args )
-for ( let arg of args )
-{
-	let s = arg.split( ":" )
-	switch ( s[0] )
-	{
-	case "id":
-		process.env.DATASYNC_OWN_ID = s[1]
-		break
-	case "port":
-		process.env.LISTEN_PORT = s[1]
-		break
-	default:
-		console.log( "Unknown flag or option " + s )
-	}
-}
-
 // Check state of websocket until timeout
 async function checkValue( ws, resolve )
 {

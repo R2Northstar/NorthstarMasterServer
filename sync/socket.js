@@ -184,6 +184,11 @@ async function start( server )
 		{
 			const reqUrl = new URL( "http://localhost"+request.url ) // jank solution but it works as all we need to do is get query params
 			let instance = getInstanceById( reqUrl.searchParams.get( "id" ) )
+			if( !instance )
+			{
+				console.log( "WebSocket attempt refused for unknown instance" )
+				return socket.destroy()
+			}
 			let instanceIp = await getInstanceAddress( instance )
 			let realIp = process.env.TRUST_PROXY ? request.headers["x-forwarded-for"] : request.socket.remoteAddress
 

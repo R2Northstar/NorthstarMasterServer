@@ -3,7 +3,7 @@ const crypto = require( "crypto" )
 const { GameServer, GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) ) 
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
-const instancing = require("../datasharing.js")
+const { broadcastEvent } = require('../sync/broadcast.js')
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -61,7 +61,7 @@ module.exports = ( fastify, opts, done ) => {
 		await accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
 		account = await accounts.AsyncGetPlayerByID( request.query.id )
-		instancing.playerUpdate({ id: account.id, account }); // data sharing
+		broadcastEvent('playerUpdate', { id: account.id, account }); // data sharing
 
 		return {
 			success: true,
@@ -166,7 +166,7 @@ module.exports = ( fastify, opts, done ) => {
 		await accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
 		account = await accounts.AsyncGetPlayerByID( request.query.id )
-		instancing.playerUpdateCurrentServer({ id: account.id, serverId: "self" }); // data sharing
+		broadcastEvent('playerUpdateCurrentServer', { id: account.id, serverId: "self" }); // data sharing
 				
 		return {
 			success: true,

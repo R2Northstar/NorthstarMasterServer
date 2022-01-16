@@ -27,7 +27,7 @@ else
 	})
 }
 
-const ROUTE_PATHS = [ "client", "server", "account", "instancing" ]
+const ROUTE_PATHS = [ "client", "server", "account" ]
 
 for ( let routePath of ROUTE_PATHS )
 {
@@ -55,7 +55,7 @@ async function start()
 }
 
 // ensure completion of data with instances before listening for http requests
-const syncing = require("./datasyncing.js")
-syncing.attemptSyncWithAny().then(() => {
+const syncing = require("./sync/socket.js")
+syncing.start(fastify.server).then(() => {
 	start()
 })

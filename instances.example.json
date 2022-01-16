@@ -1,0 +1,34 @@
+[
+    {
+        "id": "A",
+        "name": "Test 1",
+        "host": "localhost",
+        "incomingAddress": "127.0.0.1",
+        "secure": false,
+        "port": 80
+    },
+    {
+        "id": "B",
+        "name": "Test 2",
+        "host": "localhost",
+        "incomingAddress": "127.0.0.1",
+        "secure": false,
+        "port": 81
+    },
+    {
+        "id": "C",
+        "name": "Test 3",
+        "host": "localhost",
+        "incomingAddress": "127.0.0.1",
+        "secure": false,
+        "port": 82
+    },
+    {
+        "id": "D",
+        "name": "Test 4",
+        "host": "localhost",
+        "incomingAddress": "127.0.0.1",
+        "secure": false,
+        "port": 83
+    }
+]

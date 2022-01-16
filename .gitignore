@@ -127,3 +127,6 @@ instances*.json
 backups
 
 *.pem
+
+*.env
+!dev.env

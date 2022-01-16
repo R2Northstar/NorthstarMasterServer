@@ -1,11 +1,16 @@
 // Network.js holds data about the network the node is in
 
 const crypto = require('crypto');
+const { getInstanceById } = require('./instances.js');
 
 let network = {}
 
-function addNetworkNode(id, ip, port, token) {
-    network[id] = {id, ip, port, token}
+async function addNetworkNode(id, token) {
+    try {
+        network[id] = Object.assign({}, getInstanceById(id), {id, token});
+    } catch(e) {
+        network[id] = {id, token};
+    }
 }
 
 function getNetworkNode(id) {
@@ -31,7 +36,6 @@ function setNetworkNodes(recvNodes) {
 }
 
 function getOwnToken() {
-    // console.log(network[process.env.DATASYNC_OWN_ID].token)
     return network[process.env.DATASYNC_OWN_ID].token
 }
 function getInstanceToken(id) {

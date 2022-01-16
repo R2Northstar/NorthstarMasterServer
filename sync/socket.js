@@ -3,12 +3,12 @@
 // Before it can start syncing, it has to join a network
 // This is handled by auth.js
 
-const { getAllKnownInstances, getInstanceById, getInstanceAddress } = require("./util.js");
-const { handleIncomingMessage } = require("./messageHandling.js");
-const { encryptPayload } = require("./encryption.js");
-const { attemptSyncWithAny, setOwnSyncState } = require("./syncutil.js");
-const { getInstanceToken, addNetworkNode, removeNetworkNode, hasNetworkNode, generateToken, getNetworkNodes } = require("./network.js")
-const http = require("http");
+const { handleIncomingMessage } = require( "./messageHandling.js" )
+const { getAllKnownInstances, getInstanceById, getInstanceAddress } = require("./instances.js")
+const { encryptPayload } = require( "./encryption.js" )
+const { attemptSyncWithAny, setOwnSyncState } = require( "./syncutil.js" )
+const { getInstanceToken, addNetworkNode, removeNetworkNode, getNetworkNodes, hasNetworkNode, generateToken } = require( "./network.js" )
+const accounts = require('../shared/accounts.js')
 
 const { WebSocket, WebSocketServer } = require( "ws" )
 let instanceSockets = {}
@@ -54,7 +54,14 @@ async function initializeAsNewNetwork()
 	// Could not find another active server, starting new network
 	console.log( "Unable to find active server from instances. Creating new network" )
 	setOwnSyncState( 2 )
-	addNetworkNode( process.env.DATASYNC_OWN_ID, process.env.NETWORK_EXTERNAL_IP, parseInt(process.env.LISTEN_PORT), generateToken() )
+	addNetworkNode( process.env.DATASYNC_OWN_ID, generateToken() )
+
+	// backup server every n minutes in case of oopsie
+	console.log( `Will attempt to backup DB every ${process.env.DB_BACKUP_MINUTES || 30} minutes` )
+	setInterval( () =>
+	{
+		accounts.BackupDatabase()
+	}, ( process.env.DB_BACKUP_MINUTES || 30 )*60000 )
 }
 
 // When the master server is initiated, this function is called
@@ -153,11 +160,15 @@ function connectTo( instance )
 	{
 		if( ws.everOpen ) console.log( "WebSocket connection to",instance.name,"closed" )
 		delete instanceSockets[instance.id]
+		removeNetworkNode( instance.id )
 	} )
 	ws.on( "error", ( err ) =>
 	{
 		if( err.code == "ECONNREFUSED" ) console.log( "WebSocket connection refused by",instance.name )
-		else console.log( err )
+		else {
+			console.log( "WebSocket connection to",instance.name,"failed" )
+			if(process.env.USE_DATASYNC_LOGGING) console.log(err)
+		}
 	} )
 	return ws
 }
@@ -169,9 +180,11 @@ async function start( server )
 		server.on( "upgrade", async function upgrade( request, socket, head )
 		{
 			const reqUrl = new URL( "http://localhost"+request.url ) // jank solution but it works as all we need to do is get query params
-			let instance = await getInstanceById( reqUrl.searchParams.get( "id" ) )
+			let instance = getInstanceById( reqUrl.searchParams.get( "id" ) )
 			let instanceIp = await getInstanceAddress( instance )
-			let isAuthorized = request.socket.remoteAddress == instanceIp && !instanceSockets[reqUrl.searchParams.get( "id" )]
+			let realIp = process.env.TRUST_PROXY ? request.headers['x-forwarded-for'] : request.socket.remoteAddress;
+			
+			let isAuthorized = realIp == instanceIp && !instanceSockets[reqUrl.searchParams.get( "id" )]
 			if ( reqUrl.pathname === "/sync" && isAuthorized )
 			{
 				wss.handleUpgrade( request, socket, head, async function done( ws )

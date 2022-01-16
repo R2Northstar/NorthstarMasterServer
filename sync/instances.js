@@ -2,8 +2,6 @@ const util = require('util');
 const dns = require('dns');
 const lookup = util.promisify(dns.lookup);
 
-const { encryptPayload, decryptPayload } = require('./encryption.js');
-
 const fs = require("fs");
 let instanceListPath = process.env.INSTANCE_LIST || "./instances.json"
 let instances = JSON.parse(fs.readFileSync(instanceListPath, 'utf-8'));
@@ -22,7 +20,7 @@ fs.watch(instanceListPath, eventType => {
 
 // gets a list of instances from the json file
 function getAllKnownInstances() {
-    return new Promise(async (resolve, reject) => {
+    return new Promise((resolve, reject) => {
         try {
             resolve(instances);
         } catch(e) {
@@ -32,13 +30,7 @@ function getAllKnownInstances() {
 }
 // gets a specific instance from the json file
 function getInstanceById(id) {
-    return new Promise((resolve, reject) => {
-        try {
-            resolve(instances.find(inst => inst.id == id));
-        } catch(e) {
-            reject(e);
-        }
-    });
+    return instances.find(inst => inst.id == id);
 }
 // gets own instance from the json file based on id env var
 function getOwnInstance() {
@@ -64,19 +56,17 @@ function getAllKnownAddresses() {
 function getInstanceAddress(instance) {
     return new Promise(async (resolve, reject) => {
         try {
-            resolve( (await lookup(instance.host)).address );
+            if(instance.incomingAddress) resolve(instance.incomingAddress)
+            else resolve( (await lookup(instance.host)).address );
         } catch(e) {
             reject(e);
         }
     });
 }
-
 module.exports = {
     getAllKnownInstances,
     getInstanceById,
     getOwnInstance,
     getInstanceAddress,
-    getAllKnownAddresses,
-    encryptPayload,
-    decryptPayload
+    getAllKnownAddresses
 }

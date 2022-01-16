@@ -1,6 +1,6 @@
 // MessageHandling.js is a utility file that takes in a message and routes it to the correct handler
 
-const { getOwnToken, getInstanceToken } = require('./network.js');
+const { getOwnToken, getInstanceToken, hasNetworkNode } = require('./network.js');
 const { getOwnSyncState } = require('./syncutil.js');
 const { encryptPayload, decryptPayload } = require('./encryption.js');
 
@@ -72,7 +72,7 @@ async function handleIncomingMessage(data, ws) {
         handleAuthMessage(msg.payload, ws)
     }
     else {
-        handlePotentialPayload(msg.payload, ws)
+        if(hasNetworkNode(process.env.DATASYNC_OWN_ID)) handlePotentialPayload(msg.payload, ws)
     }
 }
 

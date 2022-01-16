@@ -30,8 +30,8 @@ async function getInstanceState( ws, resolve )
 	resolve()
 }
 
-var syncTimeoutCycles = 5
-var syncCheckDelay = 100
+var syncTimeoutCycles = 50
+var syncCheckDelay = 50
 async function waitForSyncDataReceived( resolve )
 {
 	for ( let i = 0; i < syncTimeoutCycles; i++ )

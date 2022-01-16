@@ -4,9 +4,7 @@
 const { getOwnSyncState, setReceivedSyncData } = require( "./syncutil.js" )
 const accounts = require( "../shared/accounts.js" )
 const { GameServer, GetGameServers, AddGameServer, UpdateGameServer } = require( "../shared/gameserver.js" )
-const { startSync } = require( "./broadcast.js" )
 const { addNetworkNode, getNetworkNodes } = require("./network.js")
-const { getInstanceById } = require("./util.js")
 
 module.exports = {
 	// eventName: async (data) => {
@@ -117,7 +115,7 @@ module.exports = {
 	addNetworkNode: async (data) => {
 		let payload = data.payload
 		try { 
-			addNetworkNode(payload.id, payload.host, (await getInstanceById(payload.id)).port, payload.token)
+			addNetworkNode(payload.id, payload.token)
 			console.log("Updated network! Current network: " + Object.keys(await getNetworkNodes()))
 		} catch(e) {
 			if(process.env.USE_DATASYNC_LOGGING) console.log(e)

@@ -6,7 +6,7 @@ const fs = require("fs")
 const { broadcastEvent, startSync, connectTo } = require("./broadcast")
 const { encryptPayload, decryptPayload } = require("./encryption")
 
-const { getInstanceById } = require("./util")
+const { getInstanceById } = require("./instances.js")
 
 const { addNetworkNode, getNetworkNodes, setNetworkNodes, generateToken, hasNetworkNode } = require("./network")
 
@@ -72,18 +72,16 @@ module.exports = {
         }
     },
 
-    serverJoinChallengeAttempt: async (data, replyFunc, socket) => { // Received by Master from Client
+    serverJoinChallengeAttempt: async (data, replyFunc) => { // Received by Master from Client
         try {
             let { response, id } = data.data
             let correct = data.buffer.checkSecret(response, id) && !hasNetworkNode(id)
             let token;
-            let encryptedToken;
             if (correct) {
                 console.log("Authorisation request from " + id + " was correct, authorizing!")
                 token = generateToken();
-                encryptedToken = encrypt(token, publicKey); // Send new master server token to network
-                addNetworkNode(id, socket._socket._peername.address, (await getInstanceById(id)).port, token)
-                broadcastEvent("addNetworkNode", {id, host: socket._socket._peername.address, port: (await getInstanceById(id)).port, token})
+                addNetworkNode(id, token)
+                broadcastEvent("addNetworkNode", {id, token})
                 console.log("Updated network! Current network: " + Object.keys(await getNetworkNodes()))
             }
             else {
@@ -101,12 +99,12 @@ module.exports = {
 
     serverJoinChallengeResponse: async (data, replyFunc, socket) => { // Received by Client from Master
         try {
-            let { correct, token, id, network } = data.data
+            let { correct, token } = data.data
             // console.log(data.data)
             // console.log(data.data.network.data)
             if (correct) {
                 console.log("Authorisation was correct, authorized!")
-                tokenDecrypted = decrypt(token, privateKey);
+                let tokenDecrypted = decrypt(token, privateKey);
 
                 let decNetwork = await decryptPayload(data.data.network, tokenDecrypted)
                 // console.log("Network is " + JSON.stringify(decNetwork.data))
@@ -117,7 +115,7 @@ module.exports = {
                         connectTo(await getInstanceById(node.id))
                     }
                 }
-                console.log(await getNetworkNodes())
+                // console.log(await getNetworkNodes())
 
                 startSync();
             }

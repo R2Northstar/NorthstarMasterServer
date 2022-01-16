@@ -4,11 +4,11 @@
 // This is handled by auth.js
 
 const { handleIncomingMessage } = require( "./messageHandling.js" )
-const { getAllKnownInstances, getInstanceById, getInstanceAddress } = require("./instances.js")
+const { getAllKnownInstances, getInstanceById, getInstanceAddress } = require( "./instances.js" )
 const { encryptPayload } = require( "./encryption.js" )
 const { attemptSyncWithAny, setOwnSyncState } = require( "./syncutil.js" )
 const { getInstanceToken, addNetworkNode, removeNetworkNode, getNetworkNodes, hasNetworkNode, generateToken } = require( "./network.js" )
-const accounts = require('../shared/accounts.js')
+const accounts = require( "../shared/accounts.js" )
 
 const { WebSocket, WebSocketServer } = require( "ws" )
 let instanceSockets = {}
@@ -19,20 +19,22 @@ var checkDelay = 10
 
 // This is some code for handling the command line arguments
 // This is just to overwrite .env when debugging
-const args = process.argv.slice(2);
-console.log('Command line arguments: ', args);
-for (let arg of args) {
-    let s = arg.split(":")
-    switch (s[0]) {
-        case 'id':
-            process.env.DATASYNC_OWN_ID = s[1]
-            break;
-        case 'port':
-            process.env.LISTEN_PORT = s[1]
-            break;
-        default:
-            console.log('Unknown flag or option ' + s);
-    }
+const args = process.argv.slice( 2 )
+console.log( "Command line arguments: ", args )
+for ( let arg of args )
+{
+	let s = arg.split( ":" )
+	switch ( s[0] )
+	{
+	case "id":
+		process.env.DATASYNC_OWN_ID = s[1]
+		break
+	case "port":
+		process.env.LISTEN_PORT = s[1]
+		break
+	default:
+		console.log( "Unknown flag or option " + s )
+	}
 }
 
 // Check state of websocket until timeout
@@ -111,8 +113,8 @@ wss.on( "connection", async function connection( ws )
 {
 	ws.everOpen = true
 	let instance = await getInstanceById( ws.id )
-	console.log("Incoming connection from " + instance.id)
-	console.log("Updated network! Current network: " + Object.keys(await getNetworkNodes()))
+	console.log( "Incoming connection from " + instance.id )
+	console.log( "Updated network! Current network: " + Object.keys( await getNetworkNodes() ) )
 	try
 	{
 		console.log( "WebSocket connection opened from "+instance.name )
@@ -165,9 +167,10 @@ function connectTo( instance )
 	ws.on( "error", ( err ) =>
 	{
 		if( err.code == "ECONNREFUSED" ) console.log( "WebSocket connection refused by",instance.name )
-		else {
+		else
+		{
 			console.log( "WebSocket connection to",instance.name,"failed" )
-			if(process.env.USE_DATASYNC_LOGGING) console.log(err)
+			if( process.env.USE_DATASYNC_LOGGING ) console.log( err )
 		}
 	} )
 	return ws
@@ -182,15 +185,15 @@ async function start( server )
 			const reqUrl = new URL( "http://localhost"+request.url ) // jank solution but it works as all we need to do is get query params
 			let instance = getInstanceById( reqUrl.searchParams.get( "id" ) )
 			let instanceIp = await getInstanceAddress( instance )
-			let realIp = process.env.TRUST_PROXY ? request.headers['x-forwarded-for'] : request.socket.remoteAddress;
-			
+			let realIp = process.env.TRUST_PROXY ? request.headers["x-forwarded-for"] : request.socket.remoteAddress
+
 			let isAuthorized = realIp == instanceIp && !instanceSockets[reqUrl.searchParams.get( "id" )]
 			if ( reqUrl.pathname === "/sync" && isAuthorized )
 			{
 				wss.handleUpgrade( request, socket, head, async function done( ws )
 				{
 					ws.id = reqUrl.searchParams.get( "id" )
-					console.log("upgrading connection here")
+					console.log( "upgrading connection here" )
 					if( !instanceSockets[instance.id] ) instanceSockets[instance.id] = ws
 					wss.emit( "connection", ws, request )
 				} )
@@ -212,7 +215,7 @@ async function start( server )
 // Instead, we use the workaround of event listeners to make sure this can still happen
 async function broadcastEvent( event, payload )
 {
-	console.log("Broadcasting message to all sockets")
+	if( process.env.USE_DATASYNC_LOGGING ) console.log( "Broadcasting message to all sockets" )
 	for ( const [id, ws] of Object.entries( instanceSockets ) )
 	{
 		if ( ws.readyState === WebSocket.OPEN )
@@ -238,7 +241,7 @@ broadcastEmitter.addListener( "startSync", async () =>
 // Since this is done from a message handler in auth.js, we use this eventlistener
 broadcastEmitter.addListener( "connectTo", ( instance ) =>
 {
-	return connectTo(instance)
+	return connectTo( instance )
 } )
 module.exports = {
 	start,

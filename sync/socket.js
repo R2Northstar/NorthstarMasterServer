@@ -54,7 +54,7 @@ async function initializeAsNewNetwork()
 async function initializeServer()
 {
 	await new Promise( res => instancesReady( res ) )
-	
+
 	let initClient = undefined
 	for ( let instance of await getAllKnownInstances() )
 	{
@@ -71,7 +71,7 @@ async function initializeServer()
 			}
 		}
 	}
-	if ( initClient.readyState == 1 )
+	if ( initClient && initClient.readyState == 1 )
 	{
 		console.log( "Found working instance " + initClient.id )
 		let epayload = { method: "auth", payload: { event:"serverRequestJoin", id:process.env.DATASYNC_OWN_ID }}

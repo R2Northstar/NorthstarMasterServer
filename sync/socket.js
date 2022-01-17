@@ -4,7 +4,7 @@
 // This is handled by auth.js
 
 const { handleIncomingMessage } = require( "./messageHandling.js" )
-const { getAllKnownInstances, getInstanceById, getInstanceAddress } = require( "./instances.js" )
+const { instancesReady, getAllKnownInstances, getInstanceById, getInstanceAddress } = require( "./instances.js" )
 const { encryptPayload } = require( "./encryption.js" )
 const { attemptSyncWithAny, setOwnSyncState } = require( "./syncutil.js" )
 const { getInstanceToken, addNetworkNode, removeNetworkNode, getNetworkNodes, hasNetworkNode, generateToken } = require( "./network.js" )
@@ -53,6 +53,8 @@ async function initializeAsNewNetwork()
 // If it cant, it assumes it is the first node of the network and creates a new network
 async function initializeServer()
 {
+	await new Promise( res => instancesReady( res ) )
+	
 	let initClient = undefined
 	for ( let instance of await getAllKnownInstances() )
 	{

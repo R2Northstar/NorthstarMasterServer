@@ -21,6 +21,7 @@
 		"fastify-cors": "^6.0.2",
 		"fastify-multipart": "^5.2.1",
 		"is-online": "^9.0.1",
+		"jsonschema": "^1.4.0",
 		"minimist": "^1.2.5",
 		"sqlite3": "^5.0.2",
 		"ws": "^8.4.2"

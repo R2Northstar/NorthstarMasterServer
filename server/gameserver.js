@@ -153,7 +153,7 @@ module.exports = ( fastify, opts, done ) => {
 		// update heartbeat
 		server.lastHeartbeat = Date.now()
 		
-		UpdateGameServer(server, request.query)
+		UpdateGameServer(server, Object.assign(request.query, { lastHeartbeat: server.lastHeartbeat }))
 		return null
 	})
 	

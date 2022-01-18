@@ -61,11 +61,12 @@ module.exports = {
 				else
 				{
 					logSync( "- Creating server with id \""+id+"\"" , 3)
-					let { name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat, lastModified } = servers[id]
+					let { name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat, lastModified, serverAuthToken } = servers[id]
 					let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
 					newServer.id = id
 					newServer.lastHeartbeat = lastHeartbeat
 					newServer.lastModified = lastModified
+					newServer.serverAuthToken = serverAuthToken
 					AddGameServer( newServer, false )
 				}
 			}

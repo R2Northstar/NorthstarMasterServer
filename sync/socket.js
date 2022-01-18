@@ -9,6 +9,7 @@ const { encryptPayload } = require( "./encryption.js" )
 const { attemptSyncWithAny, setOwnSyncState } = require( "./syncutil.js" )
 const { getInstanceToken, addNetworkNode, removeNetworkNode, getNetworkNodes, hasNetworkNode, generateToken } = require( "./network.js" )
 const accounts = require( "../shared/accounts.js" )
+const { logger, logSync } = require("../logging.js")
 
 const isOnline = require( "is-online" )
 
@@ -17,6 +18,88 @@ let instanceSockets = {}
 
 var timeoutCycles = 50
 var checkDelay = 10
+
+// Each node has a WebSocketServer so that it can accept new connections.
+// When a new node joins the network, it connects to all other nodes
+// Since websockets are full-duplex, that node doesnt need to connect back
+// TODO: we should really handle dropped connections and server outages
+const wss = new WebSocketServer( { noServer: true } )
+logger.info( "Created WebSocket server on port " + process.env.LISTEN_PORT.toString() )
+logger.info( "Self-registering with ID " + process.env.DATASYNC_OWN_ID )
+
+// This is the server handling incoming connections and messages
+wss.on( "connection", async function connection( ws )
+{
+	ws.everOpen = true
+	let instance = await getInstanceById( ws.id )
+	logger.info( "Incoming connection from " + instance.id )
+	logger.info( "Updated network! Current network: " + Object.keys( await getNetworkNodes() ) )
+	try
+	{
+		logger.info( "WebSocket connection opened from " + instance.name )
+		if( !instanceSockets[ws.id] ) instanceSockets[ws.id] = ws
+	}
+	catch ( e )
+	{
+		logger.info( "WebSocket connection opened from unknown instance" )
+	}
+
+	ws.on( "message", function message( data )
+	{
+		handleIncomingMessage( data, ws )
+	} )
+	ws.on( "close", () =>
+	{
+		if( ws.everOpen ) logger.warn( "WebSocket connection to " + instance.name + " closed" )
+		delete instanceSockets[instance.id]
+		removeNetworkNode( instance.id )
+	} )
+	ws.on( "error", ( err ) =>
+	{
+		if( err.code == "ECONNREFUSED" ) logger.warn( "WebSocket connection refused by " + instance.name )
+		else logger.error( err )
+	} )
+} )
+
+async function start( server )
+{
+	return new Promise( resolve =>
+	{
+		server.on( "upgrade", async function upgrade( request, socket, head )
+		{
+			const reqUrl = new URL( "http://localhost"+request.url ) // jank solution but it works as all we need to do is get query params
+			let instance = getInstanceById( reqUrl.searchParams.get( "id" ) )
+			if( !instance )
+			{
+				logger.warn( "WebSocket attempt refused for unknown instance" )
+				return socket.destroy()
+			}
+			let instanceIp = await getInstanceAddress( instance )
+			let realIp = process.env.TRUST_PROXY ? request.headers["x-forwarded-for"] : request.socket.remoteAddress
+
+			let isAuthorized = realIp == instanceIp && !instanceSockets[reqUrl.searchParams.get( "id" )]
+			if ( reqUrl.pathname === "/sync" && isAuthorized )
+			{
+				wss.handleUpgrade( request, socket, head, async function done( ws )
+				{
+					ws.id = reqUrl.searchParams.get( "id" )
+					if( !instanceSockets[instance.id] ) instanceSockets[instance.id] = ws
+					wss.emit( "connection", ws, request )
+				} )
+			}
+			else
+			{
+				logger.warn( "WebSocket attempt refused for " + request.socket.remoteAddress + " acting as " + instance.name )
+				socket.destroy()
+			}
+		} )
+
+		initializeServer()
+
+		resolve()
+	} )
+}
+
 
 // Check state of websocket until timeout
 async function checkValue( ws, resolve )
@@ -35,12 +118,12 @@ async function checkValue( ws, resolve )
 async function initializeAsNewNetwork()
 {
 	// Could not find another active server, starting new network
-	console.log( "Unable to find active server from instances. Creating new network" )
+	logger.info( "Unable to find active server from instances. Creating new network" )
 	setOwnSyncState( 2 )
 	addNetworkNode( process.env.DATASYNC_OWN_ID, generateToken() )
 
 	// backup server every n minutes in case of oopsie
-	console.log( `Will attempt to backup DB every ${process.env.DB_BACKUP_MINUTES || 30} minutes` )
+	logger.info( `Will attempt to backup DB every ${process.env.DB_BACKUP_MINUTES || 30} minutes` )
 	setInterval( () =>
 	{
 		accounts.BackupDatabase()
@@ -61,9 +144,8 @@ async function initializeServer()
 		if ( instance.id != process.env.DATASYNC_OWN_ID )
 		{
 			// Wait for the client to connect using async/await
-			console.log( "Testing connection to " + instance.id )
+			logger.info( "Testing connection to " + instance.id )
 			initClient = await connectTo( instance )
-			//await new Promise(resolve => initClient.once('open', resolve));
 			await new Promise( res => checkValue( initClient, res ) )
 			if ( initClient.readyState == 1 )
 			{ // Found a working instance
@@ -73,7 +155,7 @@ async function initializeServer()
 	}
 	if ( initClient && initClient.readyState == 1 )
 	{
-		console.log( "Found working instance " + initClient.id )
+		logger.info( "Found working instance " + initClient.id )
 		let epayload = { method: "auth", payload: { event:"serverRequestJoin", id:process.env.DATASYNC_OWN_ID }}
 		initClient.send( JSON.stringify( epayload ) )
 	}
@@ -82,48 +164,6 @@ async function initializeServer()
 		if( await isOnline() ) initializeAsNewNetwork()
 	}
 }
-
-// Each node has a WebSocketServer so that it can accept new connections.
-// When a new node joins the network, it connects to all other nodes
-// Since websockets are full-duplex, that node doesnt need to connect back
-// TODO: we should really handle dropped connections and server outages
-const wss = new WebSocketServer( { noServer: true } )
-console.log( "Created WebSocket server on port " + process.env.LISTEN_PORT.toString() )
-console.log( "Self-registering with ID " + process.env.DATASYNC_OWN_ID )
-
-// This is the server handling incoming connections and messages
-wss.on( "connection", async function connection( ws )
-{
-	ws.everOpen = true
-	let instance = await getInstanceById( ws.id )
-	console.log( "Incoming connection from " + instance.id )
-	console.log( "Updated network! Current network: " + Object.keys( await getNetworkNodes() ) )
-	try
-	{
-		console.log( "WebSocket connection opened from "+instance.name )
-		if( !instanceSockets[ws.id] ) instanceSockets[ws.id] = ws
-	}
-	catch ( e )
-	{
-		console.log( "WebSocket connection opened from unknown instance" )
-	}
-
-	ws.on( "message", function message( data )
-	{
-		handleIncomingMessage( data, ws )
-	} )
-	ws.on( "close", () =>
-	{
-		if( ws.everOpen ) console.log( "WebSocket connection to",instance.name,"closed" )
-		delete instanceSockets[instance.id]
-		removeNetworkNode( instance.id )
-	} )
-	ws.on( "error", ( err ) =>
-	{
-		if( err.code == "ECONNREFUSED" ) console.log( "WebSocket connection refused by",instance.name )
-		else console.log( err )
-	} )
-} )
 
 // A fairly simple wrapper function that takes in an instance object and returns a websocket connection
 function connectTo( instance )
@@ -135,7 +175,7 @@ function connectTo( instance )
 	ws.on( "open", async function open()
 	{
 		ws.everOpen = true
-		console.log( "Opened WebSocket connection to",instance.name )
+		logger.info( "Opened WebSocket connection to " + instance.name )
 	} )
 	ws.on( "message", function message( data )
 	{
@@ -143,67 +183,27 @@ function connectTo( instance )
 	} )
 	ws.on( "close", () =>
 	{
-		if( ws.everOpen ) console.log( "WebSocket connection to",instance.name,"closed" )
+		if( ws.everOpen ) logger.warn( "WebSocket connection to " + instance.name + " closed" )
 		delete instanceSockets[instance.id]
 		removeNetworkNode( instance.id )
 	} )
 	ws.on( "error", ( err ) =>
 	{
-		if( err.code == "ECONNREFUSED" ) console.log( "WebSocket connection refused by",instance.name )
+		if( err.code == "ECONNREFUSED" ) logger.warn( "WebSocket connection refused by " + instance.name )
 		else
 		{
-			console.log( "WebSocket connection to",instance.name,"failed" )
-			if( process.env.USE_DATASYNC_LOGGING ) console.log( err )
+			logger.error( "WebSocket connection to " + instance.name + " failed" )
+			if( process.env.USE_DATASYNC_LOGGING ) logger.error( err )
 		}
 	} )
 	return ws
-}
-
-async function start( server )
-{
-	return new Promise( resolve =>
-	{
-		server.on( "upgrade", async function upgrade( request, socket, head )
-		{
-			const reqUrl = new URL( "http://localhost"+request.url ) // jank solution but it works as all we need to do is get query params
-			let instance = getInstanceById( reqUrl.searchParams.get( "id" ) )
-			if( !instance )
-			{
-				console.log( "WebSocket attempt refused for unknown instance" )
-				return socket.destroy()
-			}
-			let instanceIp = await getInstanceAddress( instance )
-			let realIp = process.env.TRUST_PROXY ? request.headers["x-forwarded-for"] : request.socket.remoteAddress
-
-			let isAuthorized = realIp == instanceIp && !instanceSockets[reqUrl.searchParams.get( "id" )]
-			if ( reqUrl.pathname === "/sync" && isAuthorized )
-			{
-				wss.handleUpgrade( request, socket, head, async function done( ws )
-				{
-					ws.id = reqUrl.searchParams.get( "id" )
-					console.log( "upgrading connection here" )
-					if( !instanceSockets[instance.id] ) instanceSockets[instance.id] = ws
-					wss.emit( "connection", ws, request )
-				} )
-			}
-			else
-			{
-				console.log( "WebSocket attempt refused for",request.socket.remoteAddress,"acting as",instance.name )
-				socket.destroy()
-			}
-		} )
-
-		initializeServer()
-
-		resolve()
-	} )
 }
 
 // Because of dependency reasons, the message handlers cannot call functions from socket.js directly
 // Instead, we use the workaround of event listeners to make sure this can still happen
 async function broadcastEvent( event, payload )
 {
-	if( process.env.USE_DATASYNC_LOGGING ) console.log( "Broadcasting message to all sockets" )
+	logSync("Broadcasting message to all sockets with event " + event)
 	for ( const [id, ws] of Object.entries( instanceSockets ) )
 	{
 		if ( ws.readyState === WebSocket.OPEN )

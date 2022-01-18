@@ -5,6 +5,7 @@ const { getOwnSyncState, setReceivedSyncData } = require( "./syncutil.js" )
 const accounts = require( "../shared/accounts.js" )
 const { GameServer, GetGameServers, AddGameServer, UpdateGameServer } = require( "../shared/gameserver.js" )
 const { addNetworkNode, getNetworkNodes } = require("./network.js")
+const { logSync } = require("../logging.js")
 
 module.exports = {
 	// eventName: async (data) => {
@@ -28,7 +29,7 @@ module.exports = {
 				if( accountJson.persistentDataBaseline ) accountJson.persistentDataBaseline = Buffer.from( accountJson.persistentDataBaseline )
 				if ( !account ) // create account for user
 				{
-					if( process.env.USE_DATASYNC_LOGGER ) console.log( "- Creating account with id \""+accountJson.id+"\"" )
+					logSync( "- Creating account with id \""+accountJson.id+"\"", 3)
 					await accounts.AsyncCreateAccountFromData( accountJson, accountJson.lastModified )
 					account = await accounts.AsyncGetPlayerByID( accountJson.id )
 				}
@@ -36,12 +37,12 @@ module.exports = {
 				{
 					if( accountJson.lastModified > account.lastModified )
 					{
-						if( process.env.USE_DATASYNC_LOGGER ) console.log( "- Updating account with id \""+accountJson.id+"\"" )
+						logSync( "- Updating account with id \""+accountJson.id+"\"", 3 )
 						accounts.AsyncUpdatePlayer( account.id, accountJson.account, accountJson.lastModified )
 					}
 					else
 					{
-						if( process.env.USE_DATASYNC_LOGGER ) console.log( "- Skipped account with id \""+accountJson.id+"\" (up-to-date, ts: "+accountJson.lastModified+">="+account.lastModified+")" )
+						logSync( "- Skipped account with id \""+accountJson.id+"\" (up-to-date, ts: "+accountJson.lastModified+">="+account.lastModified+")" , 3)
 					}
 				}
 			}
@@ -54,12 +55,12 @@ module.exports = {
 				let id = Object.keys( servers )[i]
 				if( currentServers[id] )
 				{
-					if( process.env.USE_DATASYNC_LOGGER ) console.log( "- Updating server with id \""+id+"\"" )
+					logSync( "- Updating server with id \""+id+"\"" , 3)
 					UpdateGameServer( currentServers[id], servers[id], false )
 				}
 				else
 				{
-					if( process.env.USE_DATASYNC_LOGGER ) console.log( "- Creating server with id \""+id+"\"" )
+					logSync( "- Creating server with id \""+id+"\"" , 3)
 					let { name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat, lastModified } = servers[id]
 					let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
 					newServer.id = id
@@ -73,7 +74,7 @@ module.exports = {
 		}
 		catch( e )
 		{
-			if( process.env.USE_DATASYNC_LOGGING ) console.log( e )
+			logSync( e, 1, type="error" )
 		}
 	},
 	requestSyncData: async ( data, reply ) =>
@@ -87,7 +88,7 @@ module.exports = {
 		}
 		catch( e )
 		{
-			if( process.env.USE_DATASYNC_LOGGING ) console.log( e )
+			logSync( e, 1, type="error" )
 		}
 	},
 	getState: async ( data, reply ) =>
@@ -98,7 +99,7 @@ module.exports = {
 		}
 		catch( e )
 		{
-			if( process.env.USE_DATASYNC_LOGGING ) console.log( e )
+			logSync( e, 1, type="error" )
 		}
 	},
 	getStateReply: async ( data, reply, ws ) =>
@@ -109,16 +110,16 @@ module.exports = {
 		}
 		catch( e )
 		{
-			if( process.env.USE_DATASYNC_LOGGING ) console.log( e )
+			logSync( e, 1, type="error" )
 		}
 	},
 	addNetworkNode: async (data) => {
 		let payload = data.payload
 		try { 
 			addNetworkNode(payload.id, payload.token)
-			console.log("Updated network! Current network: " + Object.keys(await getNetworkNodes()))
+			logSync("Updated network! Current network: " + Object.keys(await getNetworkNodes()), 3)
 		} catch(e) {
-			if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+			logSync( e, 1, type="error" )
 		}
 	}
 }

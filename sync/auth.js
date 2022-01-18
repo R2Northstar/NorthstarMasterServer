@@ -7,6 +7,7 @@ const { broadcastEvent, startSync, connectTo } = require("./broadcast")
 const { encryptPayload, decryptPayload } = require("./encryption")
 
 const { getInstanceById } = require("./instances.js")
+const { logSync } = require("../logging.js")
 
 const { addNetworkNode, getNetworkNodes, setNetworkNodes, generateToken, hasNetworkNode } = require("./network")
 
@@ -22,11 +23,11 @@ function encrypt(toEncrypt, publicKey) {
 function decrypt(toDecrypt, privateKey) {
     const buffer = Buffer.from(toDecrypt, 'base64')
     const decrypted = crypto.privateDecrypt(
-      {
-        key: privateKey.toString(),
-        passphrase: '',
-      },
-      buffer,
+        {
+            key: privateKey.toString(),
+            passphrase: '',
+        },
+        buffer,
     )
     return decrypted.toString('utf8')
 }
@@ -50,25 +51,26 @@ module.exports = {
         try { 
             let { id, buffer } = data;
             let secret = buffer.generateSecret(id)
+            // acceptRequest is hardcoded true, keeping it anyway for possible later use
             replyFunc("serverJoinChallenge", {challenge: encrypt(secret, publicKey), acceptRequest:true})
         }
         catch (e) {
-            if(process.env.USE_AUTH_LOGGING) console.log(e)
+            logSync(e, 1, "error")
         }
     },
     serverJoinChallenge: async (data, replyFunc) => { // Received by Client from Master
         try {
             let { challenge, acceptRequest } = data.data
             if (acceptRequest) {
-                // TODO: prevent mitm here, provided we arent using ssl
                 replyFunc("serverJoinChallengeAttempt", {response: decrypt(challenge, privateKey), id: process.env.DATASYNC_OWN_ID})
             }
             else {
-                console.log("NOT ALLOWED TO CONNECT")
+                logSync("acceptRequest is false, not allowed to connect. Dying", 0, "error")
+                process.exit(1)
             }
         }
         catch (e) {
-            if(process.env.USE_AUTH_LOGGING) console.log(e)
+            logSync(e, 1, "error")
         }
     },
 
@@ -78,53 +80,48 @@ module.exports = {
             let correct = data.buffer.checkSecret(response, id) && !hasNetworkNode(id)
             let token;
             if (correct) {
-                console.log("Authorisation request from " + id + " was correct, authorizing!")
+                logSync("Authorisation request from " + id + " was correct, authorizing!", 2)
                 token = generateToken();
                 addNetworkNode(id, token)
                 broadcastEvent("addNetworkNode", {id, token})
-                console.log("Updated network! Current network: " + Object.keys(await getNetworkNodes()))
+                logSync("Updated network! Current network: " + Object.keys(await getNetworkNodes()), 2)
             }
             else {
-                console.log("Authorisation request from " + id + " was incorrect, denying!")
+                logSync("Authorisation request from " + id + " was incorrect, denying!", 2, type="warn")
             }
-            // console.log("Encrypting with token " + token)
             let encNet = await encryptPayload(JSON.stringify(getNetworkNodes()), token)
-            // console.log(encNet)
             replyFunc("serverJoinChallengeResponse", { correct, token: (correct ? encrypt(token, publicKey) : undefined), network: (correct ? encNet : undefined) })
         }
         catch (e) {
-            if(process.env.USE_AUTH_LOGGING) console.log(e)
+            logSync(e, 1, "error")
         }
     },
 
     serverJoinChallengeResponse: async (data, replyFunc, socket) => { // Received by Client from Master
         try {
             let { correct, token } = data.data
-            // console.log(data.data)
-            // console.log(data.data.network.data)
             if (correct) {
-                console.log("Authorisation was correct, authorized!")
+                logSync("Authorisation was correct, authorized!", 2)
                 let tokenDecrypted = decrypt(token, privateKey);
 
                 let decNetwork = await decryptPayload(data.data.network, tokenDecrypted)
-                // console.log("Network is " + JSON.stringify(decNetwork.data))
                 setNetworkNodes(JSON.parse(decNetwork.data))
-                console.log("Received network data from master")
+                logSync("Received network data from master", 2)
                 for (let node of Object.values( await getNetworkNodes())) {
                     if (node.id != process.env.DATASYNC_OWN_ID && node.id != socket.id) {
                         connectTo(await getInstanceById(node.id))
                     }
                 }
-                // console.log(await getNetworkNodes())
 
                 startSync();
             }
             else {
-                console.log("Authorisation was incorrect, unauthorized!")
+                logSync("Authorisation was incorrect, unauthorized! Dying.", 0, "error")
+                process.exit(1)
             }
         }
         catch (e) {
-            if(process.env.USE_AUTH_LOGGING) console.log(e)
+            logSync(e, 1, "error")
         }
     },
 }

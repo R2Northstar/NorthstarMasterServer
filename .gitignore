@@ -130,3 +130,5 @@ backups
 
 *.env
 !dev.env
+*.log
+*.jshidden

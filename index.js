@@ -2,6 +2,8 @@
 // This is just to overwrite .env when debugging
 const args = require( "minimist" )( process.argv.slice( 2 ) )
 require( "dotenv" ).config( { path: "./"+( args.env || ( args.devenv ? "dev.env" : ".env" ) ) } )
+if(process.env.SYNC_LOGGING_LEVEL == undefined) process.env.SYNC_LOGGING_LEVEL  = 1
+const { logMonarch } = require("./logging.js")
 
 const fs = require( "fs" )
 const path = require( "path" )
@@ -34,7 +36,7 @@ for ( let routePath of ROUTE_PATHS )
 	{
 		if ( file.endsWith( ".js" ) )
 		{
-			console.log( `Registering routes from file ${path.join( routePath, file )}` )
+			logMonarch( `Registering routes from file ${path.join( routePath, file )}` )
 			fastify.register( require( path.join( __dirname, routePath, file ) ) )
 		}
 	}
@@ -54,7 +56,7 @@ async function start()
 }
 
 // ensure completion of data with instances before listening for http requests
-if( process.env.USE_INSTANCING )
+if( process.env.USE_INSTANCING == "1" || process.env.USE_INSTANCING == "true" )
 {
 	const syncing = require( "./sync/socket.js" )
 	syncing.start( fastify.server ).then( () =>

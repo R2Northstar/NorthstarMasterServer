@@ -4,6 +4,8 @@ const fs = require( "fs" )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) ) 
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 
+const { logger, logMonarch } = require("../logging.js") 
+
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
@@ -12,9 +14,9 @@ let playerDB;
 function openDB() {
 	playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex => { 
 		if ( ex )
-			console.error( ex )
+			logger.error( ex )
 		else
-			console.log( "Connected to player database successfully" )
+			logMonarch( "Connected to player database successfully" )
 		
 		playerDBOpen = true;
 
@@ -31,9 +33,9 @@ function openDB() {
 		)
 		`, ex => {
 			if ( ex )
-				console.error( ex )
+				logger.error( ex )
 			else
-				console.log( "Created player account table successfully" )
+				logMonarch( "Created player account table successfully" )
 		})
 
 		// create mod persistent data table
@@ -48,9 +50,9 @@ function openDB() {
 		)
 		`, ex => {
 			if ( ex )
-				console.error( ex )
+				logger.error( ex )
 			else
-				console.log( "Created mod persistent data table successfully" )
+				logMonarch( "Created mod persistent data table successfully" )
 		})
 	})
 }
@@ -63,7 +65,7 @@ function asyncDBGet( sql, params = [] )
 		playerDB.get( sql, params, ( ex, row ) => {
 			if ( ex )
 			{
-				console.error( "Encountered error querying player database: " + ex )
+				logger.error( "Encountered error querying player database: " + ex )
 				reject( ex )
 			}
 			else 
@@ -78,7 +80,7 @@ function asyncDBAll( sql, params = [] )
 		playerDB.all( sql, params, ( ex, rows ) => {
 			if ( ex )
 			{
-				console.error( "Encountered error querying player database: " + ex )
+				logger.error( "Encountered error querying player database: " + ex )
 				reject( ex )
 			}
 			else 
@@ -94,7 +96,7 @@ function asyncDBRun( sql, params = [] )
 		playerDB.run( sql, params, ex => {
 			if ( ex )
 			{
-				console.error( "Encountered error querying player database: " + ex )
+				logger.error( "Encountered error querying player database: " + ex )
 				reject( ex )
 			}
 			else
@@ -206,7 +208,7 @@ module.exports = {
 	},
 
 	BackupDatabase: async function BackupDatabase() { // closes db, copies it, then opens db. hopefully doesn't break anything
-		console.log("Backing up database")
+		logMonarch("Backing up database")
 		playerDBOpen = false;
 		await playerDB.close()
 		var dir = './backups';

@@ -24,11 +24,12 @@
 		"jsonschema": "^1.4.0",
 		"minimist": "^1.2.5",
 		"sqlite3": "^5.0.2",
+		"winston": "^3.4.0",
 		"ws": "^8.4.2"
 	},
 	"devDependencies": {
 		"eslint": "^8.6.0",
-		"husky": "^7.0.0",
+		"husky": "^7.0.4",
 		"nodemon": "^2.0.15"
 	}
 }

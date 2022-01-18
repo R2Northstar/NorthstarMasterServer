@@ -1,6 +1,6 @@
 const path = require( "path" )
 const fs = require( "fs" )
-
+const { logMonarch } = require("../logging.js")
 
 let promodataPath = path.join( __dirname, "mainmenupromodata.json" )
 
@@ -9,11 +9,11 @@ fs.watch( promodataPath, ( curr, prev ) => {
     try 
     {
         mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
-        console.log( "updated main menu promo data successfully!" )
+        logMonarch( "updated main menu promo data successfully!" )
     }
     catch ( ex )
     {
-        console.log( `encountered error updating main menu promo data: ${ ex }` )
+        logMonarch( `encountered error updating main menu promo data: ${ ex }` )
     }
 
 })

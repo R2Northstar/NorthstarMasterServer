@@ -48,12 +48,13 @@ async function waitForSyncDataReceived( resolve )
 const { encryptPayload } = require( "./encryption.js" )
 const { getInstanceToken } = require( "./network.js" )
 const accounts = require( "../shared/accounts.js" )
+const { logSync } = require("../logging.js")
 
 async function attemptSyncWithAny( sockets )
 {
 	accounts.BackupDatabase() // backup DB on startup in case of big oopsie
 
-	console.log( "Attempting to sync with first available server" )
+	logSync( "Attempting to sync with first available server", 2 )
 	setOwnSyncState( 1 )
 	// Attempt to sync with any up-and-running masterserver
 	let hasSynced = false
@@ -74,7 +75,7 @@ async function attemptSyncWithAny( sockets )
 				{
 					try
 					{
-						console.log( "Attempting sync with instance "+id )
+						logSync( "Attempting sync with instance "+id , 2)
 						// Sync data
 						let encrypted = await encryptPayload( { event: "requestSyncData", payload: { } }, token )
 						ws.send( JSON.stringify( { method: "sync", payload: encrypted } ) )
@@ -84,25 +85,25 @@ async function attemptSyncWithAny( sockets )
 
 						if( receivedSyncData )
 						{
-							console.log( "Completed sync with instance "+id )
+							logSync( "Completed sync with instance "+id , 2)
 							setOwnSyncState( 2 )
 							hasSynced = true
 						}
 						else
 						{
-							console.log( "No sync data response from "+id+" before timeout" )
+							logSync( "No sync data response from "+id+" before timeout", 2, type="warn")
 						}
 					}
 					catch( e )
 					{
-						console.log( e )
-						console.log( "Failed to complete sync with instance "+id )
+						logSync( "Failed to complete sync with instance "+id, 2, type="error")
+						logSync(e, 1, type="error")
 					}
 				}
 			}
 			catch( e )
 			{
-				console.log( e )
+				logSync(e, 1, type="error")
 			}
 		}
 	}
@@ -110,12 +111,12 @@ async function attemptSyncWithAny( sockets )
 	// Skip if none available
 	if( !hasSynced )
 	{
-		console.log( "Sync could not be completed" )
+		logSync("Sync could not be completed", 1, type="error")
 		setOwnSyncState( 2 )
 	}
 
 	// backup server every n minutes in case of oopsie
-	console.log( `Will attempt to backup DB every ${process.env.DB_BACKUP_MINUTES || 30} minutes` )
+	logSync( `Will attempt to backup DB every ${process.env.DB_BACKUP_MINUTES || 30} minutes` , 3)
 	setInterval( () =>
 	{
 		accounts.BackupDatabase()

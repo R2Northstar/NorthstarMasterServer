@@ -3,6 +3,7 @@
 
 const crypto = require('crypto')
 const { getOwnToken } = require('./network.js')
+const { logSync } = require("../logging.js")
 
 // encrypts payloads
 async function encryptPayload(body, token) {
@@ -22,7 +23,7 @@ async function encryptPayload(body, token) {
 
         return { iv: initVector, data: encryptedData.toString() }
     } catch(e) {
-        console.log(e)
+        logSync(e, 0, type="error")
         return {} // don't ever error cause i'm nice
     }
 }
@@ -43,7 +44,7 @@ async function decryptPayload(body, token) {
         let json = JSON.parse(decryptedData);
         return json
     } catch(e) {
-        console.log(e)
+        logSync(e, 0, type="error")
         return {} // don't ever error cause i'm nice
     }
 }

@@ -1,4 +1,5 @@
 const sqlite = require( "sqlite3" ).verbose()
+const { logMonarch } = require("./logging.js")
 
 if ( process.argv.includes( "-devenv" ) )
 	require( 'dotenv' ).config({ path: "./dev.env" })
@@ -7,9 +8,9 @@ else
 
 let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, async ex => { 
 	if ( ex )
-		console.error( ex )
+		logMonarch( ex, type="error" )
 	else
-		console.log( "Connected to player database successfully" )
+		logMonarch( "Connected to player database successfully" )
 	
 	// create account table
 	// this should mirror the PlayerAccount class's	properties
@@ -24,9 +25,9 @@ let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqli
 	)
 	`, ex => {
 		if ( ex )
-			console.error( ex )
+			logMonarch( ex, type="error" )
 		else
-			console.log( "Created player account table successfully" )
+			logMonarch( "Created player account table successfully" )
 	})
 
 	// create mod persistent data table
@@ -41,17 +42,17 @@ let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqli
 	)
 	`, ex => {
 		if ( ex )
-			console.error( ex )
+			logMonarch( ex, type="error" )
 		else
-			console.log( "Created mod persistent data table successfully" )
+			logMonarch( "Created mod persistent data table successfully" )
 	})
 
     if( !(await accountsTimestampColumnExists()) ) {
-        console.log("Adding column 'lastModified' to accounts")
+        logMonarch("Adding column 'lastModified' to accounts")
         accountsAddTimestampColumn()
     }
     if( !(await modPDataTimestampColumnExists()) ) {
-        console.log("Adding column 'lastModified' to modPeristentData")
+        logMonarch("Adding column 'lastModified' to modPeristentData")
         modPDataAddTimestampColumn()
     }
 })
@@ -64,7 +65,7 @@ function accountsTimestampColumnExists()
         `, [], ( ex, row ) => {
 			if ( ex )
 			{
-				console.error( "Encountered error querying player database: " + ex )
+				logMonarch( "Encountered error querying player database: " + ex, type="error" )
 				reject( ex )
 			}
 			else
@@ -82,7 +83,7 @@ function modPDataTimestampColumnExists()
         `, [], ( ex, row ) => {
 			if ( ex )
 			{
-				console.error( "Encountered error querying player database: " + ex )
+				logMonarch( "Encountered error querying player database: " + ex, type="error" )
 				reject( ex )
 			}
 			else
@@ -100,9 +101,9 @@ function accountsAddTimestampColumn()
         ALTER TABLE accounts ADD COLUMN lastModified INTEGER DEFAULT 0
         `, ex => {
             if ( ex )
-                console.error( ex )
+				logMonarch( ex, type="error" )
             else
-                console.log( "Added account lastModified column" )
+                logMonarch( "Added account lastModified column" )
         })
 	})
 }
@@ -113,9 +114,9 @@ function modPDataAddTimestampColumn()
         ALTER TABLE modPeristentData ADD COLUMN lastModified INTEGER DEFAULT 0
         `, ex => {
             if ( ex )
-                console.error( ex )
+				logMonarch( ex, type="error" )
             else
-                console.log( "Added mod pdata lastModified column" )
+                logMonarch( "Added mod pdata lastModified column" )
         })
 	})
 }

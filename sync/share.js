@@ -2,13 +2,14 @@
 
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameServer } = require("../shared/gameserver.js")
 const accounts = require("../shared/accounts.js") 
+const { logSync } = require("../logging.js")
 
 module.exports = {
     // eventName: async (data) => {
     //     try { 
     //         EVENT HANDLER
     //     } catch(e) {
-    //         if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+    //         logSync( e, 1, type="error" )
     //     }
     // }
     serverAdd: async (data) => {
@@ -20,14 +21,14 @@ module.exports = {
             newServer.lastModified = data.timestamp;
             AddGameServer(newServer, false);
         } catch(e) {
-            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+            logSync( e, 1, type="error" )
         }
     },
     serverRemove: async (data) => {
         try {
             RemoveGameServer(data.payload, false)
         } catch(e) {
-            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+            logSync( e, 1, type="error" )
         }
     },
     serverUpdate: async (data) => {
@@ -35,7 +36,7 @@ module.exports = {
             let server = GetGameServers()[ data.payload.gameserver.id ]
             UpdateGameServer(server, Object.assign(data.payload.data, { lastModified: data.timestamp }) , false)
         } catch(e) {
-            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+            logSync( e, 1, type="error" )
         }
     },
     playerUpdate: async (data) => {
@@ -49,7 +50,7 @@ module.exports = {
             }
             accounts.AsyncUpdatePlayer( account.id, data.payload.account, data.timestamp )
         } catch(e) {
-            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+            logSync( e, 1, type="error" )
         }
     },
     playerUpdateCurrentServer: async (data) => {
@@ -59,7 +60,7 @@ module.exports = {
                 accounts.AsyncUpdatePlayerCurrentServer( data.payload.id, data.payload.serverId, data.timestamp )
             }
         } catch(e) {
-            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+            logSync( e, 1, type="error" )
         }
     },
     playerWritePersistenceBaseline: async (data) => {
@@ -69,7 +70,7 @@ module.exports = {
                 accounts.AsyncWritePlayerPersistenceBaseline( data.payload.id, Buffer.from(data.payload.buf), data.timestamp )
             }
         } catch(e) {
-            if(process.env.USE_DATASYNC_LOGGING) console.log(e)
+            logSync( e, 1, type="error" )
         }
     }
 }

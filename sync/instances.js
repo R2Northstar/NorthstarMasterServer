@@ -10,6 +10,8 @@ let isInstancesReady = false;
 const crypto = require("crypto");
 let privateKey = fs.readFileSync("./rsa_4096_priv.pem").toString()
 
+const { logSync } = require("../logging.js")
+
 function decrypt(toDecrypt, privateKey) {
     const buffer = Buffer.from(toDecrypt, 'base64')
     const decrypted = crypto.privateDecrypt(
@@ -42,7 +44,7 @@ const instancesSchema = {
 const asyncHttp = require("../shared/asynchttp.js") 
 async function getRemoteInstances(url) {
     try {
-        console.log('Attempting to fetch remote instances file');
+        logSync('Attempting to fetch remote instances file', 2);
         url = new URL(url)
         let resBuffer = await asyncHttp.request({
             method: "GET",
@@ -53,15 +55,15 @@ async function getRemoteInstances(url) {
         let proposed = JSON.parse(decrypt(resBuffer.toString(), privateKey));
         let { valid } = validate(proposed, instancesSchema);
         if(valid) {
-            console.log('Remote instances JSON meets schema, saving');
+            logSync('Remote instances JSON meets schema, saving', 2);
             instances = proposed;
         } else {
-            console.log('Remote instances JSON does not meet schema');
+            logSync('Remote instances JSON does not meet schema', 2, "warn");
         }
         isInstancesReady = true
     } catch(e) {
         isInstancesReady = true
-        console.log(e)
+        logSync(e, 1, "error")
     }
 }
 
@@ -77,7 +79,7 @@ if(process.env.INSTANCE_LIST_REMOTE) {
                 instances = fileJson;
             }
         } catch(e) {
-            console.log(e)
+            logSync(e, 1, "error")
         }
     });
 }

@@ -15,13 +15,16 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 	
 	// create account table
 	// this should mirror the PlayerAccount class's	properties
+	// Added isBanned to databse
 	playerDB.run( `
 	CREATE TABLE IF NOT EXISTS accounts (
 		id TEXT PRIMARY KEY NOT NULL,
 		currentAuthToken TEXT,
 		currentAuthTokenExpirationTime INTEGER,
-		currentServerId TEXT,
-		persistentDataBaseline BLOB NOT NULL
+		currentServerId TEXT, 
+		persistentDataBaseline BLOB NOT NULL,
+		playerName TEXT,
+		isBanned INTEGER DEFAULT 0
 	)
 	`, ex => {
 		if ( ex )
@@ -87,13 +90,15 @@ class PlayerAccount
 	// string currentServerId
 	// Buffer persistentDataBaseline
 	
-	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline )
+	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, playerName, isBanned )
 	{
 		this.id = id
 		this.currentAuthToken = currentAuthToken
 		this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
 		this.currentServerId = currentServerId
 		this.persistentDataBaseline = persistentDataBaseline
+		this.playerName = playerName
+		this.isBanned = isBanned
 	}
 }
 
@@ -104,13 +109,28 @@ module.exports = {
 		if ( !row )
 			return null
 		
-		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
+		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.playerName, row.isBanned )
 	},
 	
-	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
-		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
+	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id , playerName ) {
+		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline, playerName ) VALUES ( ?, ? ,? )", [ id, DEFAULT_PDATA_BASELINE, playerName ] )
 	},
+	
+	AsyncUpdatePlayerNameForID: async function AsyncCreateAccountForID( id , playerName ) {
+		await asyncDBRun( "UPDATE accounts SET playerName = ?, WHERE id = ?", [playerName,id] )
+	},
+	
+	
 
+	AsyncBanAccountByID: async function AsyncBanAccountByID( id ) {
+		await asyncDBRun( "UPDATE accounts SET isBanned = 1, WHERE id = ?", [id] )
+	},
+	AsyncUnbanAccountByID: async function AsyncUnbanAccountByID( id ) {
+		await asyncDBRun( "UPDATE accounts SET isBanned = 0, WHERE id = ?", [id] )
+	},
+	
+	
+	
 	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token ) {
 		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
 	},

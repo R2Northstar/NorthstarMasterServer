@@ -19,6 +19,13 @@ module.exports = ( fastify, opts, done ) => {
 		},
 	},
 	async ( request, response ) => {
+		
+		let clientIp = request.ip
+	
+		// pull the client ip address from a custom header if one is specified
+		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
+			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
+		
 		// check if account exists 
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
 		if ( !account )
@@ -29,7 +36,7 @@ module.exports = ( fastify, opts, done ) => {
 		{
 			let server = GetGameServers()[ request.query.serverId ]
 			// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-			if ( !server || request.ip != server.ip || account.currentServerId != request.query.serverId )
+			if ( !server || clientIp != server.ip || account.currentServerId != request.query.serverId )
 				return null
 		}
 		

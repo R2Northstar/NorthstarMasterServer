@@ -120,6 +120,9 @@ module.exports = ( fastify, opts, done ) => {
 		if ( !jsonResponse.success )
 			return { success: false }
 		
+		// update the current server for the player account
+		accounts.AsyncUpdatePlayerCurrentServer( account.id, server.id )
+
 		return {
 			success: true,
 			

@@ -32,8 +32,11 @@ module.exports = ( fastify, opts, done ) => {
 			return null
 
 		// if the client is on their own server then don't check this since their own server might not be on masterserver
-		if ( account.currentServerId != "self" )
-		{
+		if ( account.currentServerId == "self" ) {
+			// if the up sending the request isn't the same as the one that last authed using client/origin_auth then don't update
+			if ( clientIp != account.lastAuthIp )
+				return null
+		} else {
 			let server = GetGameServers()[ request.query.serverId ]
 			// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
 			if ( !server || clientIp != server.ip || account.currentServerId != request.query.serverId )

@@ -59,6 +59,14 @@ module.exports = ( fastify, opts, done ) => {
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
+		let clientIp = request.ip
+	
+		// pull the client ip address from a custom header if one is specified
+		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
+			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
+
+		accounts.AsyncUpdatePlayerAuthIp( account.id, clientIp )
+
 		return {
 			success: true,
 			token: authToken

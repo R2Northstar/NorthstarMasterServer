@@ -33,7 +33,7 @@ module.exports = ( fastify, opts, done ) => {
 
 		// if the client is on their own server then don't check this since their own server might not be on masterserver
 		if ( account.currentServerId == "self" ) {
-			// if the up sending the request isn't the same as the one that last authed using client/origin_auth then don't update
+			// if the ip sending the request isn't the same as the one that last authed using client/origin_auth then don't update
 			if ( clientIp != account.lastAuthIp )
 				return null
 		} else {

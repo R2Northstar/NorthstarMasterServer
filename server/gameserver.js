@@ -13,6 +13,12 @@ async function SharedTryAddServer( request )
 	// check server's verify endpoint on their auth server, make sure it's fine
 	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
 
+	let clientIp = request.ip
+	
+	// pull the client ip address from a custom header if one is specified
+	if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
+		clientIp = request.headers[process.env.CLIENT_IP_HEADER]
+	
 	let hasValidModInfo = true
 	let modInfo
 	if ( request.isMultipart() )
@@ -27,7 +33,7 @@ async function SharedTryAddServer( request )
 
 	let authServerResponse = await asyncHttp.request( {
 		method: "GET",
-		host: request.ip,
+		host: clientIp,
 		port: request.query.authPort,
 		path: "/verify"
 	})
@@ -71,7 +77,7 @@ async function SharedTryAddServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, clientIp, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
 
 	return {
@@ -119,9 +125,16 @@ module.exports = ( fastify, opts, done ) => {
 		}
 	},
 	async ( request, reply ) => {
+		
+		let clientIp = request.ip
+	
+		// pull the client ip address from a custom header if one is specified
+		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
+			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
+		
 		let server = GetGameServers()[ request.query.id ]
 		// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-		if ( !server || request.ip != server.ip || !request.query.id )// remove !request.playerCount as if playercount==0 it will trigger skip heartbeat update
+		if ( !server || clientIp != server.ip || !request.query.id )// remove !request.playerCount as if playercount==0 it will trigger skip heartbeat update
 		{
 			return null
 		}
@@ -137,6 +150,13 @@ module.exports = ( fastify, opts, done ) => {
 	// updates values shown on the server list, such as map, playlist, or player count
 	// no schema for this one, since it's fully dynamic and fastify doesnt do optional params
 	fastify.post( '/server/update_values', async ( request, reply ) => {
+		
+		let clientIp = request.ip
+	
+		// pull the client ip address from a custom header if one is specified
+		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
+			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
+		
 		if ( !( "id" in request.query ) )
 			return null
 		
@@ -147,7 +167,7 @@ module.exports = ( fastify, opts, done ) => {
 		{
 			return SharedTryAddServer( request )
 		}
-		else if ( request.ip != server.ip ) // dont update if the server isnt the one sending the heartbeat
+		else if ( clientIp != server.ip ) // dont update if the server isnt the one sending the heartbeat
 			return null
 			
 		// update heartbeat
@@ -170,7 +190,7 @@ module.exports = ( fastify, opts, done ) => {
 	async ( request, reply ) => {
 		let server = GetGameServers()[ request.query.id ]
 		// dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
-		if ( !server || request.ip != server.ip )
+		if ( !server || clientIp != server.ip )
 			return null
 		
 		RemoveGameServer( server )

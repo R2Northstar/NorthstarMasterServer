@@ -20,17 +20,27 @@ module.exports = ( fastify, opts, done ) => {
 		},
 	},
 	async ( request, response ) => {
+		
+		let clientIp = request.ip
+	
+		// pull the client ip address from a custom header if one is specified
+		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
+			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
+		
 		// check if account exists 
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
 		if ( !account )
 			return null
 
 		// if the client is on their own server then don't check this since their own server might not be on masterserver
-		if ( account.currentServerId != "self" )
-		{
+		if ( account.currentServerId == "self" ) {
+			// if the ip sending the request isn't the same as the one that last authed using client/origin_auth then don't update
+			if ( clientIp != account.lastAuthIp )
+				return null
+		} else {
 			let server = GetGameServers()[ request.query.serverId ]
 			// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
-			if ( !server || request.ip != server.ip || account.currentServerId != request.query.serverId )
+			if ( !server || clientIp != server.ip || account.currentServerId != request.query.serverId )
 				return null
 		}
 		

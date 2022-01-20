@@ -14,8 +14,9 @@ module.exports = {
     // }
     serverAdd: async (data) => {
         try {
-            let { id, name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat, serverAuthToken } = data.payload;
-            let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat )
+            let { id, name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat, serverAuthToken, registeredTo } = data.payload;
+            console.log("error here")
+            let newServer = new GameServer( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, lastHeartbeat, registeredTo )
             newServer.id = id;
             newServer.lastHeartbeat = lastHeartbeat;
             newServer.lastModified = data.timestamp;

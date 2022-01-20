@@ -1,6 +1,8 @@
 const crypto = require( "crypto" )
 const { broadcastEvent } = require( "../sync/broadcast.js" )
 
+const { logMonarch } = require("../logging.js")
+
 class GameServer
 {
 	// string name
@@ -20,7 +22,7 @@ class GameServer
 	// object modInfo
 	// object pdiff
 
-	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = {} )
+	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", registeredTo, modInfo = {} )
 	{
 		if ( nameOrServer instanceof( GameServer ) ) // copy constructor
 		{
@@ -28,7 +30,7 @@ class GameServer
 
 			this.id = nameOrServer.id
 			this.serverAuthToken = nameOrServer.serverAuthToken
-			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.pdiffs )
+			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.registeredTo, nameOrServer.pdiffs )
 		}
 		else // normal constructor
 		{
@@ -37,11 +39,11 @@ class GameServer
 
 			this.id = crypto.randomBytes( 16 ).toString( "hex" )
 			this.serverAuthToken = crypto.randomBytes( 16 ).toString( "hex" )
-			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
+			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, registeredTo )
 		}
 	}
 
-	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
+	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, registeredTo )
 	{
 		this.name = name
 		this.description = description
@@ -69,6 +71,8 @@ class GameServer
 			for ( let mod of modInfo.Mods )
 				this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null } )
 		}
+
+		this.registeredTo = registeredTo
 	}
 }
 

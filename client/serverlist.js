@@ -28,12 +28,15 @@ module.exports = ( fastify, opts, done ) => {
 				continue
 			
 			// create a copy of the gameserver obj for clients so we can hide sensitive info
+			// TODO: this should really be additive instead of subtractive
+			// AKA should only select the fields needed instead of deleting the ones we dont need
 			let copy = new GameServer( servers[ i ] )
 			delete copy.ip
 			delete copy.port
 			delete copy.authPort
 			delete copy.password
 			delete copy.serverAuthToken
+			delete copy.registeredTo
 			
 			displayServerArray.push( copy )
 		}

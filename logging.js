@@ -7,7 +7,7 @@ const myFormat = winston.format.printf(({message, level, timestamp}) => {
 });
 
 let logger = winston.createLogger({
-    level: 'info',
+    level: 'debug',
     format: winston.format.json(),
     defaultMeta: { service: 'user-service' },
     transports: [
@@ -67,6 +67,9 @@ function logSync(data, level, type="info") {
             case "warn":
                 logger.warn(data)
                 break
+            case "debug":
+                logger.debug(data)
+                break
             default:
                 console.log("Unknown logging type \"" + type + "\"")
         }
@@ -84,6 +87,9 @@ function logMonarch(data, type="info") {
                 break
             case "warn":
                 logger.warn(data)
+                break
+            case "debug":
+                logger.debug(data)
                 break
             default:
                 console.log("Unknown logging type \"" + type + "\"")

@@ -4,6 +4,9 @@ const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, UpdateGameS
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) ) 
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const Filter = require('bad-words')
+
+const { logMonarch } = require("../logging.js")
+
 let filter = new Filter();
 
 const VERIFY_STRING = "I am a northstar server!"
@@ -77,9 +80,9 @@ async function SharedTryAddServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, clientIp, request.query.port, request.query.authPort, request.query.password, modInfo )
+	let registeredTo = process.env.DATASYNC_OWN_ID
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, clientIp, request.query.port, request.query.authPort, request.query.password, registeredTo, modInfo )
 	AddGameServer( newServer )
-
 	return {
 		success: true,
 		id: newServer.id,

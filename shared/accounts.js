@@ -87,13 +87,14 @@ class PlayerAccount
 	// string currentServerId
 	// Buffer persistentDataBaseline
 	
-	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline )
+	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, lastAuthIp )
 	{
 		this.id = id
 		this.currentAuthToken = currentAuthToken
 		this.currentAuthTokenExpirationTime = currentAuthTokenExpirationTime
 		this.currentServerId = currentServerId
 		this.persistentDataBaseline = persistentDataBaseline
+		this.lastAuthIp = lastAuthIp
 	}
 }
 
@@ -104,7 +105,7 @@ module.exports = {
 		if ( !row )
 			return null
 		
-		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline )
+		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp )
 	},
 	
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
@@ -113,6 +114,10 @@ module.exports = {
 
 	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token ) {
 		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
+	},
+
+	AsyncUpdatePlayerAuthIp: async function AsyncUpdatePlayerAuthIp( id, lastAuthIp ) {
+		await asyncDBRun( "UPDATE accounts SET lastAuthIp = ? WHERE id = ?", [ lastAuthIp, id ] )
 	},
 
 	AsyncUpdatePlayerCurrentServer: async function AsyncUpdatePlayerCurrentServer( id, serverId ) {

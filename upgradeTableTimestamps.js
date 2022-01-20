@@ -21,6 +21,7 @@ let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqli
 		currentAuthTokenExpirationTime INTEGER,
 		currentServerId TEXT,
 		persistentDataBaseline BLOB NOT NULL,
+		lastAuthIp TEXT,
 		lastModified INTEGER DEFAULT 0
 	)
 	`, ex => {

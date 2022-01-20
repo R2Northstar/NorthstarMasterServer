@@ -134,6 +134,8 @@ module.exports = ( fastify, opts, done ) => {
 		
 		// update the current server for the player account
 		accounts.AsyncUpdatePlayerCurrentServer( account.id, server.id )
+		
+		broadcastEvent('playerUpdateCurrentServer', { id: account.id, serverId: server.id }); // data sharing
 
 		return {
 			success: true,
@@ -176,7 +178,6 @@ module.exports = ( fastify, opts, done ) => {
 		let authToken = crypto.randomBytes( 16 ).toString("hex").substr( 0, 31 )
 		await accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
-		account = await accounts.AsyncGetPlayerByID( request.query.id )
 		broadcastEvent('playerUpdateCurrentServer', { id: account.id, serverId: "self" }); // data sharing
 				
 		return {

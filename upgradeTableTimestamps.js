@@ -34,7 +34,7 @@ let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqli
 	// create mod persistent data table
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
-	CREATE TABLE IF NOT EXISTS modPeristentData (
+	CREATE TABLE IF NOT EXISTS modPersistentData (
 		id TEXT NOT NULL,
 		pdiffHash TEXT NOT NULL,
 		data TEXT NOT NULL,
@@ -53,7 +53,7 @@ let playerDB = new sqlite.Database( process.env.DB_PATH || 'playerdata.db', sqli
         accountsAddTimestampColumn()
     }
     if( !(await modPDataTimestampColumnExists()) ) {
-        logMonarch("Adding column 'lastModified' to modPeristentData")
+        logMonarch("Adding column 'lastModified' to modPersistentData")
         modPDataAddTimestampColumn()
     }
 })
@@ -80,7 +80,7 @@ function modPDataTimestampColumnExists()
 {
 	return new Promise( ( resolve, reject ) => {
 		playerDB.get( `
-        SELECT COUNT(*) AS CNTREC FROM pragma_table_info('modPeristentData') WHERE name='lastModified'
+        SELECT COUNT(*) AS CNTREC FROM pragma_table_info('modPersistentData') WHERE name='lastModified'
         `, [], ( ex, row ) => {
 			if ( ex )
 			{
@@ -112,7 +112,7 @@ function modPDataAddTimestampColumn()
 {
 	return new Promise( ( resolve, reject ) => {
 		playerDB.run( `
-        ALTER TABLE modPeristentData ADD COLUMN lastModified INTEGER DEFAULT 0
+        ALTER TABLE modPersistentData ADD COLUMN lastModified INTEGER DEFAULT 0
         `, ex => {
             if ( ex )
 				logMonarch( ex, type="error" )

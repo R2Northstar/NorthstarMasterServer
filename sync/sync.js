@@ -75,7 +75,7 @@ module.exports = {
 		}
 		catch( e )
 		{
-			logSync( e, 1, type="error" )
+			logSync(e.toString(), 1, type="error")
 		}
 	},
 	requestSyncData: async ( data, reply ) =>
@@ -89,7 +89,7 @@ module.exports = {
 		}
 		catch( e )
 		{
-			logSync( e, 1, type="error" )
+			logSync(e.toString(), 1, type="error")
 		}
 	},
 	getState: async ( data, reply ) =>
@@ -100,7 +100,7 @@ module.exports = {
 		}
 		catch( e )
 		{
-			logSync( e, 1, type="error" )
+			logSync(e.toString(), 1, type="error")
 		}
 	},
 	getStateReply: async ( data, reply, ws ) =>
@@ -111,7 +111,7 @@ module.exports = {
 		}
 		catch( e )
 		{
-			logSync( e, 1, type="error" )
+			logSync(e.toString(), 1, type="error")
 		}
 	},
 	addNetworkNode: async (data) => {
@@ -120,7 +120,7 @@ module.exports = {
 			addNetworkNode(payload.id, payload.token)
 			logSync("Updated network! Current network: " + Object.keys(await getNetworkNodes()), 3)
 		} catch(e) {
-			logSync( e, 1, type="error" )
+			logSync(e.toString(), 1, type="error")
 		}
 	}
 }

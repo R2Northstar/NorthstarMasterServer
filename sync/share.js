@@ -9,7 +9,7 @@ module.exports = {
     //     try { 
     //         EVENT HANDLER
     //     } catch(e) {
-    //         logSync( e, 1, type="error" )
+    //         logSync(e.toString(), 1, type="error")
     //     }
     // }
     serverAdd: async (data) => {
@@ -23,14 +23,14 @@ module.exports = {
             newServer.serverAuthToken = serverAuthToken;
             AddGameServer(newServer, false);
         } catch(e) {
-            logSync( e, 1, type="error" )
+            logSync(e.toString(), 1, type="error")
         }
     },
     serverRemove: async (data) => {
         try {
             RemoveGameServer(data.payload, false)
         } catch(e) {
-            logSync( e, 1, type="error" )
+            logSync(e.toString(), 1, type="error")
         }
     },
     serverUpdate: async (data) => {
@@ -38,7 +38,7 @@ module.exports = {
             let server = GetGameServers()[ data.payload.gameserver.id ]
             UpdateGameServer(server, Object.assign(data.payload.data, { lastModified: data.timestamp }) , false)
         } catch(e) {
-            logSync( e, 1, type="error" )
+            logSync(e.toString(), 1, type="error")
         }
     },
     playerUpdate: async (data) => {
@@ -52,7 +52,7 @@ module.exports = {
             }
             accounts.AsyncUpdatePlayer( account.id, data.payload.account, data.timestamp )
         } catch(e) {
-            logSync( e, 1, type="error" )
+            logSync(e.toString(), 1, type="error")
         }
     },
     playerUpdateCurrentServer: async (data) => {
@@ -62,7 +62,7 @@ module.exports = {
                 accounts.AsyncUpdatePlayerCurrentServer( data.payload.id, data.payload.serverId, data.timestamp )
             }
         } catch(e) {
-            logSync( e, 1, type="error" )
+            logSync(e.toString(), 1, type="error")
         }
     },
     playerWritePersistenceBaseline: async (data) => {
@@ -72,7 +72,7 @@ module.exports = {
                 accounts.AsyncWritePlayerPersistenceBaseline( data.payload.id, Buffer.from(data.payload.buf), data.timestamp )
             }
         } catch(e) {
-            logSync( e, 1, type="error" )
+            logSync(e.toString(), 1, type="error")
         }
     }
 }

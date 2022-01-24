@@ -63,7 +63,7 @@ async function getRemoteInstances(url) {
         isInstancesReady = true
     } catch(e) {
         isInstancesReady = true
-        logSync(e, 1, "error")
+        logSync(e.toString(), 1, type="error")
     }
 }
 
@@ -79,7 +79,7 @@ if(process.env.INSTANCE_LIST_REMOTE) {
                 instances = fileJson;
             }
         } catch(e) {
-            logSync(e, 1, "error")
+            logSync(e.toString(), 1, type="error")
         }
     });
 }

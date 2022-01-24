@@ -97,13 +97,13 @@ async function attemptSyncWithAny( sockets )
 					catch( e )
 					{
 						logSync( "Failed to complete sync with instance "+id, 2, type="error")
-						logSync(e, 1, type="error")
+						logSync(e.toString(), 1, type="error")
 					}
 				}
 			}
 			catch( e )
 			{
-				logSync(e, 1, type="error")
+				logSync(e.toString(), 1, type="error")
 			}
 		}
 	}

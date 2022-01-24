@@ -55,7 +55,7 @@ module.exports = {
             replyFunc("serverJoinChallenge", {challenge: encrypt(secret, publicKey), acceptRequest:true})
         }
         catch (e) {
-            logSync(e, 1, "error")
+            logSync(e.toString(), 1, type="error")
         }
     },
     serverJoinChallenge: async (data, replyFunc) => { // Received by Client from Master
@@ -70,7 +70,7 @@ module.exports = {
             }
         }
         catch (e) {
-            logSync(e, 1, "error")
+            logSync(e.toString(), 1, type="error")
         }
     },
 
@@ -93,7 +93,7 @@ module.exports = {
             replyFunc("serverJoinChallengeResponse", { correct, token: (correct ? encrypt(token, publicKey) : undefined), network: (correct ? encNet : undefined) })
         }
         catch (e) {
-            logSync(e, 1, "error")
+            logSync(e.toString(), 1, type="error")
         }
     },
 
@@ -121,7 +121,7 @@ module.exports = {
             }
         }
         catch (e) {
-            logSync(e, 1, "error")
+            logSync(e.toString(), 1, type="error")
         }
     },
 }

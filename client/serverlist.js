@@ -64,7 +64,7 @@ module.exports = ( fastify, opts, done ) => {
 		      playerToken: { type: "string" }, // not implemented yet: the authing player's account token
 		    }
 		  },
-		  config: { rateLimit: getRatelimit("REQ_PER_MINUTE__CLIENT_SERVERS") }, // ratelimit
+		  config: { rateLimit: getRatelimit("REQ_PER_MINUTE__ CLIENT_SERVERSWITHADDRESSES") }, // ratelimit
 		},
 		async ( request, response ) => {
 		let displayServerArray = []
@@ -108,7 +108,7 @@ module.exports = ( fastify, opts, done ) => {
 			delete copy.port
 			delete copy.authPort
 			delete copy.password
-      delete copy.serverAuthToken
+                        delete copy.serverAuthToken
 			
 			displayServerArray.push( copy )
 		}

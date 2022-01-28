@@ -53,7 +53,7 @@ module.exports = ( fastify, opts, done ) => {
 		if ( buf.length == account.persistentDataBaseline.length ) {
 			await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
 			broadcastEvent('playerWritePersistenceBaseline', { id: request.query.id, buf }) // data sharing
-    }
+                }
 
 		return null
 	})

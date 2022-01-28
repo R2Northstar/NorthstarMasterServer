@@ -30,7 +30,7 @@ function openDB() {
 			currentServerId TEXT,
 			persistentDataBaseline BLOB NOT NULL,
 			lastModified INTEGER DEFAULT 0,
-      lastAuthIp TEXT
+                        lastAuthIp TEXT
 		)
 		`, ex => {
 			if ( ex )

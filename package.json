@@ -25,7 +25,8 @@
 		"minimist": "^1.2.5",
 		"sqlite3": "^5.0.2",
 		"winston": "^3.4.0",
-		"ws": "^8.4.2"
+		"ws": "^8.4.2",
+    "fastify-rate-limit": "^5.7.0"
 	},
 	"devDependencies": {
 		"eslint": "^8.6.0",

@@ -11,17 +11,19 @@ let filter = new Filter();
 
 const VERIFY_STRING = "I am a northstar server!"
 
+const { getRatelimit } = require("../shared/ratelimit.js")
+
 async function SharedTryAddServer( request )
 {
 	// check server's verify endpoint on their auth server, make sure it's fine
 	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
 
 	let clientIp = request.ip
-	
+
 	// pull the client ip address from a custom header if one is specified
 	if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
 		clientIp = request.headers[process.env.CLIENT_IP_HEADER]
-	
+
 	let hasValidModInfo = true
 	let modInfo
 	if ( request.isMultipart() )
@@ -57,7 +59,7 @@ async function SharedTryAddServer( request )
 					mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
 					mod.pdiff.hash = pdiffHash
 				}
-				catch ( ex ) 
+				catch ( ex )
 				{
 					mod.pdiff = null
 				}
@@ -76,7 +78,7 @@ async function SharedTryAddServer( request )
 		request.query.port = parseInt( request.query.port )
 
 	if ( typeof request.query.authPort == 'string' )
-		request.query.authPort = parseInt( request.query.authPort ) 
+		request.query.authPort = parseInt( request.query.authPort )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
@@ -94,11 +96,12 @@ module.exports = ( fastify, opts, done ) => {
 	fastify.register( require( "fastify-multipart" ) )
 
 	// exported routes
-	
+
 	// POST /server/add_server
 	// adds a gameserver to the server list
-	fastify.post( '/server/add_server', 
+	fastify.post( '/server/add_server',
 	{
+		config: { rateLimit: getRatelimit("REQ_PER_MINUTE__SERVER_ADDSERVER") }, // ratelimit
 		schema: {
 			querystring: {
 				port: { type: "integer" }, // the port the gameserver is being hosted on ( for connect )
@@ -115,11 +118,12 @@ module.exports = ( fastify, opts, done ) => {
 	async ( request, reply ) => {
 		return SharedTryAddServer( request )
 	})
-	
+
 	// POST /server/heartbeat
 	// refreshes a gameserver's last heartbeat time, gameservers are removed after 30 seconds without a heartbeat
 	fastify.post( '/server/heartbeat',
 	{
+		config: { rateLimit: getRatelimit("REQ_PER_MINUTE__SERVER_HEARTBEAT") }, // ratelimit
 		schema: {
 			querystring: {
 				id: { type: "string" }, // the id of the server sending this message
@@ -128,41 +132,44 @@ module.exports = ( fastify, opts, done ) => {
 		}
 	},
 	async ( request, reply ) => {
-		
+
 		let clientIp = request.ip
-	
+
 		// pull the client ip address from a custom header if one is specified
 		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
 			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
-		
+
 		let server = GetGameServers()[ request.query.id ]
 		// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
 		if ( !server || clientIp != server.ip || !request.query.id )// remove !request.playerCount as if playercount==0 it will trigger skip heartbeat update
 		{
 			return null
 		}
-		
+
 		else								// Added else so update heartbeat will trigger,Have to add the brackets for me to work for some reason
 		{
 			UpdateGameServer(server, { lastHeartbeat: Date.now(), playerCount: request.query.playerCount })
 			return null
 		}
 	})
-	
+
 	// POST /server/update_values
 	// updates values shown on the server list, such as map, playlist, or player count
 	// no schema for this one, since it's fully dynamic and fastify doesnt do optional params
-	fastify.post( '/server/update_values', async ( request, reply ) => {
-		
+	fastify.post( '/server/update_values',
+    {
+		config: { rateLimit: getRatelimit("REQ_PER_MINUTE__SERVER_UPDATEVALUES") }, // ratelimit
+    },
+	async ( request, reply ) => {
 		let clientIp = request.ip
-	
+
 		// pull the client ip address from a custom header if one is specified
 		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
 			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
-		
+
 		if ( !( "id" in request.query ) )
 			return null
-		
+
 		let server = GetGameServers()[ request.query.id ]
 		
 		// if server doesn't exist, try adding it
@@ -177,13 +184,15 @@ module.exports = ( fastify, opts, done ) => {
 		server.lastHeartbeat = Date.now()
 		
 		UpdateGameServer(server, Object.assign(request.query, { lastHeartbeat: server.lastHeartbeat }))
+    
 		return null
 	})
-	
-	// DELETE /server/remove_server 
+
+	// DELETE /server/remove_server
 	// removes a gameserver from the server list
 	fastify.delete( '/server/remove_server',
 	{
+		config: { rateLimit: getRatelimit("REQ_PER_MINUTE__SERVER_REMOVESERVER") }, // ratelimit
 		schema: {
 			querystring: {
 				id: { type: "string" }
@@ -195,10 +204,10 @@ module.exports = ( fastify, opts, done ) => {
 		// dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
 		if ( !server || clientIp != server.ip )
 			return null
-		
+
 		RemoveGameServer( server )
 		return null
 	})
-	
+
 	done()
 }

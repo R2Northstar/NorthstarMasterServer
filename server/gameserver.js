@@ -80,7 +80,8 @@ async function SharedTryAddServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, clientIp, request.query.port, request.query.authPort, request.query.password, modInfo )
+	let tags = request.query.tags == "" ? "" : filter.clean( request.query.tags )
+	let newServer = new GameServer( name, description, tags, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, clientIp, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
 
 	return {
@@ -106,6 +107,7 @@ module.exports = ( fastify, opts, done ) => {
 				authPort: { type: "integer" }, // the port the server's http auth server is being hosted on
 				name: { type: "string" }, // the name of the server
 				description: { type: "string" }, // the description of the server
+				tags: { type: "string" }, // the server tags
 				map: { type: "string" }, // the map the server is on
 				playlist: { type: "string" }, // the playlist the server is using
 				maxPlayers: { type: "integer" }, // the maximum number of players the server accepts

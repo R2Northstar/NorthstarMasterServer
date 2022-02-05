@@ -44,7 +44,7 @@ class GameServer
 	{
 		this.name = name
 		this.description = description
-		this.tag = tags
+		this.tags = tags
 		this.playerCount = playerCount
 		this.maxPlayers = maxPlayers
 		this.map = map

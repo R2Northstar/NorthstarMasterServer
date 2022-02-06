@@ -142,9 +142,9 @@ module.exports = ( fastify, opts, done ) => {
 	// updates values shown on the server list, such as map, playlist, or player count
 	// no schema for this one, since it's fully dynamic and fastify doesnt do optional params
 	fastify.post( '/server/update_values',
-    {
+        {
 		config: { rateLimit: getRatelimit("REQ_PER_MINUTE__SERVER_UPDATEVALUES") }, // ratelimit
-    },
+        },
 	async ( request, reply ) => {
 		if ( !( "id" in request.query ) )
 			return null

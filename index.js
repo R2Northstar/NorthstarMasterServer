@@ -35,6 +35,23 @@ else
 
 const ROUTE_PATHS = [ "client", "server", "account" ]
 
+if(!!(process.env.USE_RATELIMIT)) {
+	fastify.register(require('fastify-rate-limit'),
+	{
+		global: false,
+		errorResponseBuilder: function(req, context) {
+			return {
+				code: 429,
+				error: 'Too Many Requests',
+				message: `Request limit reached. You can send ${context.max} requests every ${context.after}. Timeout expiry: ${context.ttl}ms.`,
+				date: Date.now(),
+				expiresIn: context.ttl // milliseconds
+			}
+		}
+	}
+	);
+}
+
 for ( let routePath of ROUTE_PATHS )
 {
 	for ( let file of fs.readdirSync( routePath ) )

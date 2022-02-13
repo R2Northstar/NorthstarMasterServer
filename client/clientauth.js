@@ -66,13 +66,7 @@ module.exports = ( fastify, opts, done ) => {
 		account = await accounts.AsyncGetPlayerByID( request.query.id )
 		broadcastEvent('playerUpdate', { id: account.id, account }); // data sharing
 
-		let clientIp = request.ip
-
-		// pull the client ip address from a custom header if one is specified
-		if (process.env.CLIENT_IP_HEADER && request.headers[process.env.CLIENT_IP_HEADER])
-			clientIp = request.headers[process.env.CLIENT_IP_HEADER]
-
-		accounts.AsyncUpdatePlayerAuthIp( account.id, clientIp )
+		accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
 
 		return {
 			success: true,

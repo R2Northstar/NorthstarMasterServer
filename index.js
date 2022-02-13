@@ -8,6 +8,12 @@ const { logMonarch } = require("./logging.js")
 const fs = require( "fs" )
 const path = require( "path" )
 
+let trustProxy = !!(process.env.TRUST_PROXY)
+if(trustProxy && process.env.TRUST_PROXY_LIST_PATH) {
+	let addressList = fs.readFileSync( process.env.TRUST_PROXY_LIST_PATH ).toString();
+	trustProxy = addressList.split("\r\n").map(a => a.trim()).filter(a => !a.startsWith("#") && a != '')
+}
+
 let fastify = require( "fastify" )
 if ( process.env.USE_HTTPS )
 {
@@ -17,15 +23,15 @@ if ( process.env.USE_HTTPS )
 			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
 			cert: fs.readFileSync( process.env.SSL_CERT_PATH )
 		},
-		trustProxy: !!( process.env.TRUST_PROXY )
-	} )
+		trustProxy
+	})
 }
 else
 {
 	fastify = fastify( {
 		logger: process.env.USE_FASTIFY_LOGGER || false,
-		trustProxy: !!( process.env.TRUST_PROXY )
-	} )
+		trustProxy
+	})
 }
 
 const ROUTE_PATHS = [ "client", "server", "account" ]

@@ -57,7 +57,6 @@ module.exports = ( fastify, opts, done ) => {
 		try {
 			playerUsername = (await getUserInfo(request.query.id)).EAID[0]; // try to find username of player
 		} catch(e) {
-			console.log(e)
 			return { success: false } // fail if we can't find it
 		}
 

@@ -3,6 +3,7 @@ const crypto = require( "crypto" )
 const { GameServer, GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
+const { getUserInfo } = require( path.join( __dirname, "../shared/origin.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -52,6 +53,14 @@ module.exports = ( fastify, opts, done ) => {
 				return { success: false }
 		}
 
+		let playerUsername;
+		try {
+			playerUsername = (await getUserInfo(request.query.id)).EAID[0]; // try to find username of player
+		} catch(e) {
+			console.log(e)
+			return { success: false } // fail if we can't find it
+		}
+
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
 		if ( !account ) // create account for user
 		{
@@ -61,6 +70,8 @@ module.exports = ( fastify, opts, done ) => {
 
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
+
+		accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
 
 		accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
 
@@ -116,7 +127,7 @@ module.exports = ( fastify, opts, done ) => {
 			method: "POST",
 			host: server.ip,
 			port: server.authPort,
-			path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
+			path: `/authenticate_incoming_player?id=${request.query.id}&username=${account.username}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
 		}, pdata )
 
 		if ( !authResponse )

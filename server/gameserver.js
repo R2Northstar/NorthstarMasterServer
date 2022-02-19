@@ -9,6 +9,7 @@ let filter = new Filter();
 const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require("../shared/ratelimit.js")
+const {updateServerList} = require("../shared/serverlist_state.js")
 
 async function SharedTryAddServer( request )
 {
@@ -107,6 +108,7 @@ module.exports = ( fastify, opts, done ) => {
 		}
 	},
 	async ( request, reply ) => {
+		updateServerList()
 		return SharedTryAddServer( request )
 	})
 
@@ -176,7 +178,7 @@ module.exports = ( fastify, opts, done ) => {
 				server[ key ] = request.query[ key ]
 			}
 		}
-
+		updateServerList()
 		return null
 	})
 
@@ -198,6 +200,7 @@ module.exports = ( fastify, opts, done ) => {
 			return null
 
 		RemoveGameServer( server )
+		updateServerList()
 		return null
 	})
 

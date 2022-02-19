@@ -147,7 +147,7 @@ module.exports = ( fastify, opts, done ) => {
         {
 		config: { rateLimit: getRatelimit("REQ_PER_MINUTE__SERVER_UPDATEVALUES") }, // ratelimit
         },
-	async ( request, reply ) => {
+	async ( request, reply ) => {	
 		if ( !( "id" in request.query ) )
 			return null
 
@@ -156,7 +156,9 @@ module.exports = ( fastify, opts, done ) => {
 		// if server doesn't exist, try adding it
 		if ( !server )
 		{
-			return SharedTryAddServer( request )
+			let retVal =  SharedTryAddServer( request )
+			updateServerList()
+			return retVal
 		}
 		else if ( request.ip != server.ip ) // dont update if the server isnt the one sending the heartbeat
 			return null
@@ -178,7 +180,6 @@ module.exports = ( fastify, opts, done ) => {
 				server[ key ] = request.query[ key ]
 			}
 		}
-		updateServerList()
 		return null
 	})
 

@@ -1,0 +1,264 @@
+@font-face {
+    font-family: Titanfall;
+    src: url('/assets/titanfall.ttf');
+}
+@font-face {
+    font-family: Titanfall Frontline;
+    src: url('/assets/TITANFALL FRONTLINE.ttf');
+}
+
+* {
+    box-sizing: border-box;
+}
+body {
+    background: #141a32;
+    color: white;
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+#videofull {
+    width: 100%;
+    height: 100vh;
+    position: relative;
+    /* background: url(/assets/NorthstarPromoPoster.jpg) center / cover; */
+    overflow: hidden;
+}
+#videofull > video {
+    top: 0;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+    filter: blur(0.74074074074vw);
+}
+#videofull > .overlay {
+    background-color: rgba(20, 26, 50, 0.5);
+    background: linear-gradient(180deg, rgba(20, 26, 50, 0.5) 0%, rgba(20, 26, 50, 0.5) 85%, rgba(20, 26, 50, 1) 100%);
+    top: 0;
+    left: 0;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+#centerlogo {
+    position: absolute;
+    top: 30%;
+    left: 50%;
+    transform: translateX(-50%);
+    vertical-align: middle;
+    width: max-content;
+    user-select: none !important;
+    pointer-events: none;
+    filter: drop-shadow(0px 4px 16px rgba(0,0,0,0.75));
+}
+#centerlogo > .logo {
+    width: 192px;
+    height: 192px;
+    vertical-align: middle;
+}
+#centerlogo > .northstartext {
+    font-family: Titanfall;
+    font-size: 84px;
+    vertical-align: middle;
+    margin-right: 16px;
+}
+#centerlogo > .northstartext::before {
+    content: '';
+    height: 128px;
+    width: 8px;
+    margin-left: 12px;
+    margin-right: 32px;
+    vertical-align: middle;
+    display: inline-block;
+    background-color: white;
+    transform: skewY(-25deg);
+    box-shadow: rgba(127,127,127,0.5) 5px 5px 0px;
+}
+#mainbuttons {
+    position: absolute;
+    top: calc(30% + 256px - 72px);
+    left: 50%;
+    transform: translateX(-50%);
+    vertical-align: middle;
+    width: max-content;
+    user-select: none !important;
+    text-align: center;
+}
+
+@media screen and (max-width: 960px) {
+    #centerlogo {
+        filter: drop-shadow(0px 0.4vw 1.6vw rgba(0,0,0,0.75));
+    }
+    #centerlogo > .logo {
+        width: 19.2vw;
+        height: 19.2vw;
+    }
+    #centerlogo > .northstartext {
+        font-size: 8.4vw;
+        margin-right: 1.6vw;
+    }
+    #centerlogo > .northstartext::before {
+        height: 12.8vw;
+        width: 0.8vw;
+        margin-left: 1.2vw;
+        margin-right: 3.2vw;
+        box-shadow: rgba(127,127,127,0.5) 0.5vw 0.5vw 0px;
+    }
+    #mainbuttons {
+        top: calc(30% + 25.6vw - 7.2vw);
+    }
+    @media screen and (max-width: 480px) {
+        #mainbuttons {
+            width: fit-content;
+        }
+    }
+}
+
+a.big-button {
+    margin: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 16px 32px;
+    border-radius: 64px;
+    background-color: rgba(33, 43, 78, 0.9);
+    white-space: nowrap;
+    display: inline-block;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+}
+a.big-button:hover {
+    background-color: rgba(37, 45, 80, 0.9);
+}
+a.big-button:active {
+    background-color: rgba(48, 60, 106, 0.9);
+}
+a.big-button > span {
+    vertical-align: middle;
+}
+a.big-button > .material-icons {
+    vertical-align: middle;
+    font-size: 28px;
+    margin-right: 8px;
+}
+a.big-button > img {
+    vertical-align: middle;
+    width: 28px;
+    height: 28px;
+    margin-right: 12px;
+    pointer-events: none;
+}
+
+
+@font-face {
+    font-family: 'Material Icons';
+    font-style: normal;
+    font-weight: 400;
+    src: url(/assets/material-icons.woff2) format('woff2');
+  }
+
+  .material-icons {
+    font-family: 'Material Icons';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -moz-font-feature-settings: 'liga';
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+#topbg {
+    position: fixed;
+    width: 100%;
+    height: 64px;
+    background-color: rgba(0,0,0,0.1);
+    z-index: -1;
+}
+#top {
+    position: fixed;
+    width: 100%;
+    height: 64px;
+    z-index: 100;
+    background-color: rgba(0,0,0,0);
+    transition: background-color 0.3s;
+}
+#toplinks {
+    float: right;
+    display: flex;
+}
+.top-link {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 16px;
+    padding: 24px 32px;
+    white-space: nowrap;
+    display: inline-block;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+    user-select: none !important;
+}
+.top-link:hover {
+    background-color: rgba(0,0,0,0.25);
+}
+.top-link:active {
+    background-color: rgba(0,0,0,0.5);
+}
+
+.pane {
+    background: #141a32;
+    padding: 32px;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-wrap: break-word;
+}
+.pane > h1 {
+    /* font-family: Titanfall; */
+    font-weight: 900;
+    font-size: 48px;
+    margin: 0;
+}
+
+a {
+    color: white
+}
+a:hover {
+    color: #dddddd
+}
+a:active {
+    color: #bbbbbb
+}
+
+li {
+    line-height: 1.5;
+}
+ol img {
+    width: 256px;
+}
+code {
+    font-size: 15px;
+    background: #eeeeee;
+    border-radius: 2px;
+    color: #141a32;
+    padding: 1px 6px;
+    vertical-align: bottom;
+}
+
+.footer {
+    display: grid;
+    grid-template-columns: 128px 128px;
+    column-gap: 16px;
+}
+.footer > a {
+    line-height: 2;
+}

@@ -2,10 +2,6 @@
     font-family: Titanfall;
     src: url('/assets/titanfall.ttf');
 }
-@font-face {
-    font-family: Titanfall Frontline;
-    src: url('/assets/TITANFALL FRONTLINE.ttf');
-}
 
 * {
     box-sizing: border-box;

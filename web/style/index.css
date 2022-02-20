@@ -60,7 +60,7 @@ body {
     vertical-align: middle;
 }
 #centerlogo > .northstartext {
-    font-family: Titanfall;
+    font-family: Titanfall, Arial, Helvetica, sans-serif;
     font-size: 84px;
     vertical-align: middle;
     margin-right: 16px;
@@ -86,6 +86,29 @@ body {
     width: max-content;
     user-select: none !important;
     text-align: center;
+}
+#videofull .northstardescription {
+    /* position: absolute;
+    top: calc(30% + 256px - 72px);
+    left: 50%;
+    transform: translateX(-50%); */
+    text-align: center;
+    vertical-align: middle;
+    max-width: 80vw;
+    margin-left: auto;
+    margin-right: auto;
+    font-size: 16px;
+}
+#videofull .northstardescription .tfdivider {
+    height: 18px;
+    width: 2px;
+    margin-left: 4px;
+    margin-right: -2px;
+    vertical-align: text-bottom;
+    display: inline-block;
+    background-color: white;
+    transform: skewY(-25deg);
+    white-space: nowrap;
 }
 
 @media screen and (max-width: 960px) {
@@ -263,4 +286,8 @@ code {
 }
 .footer > a {
     line-height: 2;
+}
+
+.tffont {
+    font-family: Titanfall, Arial, Helvetica, sans-serif;
 }

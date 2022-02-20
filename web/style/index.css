@@ -129,6 +129,8 @@ a.big-button {
     cursor: pointer;
     color: white;
     text-decoration: none;
+    height: 50px;
+    white-space: nowrap;
 }
 a.big-button:hover {
     background-color: rgba(37, 45, 80, 0.9);
@@ -141,13 +143,13 @@ a.big-button > span {
 }
 a.big-button > .material-icons {
     vertical-align: middle;
-    font-size: 28px;
+    font-size: 16px;
     margin-right: 8px;
 }
 a.big-button > img {
     vertical-align: middle;
-    width: 28px;
-    height: 28px;
+    width: 16px;
+    height: 16px;
     margin-right: 12px;
     pointer-events: none;
 }

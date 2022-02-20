@@ -5,15 +5,15 @@ module.exports = ( fastify, opts, done ) =>
 	// exported routes
 
 	// GET /
-	// redirect anyone going to northstar.tf in a browser to the github
-	// DISABLED AS IT IS REPLACED WITH LANDING PAGE
-	// fastify.get( '/',
-	// {
-	// config: { rateLimit: getRatelimit("REQ_PER_MINUTE__REDIRECT") }, // ratelimit
-	// },
-	// async ( request, reply ) => {
-	//     reply.redirect( "https://github.com/R2Northstar" )
-	// })
+	// redirect anyone going to northstar.tf/github in a browser to the github
+	fastify.get( "/github",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+		},
+		async ( request, reply ) =>
+		{
+			reply.redirect( "https://github.com/R2Northstar" )
+		} )
 
 	// GET /discord
 	// redirect anyone going to northstar.tf/discord to the discord

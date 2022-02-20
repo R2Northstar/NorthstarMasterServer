@@ -8,6 +8,7 @@
     "parserOptions": {
         "ecmaVersion": 11
     },
+    "ignorePatterns": ["web/**"],
     "rules": {
         "quotes": [
             "error",

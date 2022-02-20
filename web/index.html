@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Northstar</title>
+
+    <link rel="preload" href="assets/titanfall.ttf" as="font">
+
+    <link rel="stylesheet" href="style/index.css">
+    <link rel="shortcut icon" href="assets/favicon-32.png" type="image/png">
+</head>
+<body>
+    <div id="top">
+        <div id="toplinks">
+            <a class="top-link" href="https://northstar.thunderstore.io/">Mods</a>
+            <a class="top-link" href="/wiki">Wiki</a>
+            <a class="top-link" href="/github">GitHub</a>
+        </div>
+    </div>
+    <div id="videofull">
+        <video class="lazy" autoplay loop muted playsinline poster="assets/NorthstarPromoPoster.jpg"><source src="assets/NorthstarPromoVid.mp4"></video>
+        <div class="overlay"></div>
+        <div id="centerlogo">
+            <img class="logo" src="assets/logo_1k.png" />
+            <span class="northstartext">NORTHSTAR</span>
+        </div>
+        <div id="mainbuttons">
+            <p class="northstardescription">A <span class="tffont">TITANFALL<span class="tfdivider"></span> 2</span> modding and custom server framework</p>
+            <a ondragstart="return false;" href="https://github.com/R2Northstar/Northstar/releases/latest" class="big-button download" download><i class="material-icons">download</i><span>DOWNLOAD</span></a>
+            <a ondragstart="return false;" href="/discord" target="_blank" class="big-button"><img src="assets/Discord-Logo-White.svg" /><span>DISCORD</span></a>
+        </div>
+    </div>
+    <div class="pane">
+        <br style="font-size: 32px;">
+        <h1>How To Install Northstar</h1>
+        <p>Firstly, note that the Northstar client is only available on PC and requires you to <b>both own the game and have it installed.</b></p>
+        <ol>
+            <li><a href="https://github.com/R2Northstar/Northstar/releases/latest" class="download">Download</a> the latest version of Northstar</li>
+            <li>Copy all the files in the newly downloaded zip folder to your <code>Titanfall2</code> folder. This can vary depending on whether you purchased the game off Steam or Origin, and if you set a custom folder for game installs.
+                <ul>
+                    <li><b>For Steam</b> - Right click <i>Titanfall 2 > Properties > Local Files > Browse</i>
+                        <br>Usually: <code>C:\Program Files (x86)\Steam\steamapps\common\Titanfall2</code></li>
+                    <li><b>For Origin</b> - To find the location of your Origin library go to <i>Origin -> Application Settings -> Installs & Saves -> On your Computer -> Game Library Location</i>
+                        <br>Go to the directory mentioned there using File Explorer and open the <code>Titanfall2</code> folder.
+                        <br>Usually: <code>C:\Program Files (x86)\Origin Games\Titanfall2</code></li>
+                    <li><b>For EA App</b> - To find the location of your EA library go to <i>Settings -> Download</i>
+                        <br>Go to the directory under "Install location" using File Explorer and open the <code>Titanfall2</code> folder.
+                        <br>Usually: <code>C:\Program Files\EA Games\Titanfall2</code></li>
+                </ul>
+            </li>
+            <li>Launch <code>NorthstarLauncher.exe</code> to start Northstar
+                <ul><li>After launching for the first time, you'll be greeted with a popup requesting to authenticate to the master server. Click Yes (This can be changed in the mods menu later if desired)
+                </li></ul>
+            </li>
+            <li>Select <i>Launch Northstar</i>
+            </li>
+            <li>From the multiplayer menu, you can use the server browser to select and join any of the public community hosted servers.
+            </li>
+        </ol>
+    </div>
+    <div class="pane">
+        <h1>Help</h1>
+        <p>If you're having issues with running or setting up the Northstar client or are thinking of running a dedicated server you can find help and troubleshooting tips on the wiki and the Discord server:</p>
+        <a ondragstart="return false;" href="/wiki" class="big-button">WIKI</a>
+        <a ondragstart="return false;" href="/discord" target="_blank" class="big-button"><img src="assets/Discord-Logo-White.svg" /><span>DISCORD</span></a>
+    </div>
+    <div class="pane">
+        <h1>Modding Docs</h1>
+        <p>If you're interested in making mods for northstar you can find the docs here:</p>
+        <a ondragstart="return false;" href="https://r2northstar.readthedocs.io/" class="big-button">NORTHSTAR MODDING DOCS</a>
+    </div>
+    <br style="font-size: 32px;">
+    <div class="footer pane" style="background-color: rgb(33, 43, 78); line-height: 1.5;">
+        <a class="download" href="https://github.com/R2Northstar/Northstar/releases/latest">Download</a>
+        <a href="/wiki">Wiki</a>
+        <a href="/github">GitHub</a>
+        <a href="https://r2northstar.readthedocs.io/">Modding Docs</a>
+        <a href="/discord">Discord</a>
+        <a href="https://twitter.com/bobthebobthebo3" style="font-size: 10px; opacity: 0.1; margin-top: 6px;">big man</a>
+    </div>
+    <script src="script/index.js"></script>
+</body>
+</html>

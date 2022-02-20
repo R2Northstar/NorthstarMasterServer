@@ -21,6 +21,7 @@
 		"fastify-cors": "^6.0.2",
 		"fastify-multipart": "^5.1.0",
 		"fastify-rate-limit": "^5.7.0",
+		"fastify-static": "^4.5.0",
 		"sqlite3": "^5.0.2"
 	},
 	"devDependencies": {

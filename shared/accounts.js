@@ -23,7 +23,7 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 		currentServerId TEXT,
 		persistentDataBaseline BLOB NOT NULL,
 		lastAuthIp TEXT,
-		username TEXT
+		username TEXT DEFAULT ''
 	)
 	`, ex => {
 		if ( ex )

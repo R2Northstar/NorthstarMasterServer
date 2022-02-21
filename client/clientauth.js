@@ -57,7 +57,7 @@ module.exports = ( fastify, opts, done ) => {
 		try {
 			playerUsername = (await getUserInfo(request.query.id)).EAID[0]; // try to find username of player
 		} catch(e) {
-			return { success: false } // fail if we can't find it
+			// don't do this: return { success: false } // fail if we can't find it
 		}
 
 		let account = await accounts.AsyncGetPlayerByID( request.query.id )
@@ -70,7 +70,7 @@ module.exports = ( fastify, opts, done ) => {
 		let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 		accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
-		accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
+		if (playerUsername) accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
 
 		accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
 

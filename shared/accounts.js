@@ -22,7 +22,7 @@ let playerDB = new sqlite.Database( 'playerdata.db', sqlite.OPEN_CREATE | sqlite
 		currentAuthTokenExpirationTime INTEGER,
 		currentServerId TEXT,
 		persistentDataBaseline BLOB NOT NULL,
-        lastAuthIp TEXT,
+		lastAuthIp TEXT,
 		username TEXT
 	)
 	`, ex => {

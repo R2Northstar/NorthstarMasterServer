@@ -2,6 +2,7 @@ let sidCookie;
 let AuthToken;
 let authed = false;
 const https = require('https');
+const { parseString } = require('xml2js');
 
 async function authWithOrigin() { // thanks to r-ex for the help
     const fidURL = "https://accounts.ea.com/connect/auth?response_type=code&client_id=ORIGIN_SPA_ID&display=originXWeb/login&locale=en_US&release_type=prod&redirect_uri=https://www.origin.com/views/login.html"
@@ -9,7 +10,7 @@ async function authWithOrigin() { // thanks to r-ex for the help
 
     if(!sidCookie) {
         let fidLocation = (await GetHeaders(fidURL))['location'];
-        let fid = fidLocation.match(/(?<=fid=)[a-zA-Z0-9]+?(?=&|$)/g)[0];
+        // let fid = fidLocation.match(/(?<=fid=)[a-zA-Z0-9]+?(?=&|$)/g)[0];
         let jSessionIDheaders = await GetHeaders(fidLocation);
         let jSessionID = jSessionIDheaders['set-cookie'].join("; ").match(/(?<=JSESSIONID=)[\S]+?(?=;)/g)[0];
         let signinCookie = jSessionIDheaders['set-cookie'].join("; ").match(/(?<=signin-cookie=)[\S]+?(?=;)/g)[0];
@@ -17,14 +18,14 @@ async function authWithOrigin() { // thanks to r-ex for the help
     
         // AuthorizeLogin
         let authData = {
-            email: process.env.ORIGIN_EMAIL,
-            password: process.env.ORIGIN_PASSWORD,
-            _eventId: "submit",
-            cid: GenerateCID(),
-            showAgeUp: "true",
-            thirdPartyCaptchaResponse: "",
-            _rememberMe: "on",
-            rememberMe: "on"
+            'email': process.env.ORIGIN_EMAIL,
+            'password': process.env.ORIGIN_PASSWORD,
+            '_eventId': "submit",
+            'cid': GenerateCID(),
+            'showAgeUp': "true",
+            'thirdPartyCaptchaResponse': "",
+            '_rememberMe': "on",
+            'rememberMe': "on"
         }
         let authResponse = await PostData(jSessionLocation, authData, {"Cookie": [`JSESSIONID=${jSessionID}`, `signin-cookie=${signinCookie}`]});
         let authResLocation = authResponse.toString().match(/(?<=window\.location = ")\S+(?=";)/g)[0];

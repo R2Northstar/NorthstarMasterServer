@@ -87,8 +87,6 @@ async function SharedTryAddServer( request )
 }
 
 module.exports = ( fastify, opts, done ) => {
-	fastify.register( require( "fastify-multipart" ) )
-
 	// exported routes
 
 	// POST /server/add_server

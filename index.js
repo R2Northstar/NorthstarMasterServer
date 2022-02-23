@@ -33,6 +33,8 @@ else
 	})
 }
 
+fastify.register( require( "fastify-multipart" ) )
+
 const ROUTE_PATHS = [ "client", "server", "account" ]
 
 if(!!(process.env.USE_RATELIMIT)) {

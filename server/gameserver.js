@@ -76,6 +76,8 @@ async function SharedTryAddServer( request )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
+	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)
+	updateServerList()
 
 	return {
 		success: true,
@@ -108,7 +110,6 @@ module.exports = ( fastify, opts, done ) => {
 		}
 	},
 	async ( request, reply ) => {
-		updateServerList()
 		return SharedTryAddServer( request )
 	})
 
@@ -156,9 +157,7 @@ module.exports = ( fastify, opts, done ) => {
 		// if server doesn't exist, try adding it
 		if ( !server )
 		{
-			let retVal =  SharedTryAddServer( request )
-			updateServerList()
-			return retVal
+			return SharedTryAddServer( request )
 		}
 		else if ( request.ip != server.ip ) // dont update if the server isnt the one sending the heartbeat
 			return null

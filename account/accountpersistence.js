@@ -4,8 +4,6 @@ const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const { getRatelimit } = require("../shared/ratelimit.js")
 
 module.exports = ( fastify, opts, done ) => {
-	fastify.register( require( "fastify-multipart" ) )
-
 	// exported routes
 
 	// POST /accounts/write_persistence

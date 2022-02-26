@@ -21,7 +21,8 @@ module.exports = {
 
 				let data = []
 				reqResult.on( "data", c => data.push( c ) )
-				reqResult.on( "end", resolve( Buffer.concat( data ) ) )
+				// eslint-disable-next-line
+				reqResult.on( "end", _ => resolve( Buffer.concat( data ) ) )
 			} )
 
 			req.on( "error", reject )

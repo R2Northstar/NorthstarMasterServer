@@ -6,7 +6,8 @@ const { getRatelimit } = require( "../shared/ratelimit.js" )
 let promodataPath = path.join( __dirname, "mainmenupromodata.json" )
 
 // watch the mainmenupromodata file so we can update it without a masterserver restart
-fs.watch( promodataPath =>
+// eslint-disable-next-line
+fs.watch( promodataPath, ( curr, prev ) =>
 {
 	try
 	{

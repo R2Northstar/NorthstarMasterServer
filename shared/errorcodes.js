@@ -1,15 +1,7 @@
 const errorCodes = {
-	ACCOUNT_NOT_FOUND: {
-		enum: "ACCOUNT_NOT_FOUND",
-		msg: "Account wasn't found",
-	},
-	PARSING_MODINFO: {
-		enum: "PARSING_MOD_INFO",
-		msg: "Error parsing modinfo",
-	},
-	NO_AUTH_RESPONSE: {
-		enum: "NO_AUTH_RESPONSE",
-		msg: "Couldn't reach auth server",
+	NO_GAMESERVER_RESPONSE: {
+		enum: "NO_GAMESERVER_RESPONSE",
+		msg: "Couldn't reach game server",
 	},
 	UNAUTHORIZED_GAME: {
 		enum: "UNAUTHORIZED_GAME",

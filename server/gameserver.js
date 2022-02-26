@@ -10,6 +10,7 @@ const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
+const { NO_GAMESERVER_RESPONSE } = require( "../shared/errorcodes.js" )
 
 async function SharedTryAddServer( request )
 {
@@ -37,7 +38,7 @@ async function SharedTryAddServer( request )
 	} )
 
 	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
-		return { success: false }
+		return { success: false, error: NO_GAMESERVER_RESPONSE }
 
 	// pdiff stuff
 	if ( modInfo && modInfo.Mods )

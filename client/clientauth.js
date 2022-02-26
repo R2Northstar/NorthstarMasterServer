@@ -7,6 +7,15 @@ const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
+const {
+	STRYDER_RESPONSE,
+	UNAUTHORIZED_GAME,
+	UNAUTHORIZED_PWD,
+	PLAYER_NOT_FOUND,
+	INVALID_MASTERSERVER_TOKEN,
+	JSON_PARSE_ERROR,
+	NO_GAMESERVER_RESPONSE
+} = require( "../shared/errorcodes.js" )
 
 module.exports = ( fastify, opts, done ) =>
 {
@@ -32,7 +41,7 @@ module.exports = ( fastify, opts, done ) =>
 			{
 			// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
 				if ( request.query.token.includes( "&" ) )
-					return { success: false }
+					return { success: false } // TODO add an error code here
 
 				let authResponse = await asyncHttp.request( {
 					method: "GET",
@@ -48,13 +57,13 @@ module.exports = ( fastify, opts, done ) =>
 				}
 				catch ( error )
 				{
-					return { success: false }
+					return { success: false, error: STRYDER_RESPONSE }
 				}
 
 				// check origin auth was fine
 				// unsure if we can check the exact value of storeUri? doing an includes check just in case
 				if ( !authResponse.length || authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || !authJson.storeUri.includes( "titanfall-2" ) )
-					return { success: false }
+					return { success: false, error: UNAUTHORIZED_GAME }
 			}
 
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
@@ -95,21 +104,18 @@ module.exports = ( fastify, opts, done ) =>
 			let server = GetGameServers()[ request.query.server ]
 
 			if ( !server || ( server.hasPassword && request.query.password != server.password ) )
-				return { success: false }
+				return { success: false, error: UNAUTHORIZED_PWD }
 
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
-				return { success: false }
+				return { success: false, error: PLAYER_NOT_FOUND }
 
 			if ( shouldRequireSessionToken )
 			{
-			// check token
-				if ( request.query.playerToken != account.currentAuthToken )
-					return { success: false }
-
-				// check expired token
-				if ( account.currentAuthTokenExpirationTime < Date.now() )
-					return { success: false }
+				// check token
+				const expiredToken = account.currentAuthTokenExpirationTime < Date.now()
+				if ( request.query.playerToken != account.currentAuthToken || expiredToken )
+					return { success: false, error: INVALID_MASTERSERVER_TOKEN }
 			}
 
 			// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
@@ -126,18 +132,17 @@ module.exports = ( fastify, opts, done ) =>
 			}, pdata )
 
 			if ( !authResponse )
-				return { success: false }
+				return { success: false, error: NO_GAMESERVER_RESPONSE }
 
 			let jsonResponse = JSON.parse( authResponse.toString() )
 			if ( !jsonResponse.success )
-				return { success: false }
+				return { success: false, error: JSON_PARSE_ERROR }
 
 			// update the current server for the player account
 			accounts.AsyncUpdatePlayerCurrentServer( account.id, server.id )
 
 			return {
 				success: true,
-
 				ip: server.ip,
 				port: server.port,
 				authToken: authToken
@@ -161,17 +166,14 @@ module.exports = ( fastify, opts, done ) =>
 		{
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
-				return { success: false }
+				return { success: false, error: PLAYER_NOT_FOUND }
 
 			if ( shouldRequireSessionToken )
 			{
-			// check token
-				if ( request.query.playerToken != account.currentAuthToken )
-					return { success: false }
-
-				// check expired token
-				if ( account.currentAuthTokenExpirationTime < Date.now() )
-					return { success: false }
+				// check token
+				const expiredToken = account.currentAuthTokenExpirationTime < Date.now()
+				if ( request.query.playerToken != account.currentAuthToken || expiredToken )
+					return { success: false, error: INVALID_MASTERSERVER_TOKEN }
 			}
 
 			// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31

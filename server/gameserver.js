@@ -1,6 +1,6 @@
 const path = require( "path" )
 const crypto = require( "crypto" )
-const { GameServer, GetGameServers, AddGameServer, RemoveGameServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
+const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, GetGhostServer, RemoveGhostServer, HasGhostServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const Filter = require( "bad-words" )
@@ -10,7 +10,7 @@ const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
-const { NO_GAMESERVER_RESPONSE } = require( "../shared/errorcodes.js" )
+const { NO_GAMESERVER_RESPONSE, JSON_PARSE_ERROR } = require( "../shared/errorcodes.js" )
 
 async function SharedTryAddServer( request )
 {
@@ -26,7 +26,7 @@ async function SharedTryAddServer( request )
 		}
 		catch ( ex )
 		{
-			console.error( ex )
+			return { success: false, error: JSON_PARSE_ERROR }
 		}
 	}
 
@@ -78,6 +78,82 @@ async function SharedTryAddServer( request )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
+	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)
+	updateServerList()
+
+	return {
+		success: true,
+		id: newServer.id,
+		serverAuthToken: newServer.serverAuthToken
+	}
+}
+
+async function TryReviveServer( request )
+{
+	let ghost = GetGhostServer( request.query.id )
+
+	if( request.ip != ghost.ip ) return
+
+	// check server's verify endpoint on their auth server, make sure it's fine
+	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
+	let modInfo
+
+	if ( request.isMultipart() )
+	{
+		try
+		{
+			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+		}
+		catch ( ex )
+		{
+			return { success: false, error: JSON_PARSE_ERROR }
+		}
+	}
+
+	let authServerResponse = await asyncHttp.request( {
+		method: "GET",
+		host: request.ip,
+		port: ghost.authPort,
+		path: "/verify"
+	} )
+
+	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
+		return { success: false, error: NO_GAMESERVER_RESPONSE }
+
+	// pdiff stuff
+	if ( modInfo && modInfo.Mods )
+	{
+		for ( let mod of modInfo.Mods )
+		{
+			if ( mod.pdiff )
+			{
+				try
+				{
+					let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
+					mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
+					mod.pdiff.hash = pdiffHash
+				}
+				catch ( ex )
+				{
+					mod.pdiff = null
+				}
+			}
+		}
+	}
+
+	let playerCount = request.query.playerCount || 0
+	if ( typeof playerCount == "string" )
+		playerCount = parseInt( playerCount )
+
+	if ( typeof request.query.maxPlayers == "string" )
+		request.query.maxPlayers = parseInt( request.query.maxPlayers )
+
+	let name = filter.clean( request.query.name )
+	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, ghost.port, ghost.authPort, request.query.password, modInfo )
+	newServer.id = ghost.id
+	AddGameServer( newServer )
+	RemoveGhostServer( ghost.id )
 	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)
 	updateServerList()
 
@@ -161,7 +237,10 @@ module.exports = ( fastify, opts, done ) =>
 			// if server doesn't exist, try adding it
 			if ( !server )
 			{
-				return SharedTryAddServer( request )
+				if( HasGhostServer( request.query.id ) )
+					return TryReviveServer( request )
+				else
+					return SharedTryAddServer( request )
 			}
 			else if ( request.ip != server.ip ) // dont update if the server isnt the one sending the heartbeat
 				return null

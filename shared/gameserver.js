@@ -67,10 +67,40 @@ class GameServer
 	}
 }
 
+class GameServerGhost
+{
+	// string id
+	// string ip
+	// int port
+	// int authPort
+
+	// Date expiredAt
+
+	constructor( server )
+	{
+		this.expiredAt = Date.now()
+
+		this.id = server.id
+		this.ip = server.ip
+		this.port = server.port
+		this.authPort = server.authPort
+	}
+}
+
 let gameServers = {}
+let gameServerGhosts = {}
+let gameServerGhostTimeouts = {}
+
+function RemoveGhostServer( id )
+{
+	clearTimeout( gameServerGhostTimeouts[id] )
+	delete gameServerGhostTimeouts[id]
+	delete gameServerGhosts[id]
+}
 
 module.exports = {
 	GameServer: GameServer,
+	GameServerGhost: GameServerGhost,
 
 	GetGameServers: function()
 	{
@@ -82,6 +112,21 @@ module.exports = {
 	},
 	RemoveGameServer: function( gameserver )
 	{
+		clearTimeout( gameServerGhostTimeouts[gameserver.id] )
+		gameServerGhosts[gameserver.id] = new GameServerGhost( gameserver )
+		gameServerGhostTimeouts[gameserver.id] = setTimeout( () =>
+		{  // purge ghost after timeout
+			RemoveGhostServer( gameserver.id )
+		}, process.env.GAMESERVER_GHOST_TIMEOUT_MINS*60000 )
 		delete gameServers[ gameserver.id ]
-	}
+	},
+	GetGhostServer: function( id )
+	{
+		return gameServerGhosts[id]
+	},
+	HasGhostServer: function( id )
+	{
+		return Object.hasOwn( gameServerGhosts, id )
+	},
+	RemoveGhostServer: RemoveGhostServer
 }

@@ -4,13 +4,16 @@ let lastChecked = Date.now()
 const { GameServer, GetGameServers, RemoveGameServer } = require( "../shared/gameserver.js" )
 
 module.exports = {
-	getLastChecked: function () {
+	getLastChecked: function ()
+	{
 		return lastChecked
 	},
-	getServerList: function () {
+	getServerList: function ()
+	{
 		return serverList
 	},
-	updateServerList: function () {
+	updateServerList: function ()
+	{
 		let displayServerArray = []
 		let expiredServers = []
 		let servers = Object.values( GetGameServers() )
@@ -26,11 +29,12 @@ module.exports = {
 			}
 
 			// don't show non-private_match servers on lobby since they'll pollute server list
-			if ( servers[ i ].map == "mp_lobby" && servers[ i ].playlist != "private_match" ) {
+			if ( servers[ i ].map == "mp_lobby" && servers[ i ].playlist != "private_match" )
+			{
 				// console.log(`SKIP: (${servers[i].id}) - ${servers[i].name}`)
 				continue
 			}
-				
+
 			// create a copy of the gameserver obj for clients so we can hide sensitive info
 			let copy = new GameServer( servers[ i ] )
 			delete copy.ip

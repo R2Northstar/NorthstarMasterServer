@@ -1,60 +1,55 @@
 
 if ( process.argv.includes( "-devenv" ) )
-	require( "dotenv" ).config( { path: "./dev.env" } )
+	require( 'dotenv' ).config({ path: "./dev.env" })
 else
-	require( "dotenv" ).config()
-
+	require( 'dotenv' ).config()
+	
 const fs = require( "fs" )
 const path = require( "path" )
 
-let trustProxy = !!( process.env.TRUST_PROXY )
-if( trustProxy && process.env.TRUST_PROXY_LIST_PATH )
-{
-	let addressList = fs.readFileSync( process.env.TRUST_PROXY_LIST_PATH ).toString()
-	trustProxy = addressList.split( "\n" ).map( a => a.trim() ).filter( a => !a.startsWith( "#" ) && a != "" )
+let trustProxy = !!(process.env.TRUST_PROXY)
+if(trustProxy && process.env.TRUST_PROXY_LIST_PATH) {
+	let addressList = fs.readFileSync( process.env.TRUST_PROXY_LIST_PATH ).toString();
+	trustProxy = addressList.split("\r\n").map(a => a.trim()).filter(a => !a.startsWith("#") && a != '')
 }
 
 let fastify = require( "fastify" )
 if ( process.env.USE_HTTPS )
 {
-	fastify = fastify( {
+	fastify = fastify({ 
 		logger: process.env.USE_FASTIFY_LOGGER || false,
 		https: {
 			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
 			cert: fs.readFileSync( process.env.SSL_CERT_PATH )
 		},
 		trustProxy
-	} )
+	})
 }
 else
 {
-	fastify = fastify( {
+	fastify = fastify({ 
 		logger: process.env.USE_FASTIFY_LOGGER || false,
 		trustProxy
-	} )
+	})
 }
-
-fastify.register( require( "fastify-multipart" ) )
 
 const ROUTE_PATHS = [ "client", "server", "account" ]
 
-if( process.env.USE_RATELIMIT )
-{
-	fastify.register( require( "fastify-rate-limit" ),
-		{
-			global: false,
-			errorResponseBuilder: function( req, context )
-			{
-				return {
-					code: 429,
-					error: "Too Many Requests",
-					message: `Request limit reached. You can send ${context.max} requests every ${context.after}. Timeout expiry: ${context.ttl}ms.`,
-					date: Date.now(),
-					expiresIn: context.ttl // milliseconds
-				}
+if(!!(process.env.USE_RATELIMIT)) {
+	fastify.register(require('fastify-rate-limit'),
+	{
+		global: false,
+		errorResponseBuilder: function(req, context) {
+			return {
+				code: 429,
+				error: 'Too Many Requests',
+				message: `Request limit reached. You can send ${context.max} requests every ${context.after}. Timeout expiry: ${context.ttl}ms.`,
+				date: Date.now(),
+				expiresIn: context.ttl // milliseconds
 			}
 		}
-	)
+	}
+	);
 }
 
 for ( let routePath of ROUTE_PATHS )
@@ -69,12 +64,12 @@ for ( let routePath of ROUTE_PATHS )
 	}
 }
 
-async function start()
+async function start() 
 {
-	try
+	try 
 	{
 		await fastify.listen( process.env.LISTEN_PORT || 80, process.env.LISTEN_IP || "0.0.0.0" )
-	}
+	} 
 	catch ( ex )
 	{
 		console.error( ex )

@@ -22,7 +22,8 @@
 		"fastify-multipart": "^5.1.0",
 		"fastify-rate-limit": "^5.7.0",
 		"fastify-static": "^4.5.0",
-		"sqlite3": "^5.0.2"
+		"sqlite3": "^5.0.2",
+		"xml2js": "^0.4.23"
 	},
 	"devDependencies": {
 		"eslint": "^8.6.0",

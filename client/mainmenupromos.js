@@ -1,44 +1,40 @@
 const path = require( "path" )
 const fs = require( "fs" )
 
-const { getRatelimit } = require( "../shared/ratelimit.js" )
+const { getRatelimit } = require("../shared/ratelimit.js")
 
 let promodataPath = path.join( __dirname, "mainmenupromodata.json" )
 
 // watch the mainmenupromodata file so we can update it without a masterserver restart
-// eslint-disable-next-line
-fs.watch( promodataPath, ( curr, prev ) =>
-{
-	try
-	{
-		mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
-		console.log( "updated main menu promo data successfully!" )
-	}
-	catch ( ex )
-	{
-		console.log( `encountered error updating main menu promo data: ${ ex }` )
-	}
+fs.watch( promodataPath, ( curr, prev ) => {
+    try
+    {
+        mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
+        console.log( "updated main menu promo data successfully!" )
+    }
+    catch ( ex )
+    {
+        console.log( `encountered error updating main menu promo data: ${ ex }` )
+    }
 
-} )
+})
 
 let mainMenuPromoData = {}
-if ( fs.existsSync( promodataPath ) )
-	mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
+if ( fs.existsSync( promodataPath ))
+    mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
 
-module.exports = ( fastify, opts, done ) =>
-{
+module.exports = ( fastify, opts, done ) => {
 	// exported routes
 
-	// GET /client/mainmenupromos
-	// returns main menu promo info
-	fastify.get( "/client/mainmenupromos",
-		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__CLIENT_MAINMENUPROMOS" ) }, // ratelimit
-		},
-		async ( ) =>
-		{
-			return mainMenuPromoData
-		} )
+    // GET /client/mainmenupromos
+    // returns main menu promo info
+    fastify.get( '/client/mainmenupromos',
+    {
+		config: { rateLimit: getRatelimit("REQ_PER_MINUTE__CLIENT_MAINMENUPROMOS") }, // ratelimit
+    },
+    async ( request, reply ) => {
+        return mainMenuPromoData
+    })
 
-	done()
+    done()
 }

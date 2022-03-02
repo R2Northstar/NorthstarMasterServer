@@ -4,18 +4,18 @@ let lastChecked = Date.now()
 const { GameServer, GetGameServers, RemoveGameServer } = require( "../shared/gameserver.js" )
 
 module.exports = {
-	getLastChecked: function ()
+	getLastChecked()
 	{
 		return lastChecked
 	},
-	getServerList: function ()
+	getServerList()
 	{
 		return serverList
 	},
-	updateServerList: function ()
+	updateServerList()
 	{
 		let displayServerArray = []
-		let expiredServers = []
+		let expiredServers = [] // might be better to move this to another function at some point, but easiest to do here atm
 		let servers = Object.values( GetGameServers() )
 
 		for ( let i = 0; i < servers.length; i++ )
@@ -23,7 +23,6 @@ module.exports = {
 			// prune servers if they've had 30 seconds since last heartbeat
 			if ( Date.now() - servers[ i ].lastHeartbeat > 30000 )
 			{
-				// console.log(`REMOVE: (${servers[i].id}) - ${servers[i].name}`)
 				expiredServers.push( servers[ i ] )
 				continue
 			}
@@ -31,7 +30,6 @@ module.exports = {
 			// don't show non-private_match servers on lobby since they'll pollute server list
 			if ( servers[ i ].map == "mp_lobby" && servers[ i ].playlist != "private_match" )
 			{
-				// console.log(`SKIP: (${servers[i].id}) - ${servers[i].name}`)
 				continue
 			}
 
@@ -43,7 +41,6 @@ module.exports = {
 			delete copy.password
 			delete copy.serverAuthToken
 
-			// console.log(`ALLOW: (${servers[i].id}) - ${servers[i].name}`)
 			displayServerArray.push( copy )
 		}
 

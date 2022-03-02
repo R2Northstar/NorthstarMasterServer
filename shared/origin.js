@@ -84,7 +84,7 @@ function GetData( location, headers = {} )
 		{
 			let data = []
 			reqResult.on( "data", c => data.push( c ) )
-			reqResult.on( "end", _ => resolve( Buffer.concat( data ) ) )
+			reqResult.on( "end", () => resolve( Buffer.concat( data ) ) )
 		} )
 	} )
 }
@@ -116,7 +116,7 @@ function PostData( location, postData, headers = {} )
 		{
 			let data = []
 			reqResult.on( "data", c => data.push( c ) )
-			reqResult.on( "end", _ => resolve( Buffer.concat( data ) ) )
+			reqResult.on( "end", () => resolve( Buffer.concat( data ) ) )
 		} )
 
 		req.on( "error", e =>
@@ -151,22 +151,17 @@ function getUserInfo( uid )
 				headers: { "AuthToken": AuthToken }
 			} )
 
-			let json
 			try
 			{
-				json = await new Promise( resolve =>
+				parseString( response.toString(), function ( err, result )
 				{
-					parseString( response.toString(), function ( err, result )
-					{
-						resolve( result )
-					} )
+					resolve( result.users.user[0] )
 				} )
 			}
 			catch ( error )
 			{
 				reject( error )
 			}
-			resolve( json.users.user[0] )
 		}
 		catch ( error )
 		{

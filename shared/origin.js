@@ -84,7 +84,8 @@ function GetData( location, headers = {} )
 		{
 			let data = []
 			reqResult.on( "data", c => data.push( c ) )
-			reqResult.on( "end", () => resolve( Buffer.concat( data ) ) )
+			// eslint-disable-next-line
+			reqResult.on( "end", _ => resolve( Buffer.concat( data ) ) )
 		} )
 	} )
 }
@@ -116,7 +117,8 @@ function PostData( location, postData, headers = {} )
 		{
 			let data = []
 			reqResult.on( "data", c => data.push( c ) )
-			reqResult.on( "end", () => resolve( Buffer.concat( data ) ) )
+			// eslint-disable-next-line
+			reqResult.on( "end", _ => resolve( Buffer.concat( data ) ) )
 		} )
 
 		req.on( "error", e =>
@@ -137,6 +139,7 @@ const asyncHttp = require( "./asynchttp.js" )
 
 function getUserInfo( uid )
 {
+	// eslint-disable-next-line
 	return new Promise( async ( resolve, reject ) =>
 	{
 		try
@@ -151,17 +154,22 @@ function getUserInfo( uid )
 				headers: { "AuthToken": AuthToken }
 			} )
 
+			let json
 			try
 			{
-				parseString( response.toString(), function ( err, result )
+				json = await new Promise( resolve =>
 				{
-					resolve( result.users.user[0] )
+					parseString( response.toString(), function ( err, result )
+					{
+						resolve( result )
+					} )
 				} )
 			}
 			catch ( error )
 			{
 				reject( error )
 			}
+			resolve( json.users.user[0] )
 		}
 		catch ( error )
 		{

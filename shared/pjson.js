@@ -96,7 +96,7 @@ function ParseDefinition( pdef )
 		else
 		{
 			let name = split[ 1 ]
-			if ( !name.match( /^[\w\[\]\{\}]+$/ ) )
+			if ( !name.match( /^[\w[\]{}]+$/ ) )
 				throw new Error( "unexpected characters in member name" )
 
 			// preparse type name for checking
@@ -118,8 +118,6 @@ function ParseDefinition( pdef )
 				throw Error( `got unknown type ${checkType}` )
 			else
 			{
-				let arrayLength = -1
-
 				let newMember = { type: checkType, name: name }
 
 				if ( isNativeArrayType )
@@ -377,7 +375,7 @@ function PdataToJson( pdata, pdef )
 //    return buf
 //}
 
-function PdataJsonToBuffer( json, pdef, pdata )
+function PdataJsonToBuffer( json, pdef )
 {
 	// calc size
 	let size = 0
@@ -387,8 +385,8 @@ function PdataJsonToBuffer( json, pdef, pdata )
 	let buf = Buffer.alloc( size )
 
 	let i = 0
-	let currentKey = 0
-	let keys = Object.keys( json )
+	// let currentKey = 0
+	// let keys = Object.keys( json )
 
 	function recursiveWritePdata( struct )
 	{

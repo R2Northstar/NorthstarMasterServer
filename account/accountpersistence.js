@@ -1,12 +1,11 @@
 const path = require( "path" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 
+const { GetGameServers } = require( "../shared/gameserver.js" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 
 module.exports = ( fastify, opts, done ) =>
 {
-	fastify.register( require( "fastify-multipart" ) )
-
 	// exported routes
 
 	// POST /accounts/write_persistence
@@ -22,7 +21,7 @@ module.exports = ( fastify, opts, done ) =>
 				}
 			},
 		},
-		async ( request, response ) =>
+		async ( request ) =>
 		{
 		// check if account exists 
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )

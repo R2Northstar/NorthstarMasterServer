@@ -1,11 +1,11 @@
 const sqlite = require( "sqlite3" ).verbose()
-const path = require( "path" )
 const fs = require( "fs" )
-const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
-const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
+// const path = require( "path" )
+// const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
+// const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
 let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex =>
 {
@@ -154,36 +154,36 @@ module.exports = {
 		return JSON.parse( await asyncDBGet( "SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?", [ id, pdiffHash ] ) )
 	},
 
-	AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data )
-	{
+	// AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data )
+	// {
 
-	},
+	// },
 
-	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs )
-	{
-		let player = await module.exports.AsyncGetPlayerByID( id )
-		return player.persistentDataBaseline
+	// AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs )
+	// {
+	//	let player = await module.exports.AsyncGetPlayerByID( id )
+	//	return player.persistentDataBaseline
 
-		// disabling this for now
-		/*let pdefCopy = DEFAULT_PDEF_OBJECT
-		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+	//	// disabling this for now
+	//	let pdefCopy = DEFAULT_PDEF_OBJECT
+	//	let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
 
-		let newPdataJson = baselineJson
+	//	let newPdataJson = baselineJson
 
-		if ( !player )
-			return null
+	//	if ( !player )
+	//		return null
 
-		// temp etc
-		/*for ( let pdiff of pdiffs )
-		{
-			for ( let enumAdd in pdiff.enums )
-				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+	//	// temp etc
+	//	for ( let pdiff of pdiffs )
+	//	{
+	//		for ( let enumAdd in pdiff.enums )
+	//			pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
 
-			pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
-			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
-			newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
-		}
+	//		pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
+	//		// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
+	//		newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
+	//	}
 
-		return PdataJsonToBuffer( newPdataJson, pdefCopy )*/
-	}
+	//	return PdataJsonToBuffer( newPdataJson, pdefCopy )
+	// }
 }

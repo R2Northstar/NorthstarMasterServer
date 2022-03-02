@@ -21,6 +21,7 @@ module.exports = {
 
 				let data = []
 				reqResult.on( "data", c => data.push( c ) )
+				// eslint-disable-next-line
 				reqResult.on( "end", _ => resolve( Buffer.concat( data ) ) )
 			} )
 

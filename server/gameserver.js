@@ -10,12 +10,12 @@ const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
+const { NO_GAMESERVER_RESPONSE } = require( "../shared/errorcodes.js" )
 
 async function SharedTryAddServer( request )
 {
 	// check server's verify endpoint on their auth server, make sure it's fine
 	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
-	let hasValidModInfo = true
 	let modInfo
 
 	if ( request.isMultipart() )
@@ -23,10 +23,11 @@ async function SharedTryAddServer( request )
 		try
 		{
 			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
-			hasValidModInfo = Array.isArray( modInfo.Mods )
 		}
 		catch ( ex )
-		{}
+		{
+			console.error( ex )
+		}
 	}
 
 	let authServerResponse = await asyncHttp.request( {
@@ -37,7 +38,7 @@ async function SharedTryAddServer( request )
 	} )
 
 	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
-		return { success: false }
+		return { success: false, error: NO_GAMESERVER_RESPONSE }
 
 	// pdiff stuff
 	if ( modInfo && modInfo.Mods )
@@ -77,6 +78,8 @@ async function SharedTryAddServer( request )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
+	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)
+	updateServerList()
 
 	return {
 		success: true,
@@ -87,8 +90,6 @@ async function SharedTryAddServer( request )
 
 module.exports = ( fastify, opts, done ) =>
 {
-	fastify.register( require( "fastify-multipart" ) )
-
 	// exported routes
 
 	// POST /server/add_server
@@ -109,9 +110,8 @@ module.exports = ( fastify, opts, done ) =>
 				}
 			}
 		},
-		async ( request, reply ) =>
+		async ( request ) =>
 		{
-			updateServerList()
 			return SharedTryAddServer( request )
 		} )
 
@@ -127,7 +127,7 @@ module.exports = ( fastify, opts, done ) =>
 				}
 			}
 		},
-		async ( request, reply ) =>
+		async ( request ) =>
 		{
 			let server = GetGameServers()[ request.query.id ]
 			// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
@@ -151,7 +151,7 @@ module.exports = ( fastify, opts, done ) =>
 		{
 			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__SERVER_UPDATEVALUES" ) }, // ratelimit
 		},
-		async ( request, reply ) =>
+		async ( request ) =>
 		{
 			if ( !( "id" in request.query ) )
 				return null
@@ -161,9 +161,7 @@ module.exports = ( fastify, opts, done ) =>
 			// if server doesn't exist, try adding it
 			if ( !server )
 			{
-				let retVal =  SharedTryAddServer( request )
-				updateServerList()
-				return retVal
+				return SharedTryAddServer( request )
 			}
 			else if ( request.ip != server.ip ) // dont update if the server isnt the one sending the heartbeat
 				return null
@@ -199,7 +197,7 @@ module.exports = ( fastify, opts, done ) =>
 				}
 			}
 		},
-		async ( request, reply ) =>
+		async ( request ) =>
 		{
 			let server = GetGameServers()[ request.query.id ]
 			// dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat

@@ -11,7 +11,7 @@ let trustProxy = !!( process.env.TRUST_PROXY )
 if( trustProxy && process.env.TRUST_PROXY_LIST_PATH )
 {
 	let addressList = fs.readFileSync( process.env.TRUST_PROXY_LIST_PATH ).toString()
-	trustProxy = addressList.split( "\r\n" ).map( a => a.trim() ).filter( a => !a.startsWith( "#" ) && a != "" )
+	trustProxy = addressList.split( "\n" ).map( a => a.trim() ).filter( a => !a.startsWith( "#" ) && a != "" )
 }
 
 let fastify = require( "fastify" )
@@ -33,6 +33,8 @@ else
 		trustProxy
 	} )
 }
+
+fastify.register( require( "fastify-multipart" ) )
 
 const ROUTE_PATHS = [ "client", "server", "account" ]
 

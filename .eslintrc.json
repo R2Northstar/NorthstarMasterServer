@@ -26,7 +26,7 @@
             "error",
             "allman"
         ],
-        "no-mixed-spaces-and-tabs": "error",
+        "no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
         "eol-last": "error",
         "linebreak-style": [
             "error",

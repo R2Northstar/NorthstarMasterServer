@@ -137,45 +137,41 @@ function PostData( location, postData, headers = {} )
 
 const asyncHttp = require( "./asynchttp.js" )
 
-function getUserInfo( uid )
+async function getUserInfo( uid )
 {
-	// eslint-disable-next-line
-	return new Promise( async ( resolve, reject ) =>
+	try
 	{
+		if( !authed || !AuthToken ) return
+
+		let response = await asyncHttp.request( {
+			method: "GET",
+			host: "https://api1.origin.com",
+			port: 443,
+			path: `/atom/users?userIds=${uid}`,
+			headers: { "AuthToken": AuthToken }
+		} )
+
+		let json
 		try
 		{
-			if( !authed || !AuthToken ) resolve( undefined )
-
-			let response = await asyncHttp.request( {
-				method: "GET",
-				host: "https://api1.origin.com",
-				port: 443,
-				path: `/atom/users?userIds=${uid}`,
-				headers: { "AuthToken": AuthToken }
-			} )
-
-			let json
-			try
+			json = await new Promise( resolve =>
 			{
-				json = await new Promise( resolve =>
+				parseString( response.toString(), function ( err, result )
 				{
-					parseString( response.toString(), function ( err, result )
-					{
-						resolve( result )
-					} )
+					resolve( result )
 				} )
-			}
-			catch ( error )
-			{
-				reject( error )
-			}
-			resolve( json.users.user[0] )
+			} )
 		}
 		catch ( error )
 		{
-			reject( error )
+			return
 		}
-	} )
+		return json.users.user[0]
+	}
+	catch ( error )
+	{
+		return
+	}
 }
 
 module.exports = {

@@ -12,10 +12,28 @@ const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
 const { NO_GAMESERVER_RESPONSE, JSON_PARSE_ERROR } = require( "../shared/errorcodes.js" )
 
-async function SharedTryAddServer( request )
+async function TryVerifyServer( request )
 {
 	// check server's verify endpoint on their auth server, make sure it's fine
 	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
+	let authServerResponse = await asyncHttp.request( {
+		method: "GET",
+		host: request.ip,
+		port: request.query.authPort,
+		path: "/verify"
+	} )
+
+	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
+		return 1
+
+	return 0
+}
+
+async function SharedTryAddServer( request )
+{
+	let verifySuccess = TryVerifyServer( request )
+	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
+
 	let modInfo
 
 	if ( request.isMultipart() )
@@ -29,16 +47,6 @@ async function SharedTryAddServer( request )
 			return { success: false, error: JSON_PARSE_ERROR }
 		}
 	}
-
-	let authServerResponse = await asyncHttp.request( {
-		method: "GET",
-		host: request.ip,
-		port: request.query.authPort,
-		path: "/verify"
-	} )
-
-	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
-		return { success: false, error: NO_GAMESERVER_RESPONSE }
 
 	// pdiff stuff
 	if ( modInfo && modInfo.Mods )
@@ -94,8 +102,9 @@ async function TryReviveServer( request )
 
 	if( request.ip != ghost.ip ) return
 
-	// check server's verify endpoint on their auth server, make sure it's fine
-	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
+	let verifySuccess = TryVerifyServer( request )
+	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
+
 	let modInfo
 
 	if ( request.isMultipart() )
@@ -109,16 +118,6 @@ async function TryReviveServer( request )
 			return { success: false, error: JSON_PARSE_ERROR }
 		}
 	}
-
-	let authServerResponse = await asyncHttp.request( {
-		method: "GET",
-		host: request.ip,
-		port: ghost.authPort,
-		path: "/verify"
-	} )
-
-	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
-		return { success: false, error: NO_GAMESERVER_RESPONSE }
 
 	// pdiff stuff
 	if ( modInfo && modInfo.Mods )

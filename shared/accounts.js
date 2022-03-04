@@ -159,31 +159,32 @@ module.exports = {
 
 	// },
 
-	// AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs )
-	// {
-	//	let player = await module.exports.AsyncGetPlayerByID( id )
-	//	return player.persistentDataBaseline
+	// eslint-disable-next-line
+	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs )
+	{
+		let player = await module.exports.AsyncGetPlayerByID( id )
+		return player.persistentDataBaseline
 
-	//	// disabling this for now
-	//	let pdefCopy = DEFAULT_PDEF_OBJECT
-	//	let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+		//	// disabling this for now
+		//	let pdefCopy = DEFAULT_PDEF_OBJECT
+		//	let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
 
-	//	let newPdataJson = baselineJson
+		//	let newPdataJson = baselineJson
 
-	//	if ( !player )
-	//		return null
+		//	if ( !player )
+		//		return null
 
-	//	// temp etc
-	//	for ( let pdiff of pdiffs )
-	//	{
-	//		for ( let enumAdd in pdiff.enums )
-	//			pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+		//	// temp etc
+		//	for ( let pdiff of pdiffs )
+		//	{
+		//		for ( let enumAdd in pdiff.enums )
+		//			pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
 
-	//		pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
-	//		// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
-	//		newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
-	//	}
+		//		pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
+		//		// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
+		//		newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
+		//	}
 
 	//	return PdataJsonToBuffer( newPdataJson, pdefCopy )
-	// }
+	}
 }

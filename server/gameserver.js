@@ -29,8 +29,22 @@ async function TryVerifyServer( request )
 	return 0
 }
 
-async function ParseModPDiffs( modInfo )
+async function ParseModPDiffs( request )
 {
+	let modInfo
+
+	if ( request.isMultipart() )
+	{
+		try
+		{
+			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+		}
+		catch ( ex )
+		{
+			return
+		}
+	}
+
 	// pdiff stuff
 	if ( modInfo && modInfo.Mods )
 	{
@@ -60,21 +74,8 @@ async function SharedTryAddServer( request )
 	let verifySuccess = TryVerifyServer( request )
 	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
 
-	let modInfo
-
-	if ( request.isMultipart() )
-	{
-		try
-		{
-			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
-		}
-		catch ( ex )
-		{
-			return { success: false, error: JSON_PARSE_ERROR }
-		}
-	}
-
-	modInfo = ParseModPDiffs( modInfo )
+	let modInfo = await ParseModPDiffs( request )
+	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
 	if ( typeof playerCount == "string" )
@@ -112,21 +113,8 @@ async function TryReviveServer( request )
 	let verifySuccess = TryVerifyServer( request )
 	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
 
-	let modInfo
-
-	if ( request.isMultipart() )
-	{
-		try
-		{
-			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
-		}
-		catch ( ex )
-		{
-			return { success: false, error: JSON_PARSE_ERROR }
-		}
-	}
-
-	modInfo = ParseModPDiffs( modInfo )
+	let modInfo = await ParseModPDiffs( request )
+	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
 	if ( typeof playerCount == "string" )

@@ -29,25 +29,8 @@ async function TryVerifyServer( request )
 	return 0
 }
 
-async function SharedTryAddServer( request )
+async function ParseModPDiffs( modInfo )
 {
-	let verifySuccess = TryVerifyServer( request )
-	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
-
-	let modInfo
-
-	if ( request.isMultipart() )
-	{
-		try
-		{
-			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
-		}
-		catch ( ex )
-		{
-			return { success: false, error: JSON_PARSE_ERROR }
-		}
-	}
-
 	// pdiff stuff
 	if ( modInfo && modInfo.Mods )
 	{
@@ -68,6 +51,30 @@ async function SharedTryAddServer( request )
 			}
 		}
 	}
+
+	return modInfo
+}
+
+async function SharedTryAddServer( request )
+{
+	let verifySuccess = TryVerifyServer( request )
+	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
+
+	let modInfo
+
+	if ( request.isMultipart() )
+	{
+		try
+		{
+			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+		}
+		catch ( ex )
+		{
+			return { success: false, error: JSON_PARSE_ERROR }
+		}
+	}
+
+	modInfo = ParseModPDiffs( modInfo )
 
 	let playerCount = request.query.playerCount || 0
 	if ( typeof playerCount == "string" )
@@ -119,26 +126,7 @@ async function TryReviveServer( request )
 		}
 	}
 
-	// pdiff stuff
-	if ( modInfo && modInfo.Mods )
-	{
-		for ( let mod of modInfo.Mods )
-		{
-			if ( mod.pdiff )
-			{
-				try
-				{
-					let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
-					mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
-					mod.pdiff.hash = pdiffHash
-				}
-				catch ( ex )
-				{
-					mod.pdiff = null
-				}
-			}
-		}
-	}
+	modInfo = ParseModPDiffs( modInfo )
 
 	let playerCount = request.query.playerCount || 0
 	if ( typeof playerCount == "string" )

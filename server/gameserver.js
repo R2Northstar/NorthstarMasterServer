@@ -10,18 +10,26 @@ const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
-const { NO_GAMESERVER_RESPONSE, JSON_PARSE_ERROR } = require( "../shared/errorcodes.js" )
+const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR } = require( "../shared/errorcodes.js" )
 
 async function TryVerifyServer( request )
 {
 	// check server's verify endpoint on their auth server, make sure it's fine
 	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
-	let authServerResponse = await asyncHttp.request( {
-		method: "GET",
-		host: request.ip,
-		port: request.query.authPort,
-		path: "/verify"
-	} )
+	let authServerResponse
+	try
+	{
+		authServerResponse = await asyncHttp.request( {
+			method: "GET",
+			host: request.ip,
+			port: request.query.authPort,
+			path: "/verify"
+		} )
+	}
+	catch
+	{
+		return 2
+	}
 
 	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
 		return 1
@@ -71,8 +79,9 @@ async function ParseModPDiffs( request )
 
 async function SharedTryAddServer( request )
 {
-	let verifySuccess = TryVerifyServer( request )
-	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
+	let verifyStatus = await TryVerifyServer( request )
+	if( verifyStatus == 1 ) return { success: false, error: NO_GAMESERVER_RESPONSE }
+	if( verifyStatus == 2 ) return { success: false, error: BAD_GAMESERVER_RESPONSE }
 
 	let modInfo = await ParseModPDiffs( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }

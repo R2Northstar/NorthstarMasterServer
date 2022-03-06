@@ -1,6 +1,5 @@
 const { getRatelimit } = require( "../shared/ratelimit.js" )
-const { getServerList } = require( "../shared/serverlist_state.js" )
-const { GameServer, GetGameServers, RemoveGameServer } = require( "../shared/gameserver.js" )
+const { GetGameServers } = require( "../shared/gameserver.js" )
 
 
 module.exports = ( fastify, opts, done ) =>
@@ -15,13 +14,15 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async (	request ) =>
 		{
-			id = request.url.substring(19)
-			serverObj = GetGameServers()[id]
-			if (serverObj != undefined) {
-				return {success:true, info: serverObj}
+			let id = request.url.substring( 19 )
+			let serverObj = GetGameServers()[id]
+			if ( serverObj != undefined )
+			{
+				return { success:true, info: serverObj }
 			}
-			else {
-				return {success: false, info: {}}
+			else
+			{
+				return { success: false, info: {} }
 			}
 		} )
 

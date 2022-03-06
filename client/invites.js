@@ -12,7 +12,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request, reply ) =>
 		{
-			reply.redirect( "northstar://server@" + request.url.substring(15) )
+			reply.redirect( "northstar://server@" + request.url.substring( 15 ) )
 		} )
 	done()
 }

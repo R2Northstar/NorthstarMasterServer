@@ -18,6 +18,11 @@ module.exports = ( fastify, opts, done ) =>
 			let serverObj = GetGameServers()[id]
 			if ( serverObj != undefined )
 			{
+				delete serverObj.ip
+				delete serverObj.port
+				delete serverObj.authPort
+				delete serverObj.password
+				delete serverObj.serverAuthToken
 				return { success:true, info: serverObj }
 			}
 			else

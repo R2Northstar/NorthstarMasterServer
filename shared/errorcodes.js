@@ -3,6 +3,10 @@ const errorCodes = {
 		enum: "NO_GAMESERVER_RESPONSE",
 		msg: "Couldn't reach game server",
 	},
+	BAD_GAMESERVER_RESPONSE: {
+		enum: "BAD_GAMESERVER_RESPONSE",
+		msg: "Game server gave an invalid response",
+	},
 	UNAUTHORIZED_GAME: {
 		enum: "UNAUTHORIZED_GAME",
 		msg: "Stryder couldn't confirm that this account owns Titanfall 2",

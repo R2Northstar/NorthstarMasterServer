@@ -43,8 +43,8 @@ class GameServer
 	{
 		this.name = name
 		this.description = description
-		this.playerCount = Math.min(Math.max(parseInt( playerCount ), 0), 128);
-		this.maxPlayers = Math.min(Math.max(parseInt( maxPlayers ), 0), 128);
+		this.playerCount = Math.min( Math.max( parseInt( playerCount ), 0 ), 128 )
+		this.maxPlayers = Math.min( Math.max( parseInt( maxPlayers ), 0 ), 128 )
 		this.map = map
 		this.playlist = playlist
 

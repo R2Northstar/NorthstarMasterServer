@@ -10,7 +10,7 @@ const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
-const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR } = require( "../shared/errorcodes.js" )
+const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER } = require( "../shared/errorcodes.js" )
 
 async function TryVerifyServer( request )
 {
@@ -117,7 +117,7 @@ async function TryReviveServer( request )
 {
 	let ghost = GetGhostServer( request.query.id )
 
-	if( request.ip != ghost.ip ) return
+	if( request.ip != ghost.ip ) return { success: false, error: UNAUTHORIZED_GAMESERVER }
 
 	let verifyStatus = await TryVerifyServer( request )
 	if( verifyStatus == 1 ) return { success: false, error: NO_GAMESERVER_RESPONSE }

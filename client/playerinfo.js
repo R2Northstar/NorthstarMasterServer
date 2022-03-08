@@ -7,6 +7,12 @@ const fs = require( "fs" )
 
 const PLAYER_DATA_PDEF_231 = ParseDefinition( fs.readFileSync( "./persistent_player_data_version_231.pdef", "utf8" ) )
 
+let translationsPath = path.join( __dirname, "translations.json" )
+
+let translations = {}
+if ( fs.existsSync( translationsPath ) )
+	translations = JSON.parse( fs.readFileSync( translationsPath ).toString() )
+
 module.exports = ( fastify, opts, done ) =>
 {
 	// exported routes
@@ -145,6 +151,17 @@ module.exports = ( fastify, opts, done ) =>
 			return ret
 		} )
 
+
+	fastify.get( "/api/translations",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+
+		},
+		async ( ) =>
+		{
+			//let n = Object.fromEntries(translations.weapons_code.map( (key, index) => [key, translations.weapons_name[index]]))
+			return translations
+		} )
 	done()
 }
 

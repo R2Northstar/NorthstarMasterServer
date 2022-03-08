@@ -459,5 +459,32 @@
         "melee_titan_punch_scorch",
         "melee_titan_punch_tone",
         "melee_titan_punch_vanguard"
+    ],
+    "factions":{
+        "faction_apex":"Apex Predators",
+	"faction_64": "The 6-4",
+	"faction_vinson":"Vinson Dynamics",
+	"faction_marauder":"Marauder Corps",
+	"faction_aces":"Angel City Elite",
+	"faction_ares":"ARES Division",
+	"faction_marvin":"Marvin's Finest Hour"
+    },
+    "factions_name":[
+        "Apex Predators",
+        "The 6-4",
+        "Vinson Dynamics",
+        "Marauder Corps",
+        "Angel City Elite",
+        "ARES Division",
+        "Marvin's Finest Hour"
+    ],
+    "factions_code":[
+        "faction_apex",
+        "faction_64",
+        "faction_vinson",
+        "faction_marauder",
+        "faction_aces",
+        "faction_ares",
+        "faction_marvin"
     ]
 }

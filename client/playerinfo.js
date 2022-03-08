@@ -60,7 +60,7 @@ module.exports = ( fastify, opts, done ) =>
 			let pdata = PdataToJsonUntyped( account.persistentDataBaseline, PLAYER_DATA_PDEF_231 )
 
 			// define a filter for which properties are copied from the pdata
-			let filter = ["gen", "xp", "activeCallingCardIndex", "activeCallsignIconIndex", "activeCallsignIconStyleIndex", "netWorth"]
+			let filter = ["gen", "xp", "activeCallingCardIndex", "activeCallsignIconIndex", "activeCallsignIconStyleIndex","lastTimePlayed", "netWorth", "factionChoice"]
 
 			let pdataFiltered = Object.fromEntries(
 				filter
@@ -72,7 +72,13 @@ module.exports = ( fastify, opts, done ) =>
 				id: account.id
 			}
 			Object.assign( ret, pdataFiltered )
-
+			Object.assign( ret, {
+				faction: {
+					factionCode: pdata.factionChoice,
+					factionName: translations.factions[pdata.factionChoice],
+					factionXP: pdata.factionXP[translations.factions_code.indexOf( pdata.factionChoice )]
+				}
+			} )
 			return ret
 		} )
 
@@ -107,10 +113,32 @@ module.exports = ( fastify, opts, done ) =>
 					.map( key => [key, pdata[key]] )
 			)
 
+
+			let wHours = pdataFiltered.weaponStats.map( key =>key.hoursUsed )
+			let wKills = pdataFiltered.weaponKillStats.map( key =>key.total )
+
+
+			let mostHours =  wHours.indexOf( Math.max( ...wHours ) )
+			let mostKills = wKills.indexOf( Math.max( ...wKills ) )
 			let ret = {
-				id: account.id
+				id: account.id,
+				mostUsedWeapon:{
+					name:translations.weapons_name[mostHours],
+					code:translations.weapons_code[mostHours],
+					array_position: mostHours,
+					time:wHours[mostHours],
+					all:pdataFiltered.weaponStats[mostHours]
+				},
+				mostKillsWeapon:{
+					name:translations.weapons_name[mostKills],
+					code:translations.weapons_code[mostKills],
+					array_position: mostKills,
+					kills:wKills[mostKills],
+					all:pdataFiltered.weaponKillStats[mostKills]
+				}
 			}
 			Object.assign( ret, pdataFiltered )
+			//Object.assign(ret, [wHours])
 
 			return ret
 		} )
@@ -147,6 +175,46 @@ module.exports = ( fastify, opts, done ) =>
 				id: account.id
 			}
 			Object.assign( ret, pdataFiltered )
+
+			return ret
+		} )
+
+	fastify.get( "/player/games",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+			schema: {
+				querystring: {
+					id: { type: "string" }, // the id of the player to get stats of
+				}
+			}
+		},
+		async ( request ) =>
+		{
+			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			if( !account )
+			{
+				return { success: false, error: PLAYER_NOT_FOUND }
+			}
+			let pdata = PdataToJsonUntyped( account.persistentDataBaseline, PLAYER_DATA_PDEF_231 )
+
+			// define a filter for which properties are copied from the pdata
+			let filter = ["lastPlayList", "mapHistory", "modeHistory", "lastAbandonedMode", "lastAbandonTime"]
+
+			let pdataFiltered = Object.fromEntries(
+				filter
+					.map( key => [key, pdata[key]] )
+			)
+
+			let ret = {
+				id: account.id
+			}
+			Object.assign( ret, pdataFiltered )
+			if( pdata.isPostGameScoreboardValid )
+			{
+				Object.assign( ret, {
+					postGame: pdata.postGameData
+				} )
+			}
 
 			return ret
 		} )

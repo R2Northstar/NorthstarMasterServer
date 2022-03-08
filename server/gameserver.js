@@ -119,8 +119,9 @@ async function TryReviveServer( request )
 
 	if( request.ip != ghost.ip ) return
 
-	let verifySuccess = TryVerifyServer( request )
-	if( !verifySuccess ) return { success: false, error: NO_GAMESERVER_RESPONSE }
+	let verifyStatus = await TryVerifyServer( request )
+	if( verifyStatus == 1 ) return { success: false, error: NO_GAMESERVER_RESPONSE }
+	if( verifyStatus == 2 ) return { success: false, error: BAD_GAMESERVER_RESPONSE }
 
 	let modInfo = await ParseModPDiffs( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }

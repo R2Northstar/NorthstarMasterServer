@@ -11,7 +11,20 @@ let translationsPath = path.join( __dirname, "translations.json" )
 
 let translations = {}
 if ( fs.existsSync( translationsPath ) )
+{
 	translations = JSON.parse( fs.readFileSync( translationsPath ).toString() )
+	let keys = Object.keys( translations )
+
+	keys.forEach( k=>
+	{
+		let kcode = k+"_code"
+		let kname = k+"_name"
+		translations[kcode] = Object.keys( translations[k] )
+		translations[kname] =  Object.values( translations[k] )
+	} )
+	console.log( keys )
+
+}
 
 module.exports = ( fastify, opts, done ) =>
 {

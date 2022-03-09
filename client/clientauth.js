@@ -14,7 +14,8 @@ const {
 	PLAYER_NOT_FOUND,
 	INVALID_MASTERSERVER_TOKEN,
 	JSON_PARSE_ERROR,
-	NO_GAMESERVER_RESPONSE
+	NO_GAMESERVER_RESPONSE,
+	BAD_GAMESERVER_RESPONSE
 } = require( "../shared/errorcodes.js" )
 
 module.exports = ( fastify, opts, done ) =>
@@ -43,12 +44,20 @@ module.exports = ( fastify, opts, done ) =>
 				if ( request.query.token.includes( "&" ) )
 					return { success: false } // TODO add an error code here
 
-				let authResponse = await asyncHttp.request( {
-					method: "GET",
-					host: "https://r2-pc.stryder.respawn.com",
-					port: 443,
-					path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString( 16 ).toUpperCase() }`
-				} )
+				let authResponse
+				try
+				{
+					authResponse = await asyncHttp.request( {
+						method: "GET",
+						host: "https://r2-pc.stryder.respawn.com",
+						port: 443,
+						path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString( 16 ).toUpperCase() }`
+					} )
+				}
+				catch
+				{
+					return { success: false, error: STRYDER_RESPONSE }
+				}
 
 				let authJson
 				try
@@ -124,12 +133,20 @@ module.exports = ( fastify, opts, done ) =>
 			// todo: build persistent data here, rather than sending baseline only
 			let pdata = await accounts.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
 
-			let authResponse = await asyncHttp.request( {
-				method: "POST",
-				host: server.ip,
-				port: server.authPort,
-				path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
-			}, pdata )
+			let authResponse
+			try
+			{
+				authResponse = await asyncHttp.request( {
+					method: "POST",
+					host: server.ip,
+					port: server.authPort,
+					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
+				}, pdata )
+			}
+			catch
+			{
+				return { success: false, error: BAD_GAMESERVER_RESPONSE }
+			}
 
 			if ( !authResponse )
 				return { success: false, error: NO_GAMESERVER_RESPONSE }

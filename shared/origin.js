@@ -43,7 +43,7 @@ async function authWithOrigin()
 	setTimeout( authWithOrigin, Number( authResJson.expires_in )*1000 - 60000 ) // Refresh access token 1 minute before it expires just to be safe
 }
 
-authWithOrigin()
+if( process.env.ENABLE_ORIGIN ) authWithOrigin()
 
 function GenerateCID()
 {

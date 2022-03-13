@@ -7,7 +7,10 @@ const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 // const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 // const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
-let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex =>
+const dbSchemaRaw = fs.readFileSync( "./dbSchema.json" )
+const dbSchema = JSON.parse( dbSchemaRaw )
+
+let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, async ex =>
 {
 	if ( ex )
 		console.error( ex )
@@ -18,13 +21,11 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
 	CREATE TABLE IF NOT EXISTS accounts (
-		id TEXT PRIMARY KEY NOT NULL,
-		currentAuthToken TEXT,
-		currentAuthTokenExpirationTime INTEGER,
-		currentServerId TEXT,
-		persistentDataBaseline BLOB NOT NULL,
-		lastAuthIp TEXT,
-		username TEXT DEFAULT ''
+		${ dbSchema.accounts.columns.map( ( col ) =>
+	{
+		return `${col.name} ${col.type} ${col.modifier ? col.modifier : ""}`
+	} ).join( ",\n\r\t\t" ) }
+		${ dbSchema.accounts.extra ? ","+dbSchema.accounts.extra : "" }
 	)
 	`, ex =>
 	{
@@ -38,10 +39,11 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
 	CREATE TABLE IF NOT EXISTS modPersistentData (
-		id TEXT NOT NULL,
-		pdiffHash TEXT NOT NULL,
-		data TEXT NOT NULL,
-		PRIMARY KEY ( id, pdiffHash )
+		${ dbSchema.modPersistentData.columns.map( ( col ) =>
+	{
+		return `${col.name} ${col.type} ${col.modifier ? col.modifier : ""}`
+	} ).join( ",\n\r\t\t" ) }
+		${ dbSchema.modPersistentData.extra ? ","+dbSchema.modPersistentData.extra : "" }
 	)
 	`, ex =>
 	{
@@ -50,6 +52,23 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 		else
 			console.log( "Created mod persistent data table successfully" )
 	} )
+
+	for ( const col of dbSchema.accounts.columns )
+	{
+		if( !await columnExists( "accounts", col.name ) )
+		{
+			console.log( `The 'accounts' table is missing the '${col.name}' column` )
+			await addColumnToTable( "accounts", col )
+		}
+	}
+	for ( const col of dbSchema.modPersistentData.columns )
+	{
+		if( !await columnExists( "modPersistentData", col.name ) )
+		{
+			console.log( `The 'modPersistentData' table is missing the '${col.name}' column` )
+			await addColumnToTable( "modPersistentData", col )
+		}
+	}
 } )
 
 function asyncDBGet( sql, params = [] )
@@ -82,6 +101,49 @@ function asyncDBRun( sql, params = [] )
 			}
 			else
 				resolve()
+		} )
+	} )
+}
+
+function columnExists( tableName, colName )
+{
+	return new Promise( ( resolve, reject ) =>
+	{
+		playerDB.get( `
+        SELECT COUNT(*) AS CNTREC FROM pragma_table_info('${tableName}') WHERE name='${colName}'
+        `, [], ( ex, row ) =>
+		{
+			if ( ex )
+			{
+				console.error( "Encountered error querying database: " + ex )
+				reject( ex )
+			}
+			else
+			{
+				resolve( row.CNTREC == 1 )
+			}
+		} )
+	} )
+}
+
+function addColumnToTable( tableName, column )
+{
+	return new Promise( ( resolve, reject ) =>
+	{
+		playerDB.run( `
+        ALTER TABLE ${tableName} ADD COLUMN ${column.name} ${column.type} ${column.modifier ? column.modifier : ""}
+        `, ex =>
+		{
+			if ( ex )
+			{
+				console.error( "Encountered error adding column to database: " + ex )
+				reject( ex )
+			}
+			else
+			{
+				console.log( `Added '${column.name}' column to the '${tableName}' table` )
+				resolve()
+			}
 		} )
 	} )
 }

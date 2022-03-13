@@ -1,6 +1,7 @@
 let sidCookie
 let AuthToken
 let authed = false
+const fs = require( "fs" )
 const https = require( "https" )
 const { parseString } = require( "xml2js" )
 
@@ -40,10 +41,28 @@ async function authWithOrigin()
 	console.log( "Successfully got Origin auth token" )
 	authed = true
 
+	if( process.env.ORIGIN_PERSIST_SID )
+	{
+		fs.writeFile( "./sid.cookie", sidCookie, ( err ) =>
+		{
+			if( err ) console.log( "Failed to save Origin sid cookie" )
+			else console.log( "Saved Origin sid cookie" )
+		} )
+	}
+
 	setTimeout( authWithOrigin, Number( authResJson.expires_in )*1000 - 60000 ) // Refresh access token 1 minute before it expires just to be safe
 }
 
-if( process.env.ENABLE_ORIGIN ) authWithOrigin()
+if( process.env.ORIGIN_ENABLE )
+{
+	console.log( "Attempting to auth with Origin" )
+	if( process.env.ORIGIN_PERSIST_SID && fs.existsSync( "./sid.cookie" ) )
+	{
+		console.log( "Found Origin sid cookie, reading data" )
+		sidCookie = fs.readFileSync( "./sid.cookie", "utf-8" )
+	}
+	authWithOrigin()
+}
 
 function GenerateCID()
 {

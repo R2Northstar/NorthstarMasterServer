@@ -59,7 +59,7 @@ if( process.env.ORIGIN_ENABLE )
 	if( process.env.ORIGIN_PERSIST_SID && fs.existsSync( "./sid.cookie" ) )
 	{
 		console.log( "Found Origin sid cookie, reading data" )
-		sidCookie = fs.readFileSync( "./sid.cookie", "utf-8" )
+		sidCookie = fs.readFileSync( "./sid.cookie", "utf-8" ).replace( /\r?\n|\r/g, "" )
 	}
 	authWithOrigin()
 }

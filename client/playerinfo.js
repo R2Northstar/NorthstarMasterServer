@@ -4,27 +4,11 @@ const { ParseDefinition, PdataToJsonUntyped } = require( "../shared/pjson.js" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const fs = require( "fs" )
+const { translations } = require(path.join(__dirname, "translations.json"));
 
 const PLAYER_DATA_PDEF_231 = ParseDefinition( fs.readFileSync( "./persistent_player_data_version_231.pdef", "utf8" ) )
 
-let translationsPath = path.join( __dirname, "translations.json" )
 
-let translations = {}
-if ( fs.existsSync( translationsPath ) )
-{
-	translations = JSON.parse( fs.readFileSync( translationsPath ).toString() )
-	let keys = Object.keys( translations )
-
-	keys.forEach( k=>
-	{
-		let kcode = k+"_code"
-		let kname = k+"_name"
-		translations[kcode] = Object.keys( translations[k] )
-		translations[kname] =  Object.values( translations[k] )
-	} )
-	console.log( keys )
-
-}
 
 module.exports = ( fastify, opts, done ) =>
 {
@@ -233,16 +217,7 @@ module.exports = ( fastify, opts, done ) =>
 		} )
 
 
-	fastify.get( "/api/translations",
-		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
-
-		},
-		async ( ) =>
-		{
-			//let n = Object.fromEntries(translations.weapons_code.map( (key, index) => [key, translations.weapons_name[index]]))
-			return translations
-		} )
+	
 	done()
 }
 
@@ -271,3 +246,4 @@ module.exports = ( fastify, opts, done ) =>
 // 	}
 // 	return stripped
 // }
+

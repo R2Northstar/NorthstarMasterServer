@@ -3,6 +3,7 @@ const crypto = require( "crypto" )
 const { GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
+const { updateLeaderboards } = require( path.join( __dirname, "leaderboards.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -82,6 +83,8 @@ module.exports = ( fastify, opts, done ) =>
 				account = await accounts.AsyncGetPlayerByID( request.query.id )
 			}
 
+			updateLeaderboards( account )
+
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 			accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
@@ -119,6 +122,7 @@ module.exports = ( fastify, opts, done ) =>
 			if ( !account )
 				return { success: false, error: PLAYER_NOT_FOUND }
 
+			updateLeaderboards( account )
 			if ( shouldRequireSessionToken )
 			{
 				// check token
@@ -184,6 +188,8 @@ module.exports = ( fastify, opts, done ) =>
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
 				return { success: false, error: PLAYER_NOT_FOUND }
+
+			updateLeaderboards( account )
 
 			if ( shouldRequireSessionToken )
 			{

@@ -1,7 +1,6 @@
 const path = require( "path" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const fs = require( "fs" )
-const { default: fastify } = require("fastify")
 
 let translationsPath = path.join( __dirname, "translations.json" )
 
@@ -23,8 +22,9 @@ if ( fs.existsSync( translationsPath ) )
 
 }
 
-module.exports = (fastify, opts, done) => {
-    fastify.get( "/api/translations",
+module.exports = ( fastify, opts, done ) =>
+{
+	fastify.get( "/api/translations",
 		{
 			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
 
@@ -34,5 +34,6 @@ module.exports = (fastify, opts, done) => {
 			//let n = Object.fromEntries(translations.weapons_code.map( (key, index) => [key, translations.weapons_name[index]]))
 			return translations
 		} )
-    done();
+	done()
 }
+module.exports.translations = translations

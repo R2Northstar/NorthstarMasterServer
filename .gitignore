@@ -121,5 +121,5 @@ dist
 .db
 playerdata.db
 
-#leaderboards file
+# leaderboards file
 client/leaderboards.json

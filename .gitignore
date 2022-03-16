@@ -120,3 +120,6 @@ dist
 # db files
 .db
 playerdata.db
+
+#leaderboards file
+client/leaderboards.json

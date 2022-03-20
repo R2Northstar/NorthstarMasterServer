@@ -37,20 +37,29 @@ async function authWithOrigin()
 	}
 	let authTokenRes = await GetData( loginURL, {"Cookie": [`sid=${sidCookie}`]} )
 	let authResJson = JSON.parse( authTokenRes.toString() )
-	AuthToken = authResJson.access_token
-	console.log( "Successfully got Origin auth token" )
-	authed = true
 
-	if( process.env.ORIGIN_PERSIST_SID )
+	if( authResJson.error )
 	{
-		fs.writeFile( "./sid.cookie", sidCookie, ( err ) =>
-		{
-			if( err ) console.log( "Failed to save Origin sid cookie" )
-			else console.log( "Saved Origin sid cookie" )
-		} )
+		console.log( `Error authing with Origin: '${authResJson.error}'` )
 	}
+	else
+	{
 
-	setTimeout( authWithOrigin, Number( authResJson.expires_in )*1000 - 60000 ) // Refresh access token 1 minute before it expires just to be safe
+		AuthToken = authResJson.access_token
+		console.log( "Successfully got Origin auth token" )
+		authed = true
+
+		if( process.env.ORIGIN_PERSIST_SID )
+		{
+			fs.writeFile( "./sid.cookie", sidCookie, ( err ) =>
+			{
+				if( err ) console.log( "Failed to save Origin sid cookie" )
+				else console.log( "Saved Origin sid cookie" )
+			} )
+		}
+
+		setTimeout( authWithOrigin, Number( authResJson.expires_in )*1000 - 60000 ) // Refresh access token 1 minute before it expires just to be safe
+	}
 }
 
 if( process.env.ORIGIN_ENABLE )

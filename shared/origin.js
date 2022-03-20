@@ -203,5 +203,9 @@ async function getUserInfo( uid )
 }
 
 module.exports = {
+	getOriginAuthState: function getOriginAuthState()
+	{
+		return authed
+	},
 	getUserInfo
 }

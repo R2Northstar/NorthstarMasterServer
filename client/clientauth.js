@@ -3,7 +3,7 @@ const crypto = require( "crypto" )
 const { GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
-const { getUserInfo } = require( path.join( __dirname, "../shared/origin.js" ) )
+const { getUserInfo, getOriginAuthState } = require( path.join( __dirname, "../shared/origin.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -79,11 +79,11 @@ module.exports = ( fastify, opts, done ) =>
 			let playerUsername
 			try
 			{
-				playerUsername = ( await getUserInfo( request.query.id ) ).EAID[0] // try to find username of player
+				if( getOriginAuthState() ) playerUsername = ( await getUserInfo( request.query.id ) ).EAID[0] // try to find username of player
 			}
 			catch( e )
 			{
-			// don't do this: return { success: false } // fail if we can't find it
+				// don't do this: return { success: false } // fail if we can't find it
 			}
 
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )

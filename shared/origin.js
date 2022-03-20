@@ -40,6 +40,7 @@ async function authWithOrigin()
 
 	if( authResJson.error )
 	{
+		authed = false
 		console.log( `Error authing with Origin: '${authResJson.error}'` )
 	}
 	else

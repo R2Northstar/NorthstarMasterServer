@@ -7,7 +7,10 @@ const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 // const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 // const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
-let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, ex =>
+const dbSchemaRaw = fs.readFileSync( "./dbSchema.json" )
+const dbSchema = JSON.parse( dbSchemaRaw )
+
+let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, async ex =>
 {
 	if ( ex )
 		console.error( ex )
@@ -18,12 +21,11 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
 	CREATE TABLE IF NOT EXISTS accounts (
-		id TEXT PRIMARY KEY NOT NULL,
-		currentAuthToken TEXT,
-		currentAuthTokenExpirationTime INTEGER,
-		currentServerId TEXT,
-		persistentDataBaseline BLOB NOT NULL,
-		lastAuthIp TEXT
+		${ dbSchema.accounts.columns.map( ( col ) =>
+	{
+		return `${col.name} ${col.type} ${col.modifier ? col.modifier : ""}`
+	} ).join( ",\n\r\t\t" ) }
+		${ dbSchema.accounts.extra ? ","+dbSchema.accounts.extra : "" }
 	)
 	`, ex =>
 	{
@@ -37,10 +39,11 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 	// this should mirror the PlayerAccount class's	properties
 	playerDB.run( `
 	CREATE TABLE IF NOT EXISTS modPersistentData (
-		id TEXT NOT NULL,
-		pdiffHash TEXT NOT NULL,
-		data TEXT NOT NULL,
-		PRIMARY KEY ( id, pdiffHash )
+		${ dbSchema.modPersistentData.columns.map( ( col ) =>
+	{
+		return `${col.name} ${col.type} ${col.modifier ? col.modifier : ""}`
+	} ).join( ",\n\r\t\t" ) }
+		${ dbSchema.modPersistentData.extra ? ","+dbSchema.modPersistentData.extra : "" }
 	)
 	`, ex =>
 	{
@@ -49,6 +52,23 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 		else
 			console.log( "Created mod persistent data table successfully" )
 	} )
+
+	for ( const col of dbSchema.accounts.columns )
+	{
+		if( !await columnExists( "accounts", col.name ) )
+		{
+			console.log( `The 'accounts' table is missing the '${col.name}' column` )
+			await addColumnToTable( "accounts", col )
+		}
+	}
+	for ( const col of dbSchema.modPersistentData.columns )
+	{
+		if( !await columnExists( "modPersistentData", col.name ) )
+		{
+			console.log( `The 'modPersistentData' table is missing the '${col.name}' column` )
+			await addColumnToTable( "modPersistentData", col )
+		}
+	}
 } )
 
 function asyncDBGet( sql, params = [] )
@@ -85,6 +105,49 @@ function asyncDBRun( sql, params = [] )
 	} )
 }
 
+function columnExists( tableName, colName )
+{
+	return new Promise( ( resolve, reject ) =>
+	{
+		playerDB.get( `
+        SELECT COUNT(*) AS CNTREC FROM pragma_table_info('${tableName}') WHERE name='${colName}'
+        `, [], ( ex, row ) =>
+		{
+			if ( ex )
+			{
+				console.error( "Encountered error querying database: " + ex )
+				reject( ex )
+			}
+			else
+			{
+				resolve( row.CNTREC == 1 )
+			}
+		} )
+	} )
+}
+
+function addColumnToTable( tableName, column )
+{
+	return new Promise( ( resolve, reject ) =>
+	{
+		playerDB.run( `
+        ALTER TABLE ${tableName} ADD COLUMN ${column.name} ${column.type} ${column.modifier ? column.modifier : ""}
+        `, ex =>
+		{
+			if ( ex )
+			{
+				console.error( "Encountered error adding column to database: " + ex )
+				reject( ex )
+			}
+			else
+			{
+				console.log( `Added '${column.name}' column to the '${tableName}' table` )
+				resolve()
+			}
+		} )
+	} )
+}
+
 class PlayerAccount
 {
 	// mirrors account struct in db
@@ -95,7 +158,7 @@ class PlayerAccount
 	// string currentServerId
 	// Buffer persistentDataBaseline
 
-	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, lastAuthIp )
+	constructor ( id, currentAuthToken, currentAuthTokenExpirationTime, currentServerId, persistentDataBaseline, lastAuthIp, username )
 	{
 		this.id = id
 		this.currentAuthToken = currentAuthToken
@@ -103,6 +166,7 @@ class PlayerAccount
 		this.currentServerId = currentServerId
 		this.persistentDataBaseline = persistentDataBaseline
 		this.lastAuthIp = lastAuthIp
+		this.username = username
 	}
 }
 
@@ -114,7 +178,7 @@ module.exports = {
 		if ( !row )
 			return null
 
-		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp )
+		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp, row.username )
 	},
 
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id )
@@ -125,6 +189,11 @@ module.exports = {
 	AsyncUpdateCurrentPlayerAuthToken: async function AsyncUpdateCurrentPlayerAuthToken( id, token )
 	{
 		await asyncDBRun( "UPDATE accounts SET currentAuthToken = ?, currentAuthTokenExpirationTime = ? WHERE id = ?", [ token, Date.now() + TOKEN_EXPIRATION_TIME, id ] )
+	},
+
+	AsyncUpdatePlayerUsername: async function AsyncUpdatePlayerUsername( id, username )
+	{
+		await asyncDBRun( "UPDATE accounts SET username = ? WHERE id = ?", [ username, id ] )
 	},
 
 	AsyncUpdatePlayerAuthIp: async function AsyncUpdatePlayerAuthIp( id, lastAuthIp )

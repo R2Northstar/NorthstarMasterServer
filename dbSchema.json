@@ -1,0 +1,57 @@
+{
+	"accounts": {
+		"columns": [
+			{
+				"name": "id",
+				"type": "TEXT",
+				"modifier": "PRIMARY KEY NOT NULL"
+			},
+			{
+				"name": "currentAuthToken",
+				"type": "TEXT"
+			},
+			{
+				"name": "currentAuthTokenExpirationTime",
+				"type": "INTEGER"
+			},
+			{
+				"name": "currentServerId",
+				"type": "TEXT"
+			},
+			{
+				"name": "persistentDataBaseline",
+				"type": "BLOB",
+				"modifier": "NOT NULL"
+			},
+			{
+				"name": "lastAuthIp",
+				"type": "TEXT"
+			},
+			{
+				"name": "username",
+				"type": "TEXT",
+				"modifier": "DEFAULT ''"
+			}
+		]
+	},
+	"modPersistentData": {
+		"columns": [
+			{
+				"name": "id",
+				"type": "TEXT",
+				"modifier": "NOT NULL"
+			},
+			{
+				"name": "pdiffHash",
+				"type": "TEXT",
+				"modifier": "NOT NULL"
+			},
+			{
+				"name": "data",
+				"type": "TEXT",
+				"modifier": "NOT NULL"
+			}
+		],
+		"extra": "PRIMARY KEY ( id, pdiffHash )"
+	}
+}

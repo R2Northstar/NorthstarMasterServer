@@ -4,6 +4,7 @@ const { GetGameServers } = require( path.join( __dirname, "../shared/gameserver.
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
+const { getUserInfo, getOriginAuthState } = require( path.join( __dirname, "../shared/origin.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -79,6 +80,16 @@ module.exports = ( fastify, opts, done ) =>
 					return { success: false, error: UNAUTHORIZED_GAME }
 			}
 
+			let playerUsername
+			try
+			{
+				if( getOriginAuthState() ) playerUsername = ( await getUserInfo( request.query.id ) ).EAID[0] // try to find username of player
+			}
+			catch( e )
+			{
+				// don't do this: return { success: false } // fail if we can't find it
+			}
+
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account ) // create account for user
 			{
@@ -88,6 +99,8 @@ module.exports = ( fastify, opts, done ) =>
 
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 			accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
+
+			if ( playerUsername ) accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
 
 			accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
 
@@ -147,7 +160,7 @@ module.exports = ( fastify, opts, done ) =>
 					method: "POST",
 					host: server.ip,
 					port: server.authPort,
-					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
+					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}&username=${account.username}`
 				}, pdata )
 			}
 			catch
@@ -167,6 +180,7 @@ module.exports = ( fastify, opts, done ) =>
 
 			return {
 				success: true,
+
 				ip: server.ip,
 				port: server.port,
 				authToken: authToken

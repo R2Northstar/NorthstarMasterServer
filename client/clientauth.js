@@ -3,6 +3,7 @@ const crypto = require( "crypto" )
 const { GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
+const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -15,7 +16,8 @@ const {
 	INVALID_MASTERSERVER_TOKEN,
 	JSON_PARSE_ERROR,
 	NO_GAMESERVER_RESPONSE,
-	BAD_GAMESERVER_RESPONSE
+	BAD_GAMESERVER_RESPONSE,
+	UNSUPPORTED_VERSION
 } = require( "../shared/errorcodes.js" )
 
 module.exports = ( fastify, opts, done ) =>
@@ -37,7 +39,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-		// only do this if we're in an environment that actually requires session tokens
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+			// only do this if we're in an environment that actually requires session tokens
 			if ( shouldRequireSessionToken )
 			{
 			// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
@@ -110,6 +114,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+
 			let server = GetGameServers()[ request.query.server ]
 
 			if ( !server || ( server.hasPassword && request.query.password != server.password ) )
@@ -181,6 +188,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
 				return { success: false, error: PLAYER_NOT_FOUND }

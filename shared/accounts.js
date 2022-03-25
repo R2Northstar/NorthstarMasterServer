@@ -84,14 +84,16 @@ function asyncDBGet( sql, params = [] )
 			}
 			else
 				resolve( row )
-		})
-	})
+		} )
+	} )
 }
 
 function asyncDBAll( sql, params = [] )
 {
-	return new Promise( ( resolve, reject ) => {
-		playerDB.all( sql, params, ( ex, row ) => {
+	return new Promise( ( resolve, reject ) =>
+	{
+		playerDB.all( sql, params, ( ex, row ) =>
+		{
 			if ( ex )
 			{
 				console.error( "Encountered error querying player database: " + ex )
@@ -196,14 +198,16 @@ module.exports = {
 
 		return new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp, row.username )
 	},
-  
-	AsyncGetPlayersByUsername: async function AsyncGetPlayerByUsername( username ) {
+
+	AsyncGetPlayersByUsername: async function AsyncGetPlayerByUsername( username )
+	{
 		let rows = await asyncDBAll( "SELECT * FROM accounts WHERE username = ?", [ username ] )
 
-		return rows.map(row => new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp, row.username ))
+		return rows.map( row => new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp, row.username ) )
 	},
 
-	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id ) {
+	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id )
+	{
 		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )
 	},
 
@@ -268,6 +272,6 @@ module.exports = {
 		//		newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
 		//	}
 
-	  //	return PdataJsonToBuffer( newPdataJson, pdefCopy )
+		//	return PdataJsonToBuffer( newPdataJson, pdefCopy )
 	}
 }

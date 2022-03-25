@@ -139,7 +139,7 @@ module.exports = ( fastify, opts, done ) =>
 				if ( request.query.playerToken != account.currentAuthToken || expiredToken )
 					return { success: false, error: INVALID_MASTERSERVER_TOKEN }
 			}
-    
+
 			// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 

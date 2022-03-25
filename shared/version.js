@@ -1,4 +1,4 @@
-const versionRe = /(?:R2Northstar\/)(\d)\.(\d)\.(\d)/g
+const versionRe = /(?:R2Northstar\/)(\d+)\.(\d+)\.(\d+)/g
 
 function minimumVersion( request )
 {

@@ -23,7 +23,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request, reply ) =>
 		{
-			reply.redirect( "https://discord.gg/GYVRKC9pJh" )
+			reply.redirect( "https://discord.gg/northstar" )
 		} )
 
 	// GET /wiki

@@ -3,6 +3,8 @@ const crypto = require( "crypto" )
 const { GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
+const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
+const { getUserInfo, getOriginAuthState } = require( path.join( __dirname, "../shared/origin.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -15,7 +17,8 @@ const {
 	INVALID_MASTERSERVER_TOKEN,
 	JSON_PARSE_ERROR,
 	NO_GAMESERVER_RESPONSE,
-	BAD_GAMESERVER_RESPONSE
+	BAD_GAMESERVER_RESPONSE,
+	UNSUPPORTED_VERSION
 } = require( "../shared/errorcodes.js" )
 
 module.exports = ( fastify, opts, done ) =>
@@ -37,7 +40,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-		// only do this if we're in an environment that actually requires session tokens
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+			// only do this if we're in an environment that actually requires session tokens
 			if ( shouldRequireSessionToken )
 			{
 			// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
@@ -75,6 +80,16 @@ module.exports = ( fastify, opts, done ) =>
 					return { success: false, error: UNAUTHORIZED_GAME }
 			}
 
+			let playerUsername
+			try
+			{
+				if( getOriginAuthState() ) playerUsername = ( await getUserInfo( request.query.id ) ).EAID[0] // try to find username of player
+			}
+			catch( e )
+			{
+				// don't do this: return { success: false } // fail if we can't find it
+			}
+
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account ) // create account for user
 			{
@@ -84,6 +99,8 @@ module.exports = ( fastify, opts, done ) =>
 
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" )
 			accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
+
+			if ( playerUsername ) accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
 
 			accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
 
@@ -110,6 +127,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+
 			let server = GetGameServers()[ request.query.server ]
 
 			if ( !server || ( server.hasPassword && request.query.password != server.password ) )
@@ -140,7 +160,7 @@ module.exports = ( fastify, opts, done ) =>
 					method: "POST",
 					host: server.ip,
 					port: server.authPort,
-					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}`
+					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}&username=${account.username}`
 				}, pdata )
 			}
 			catch
@@ -160,6 +180,7 @@ module.exports = ( fastify, opts, done ) =>
 
 			return {
 				success: true,
+
 				ip: server.ip,
 				port: server.port,
 				authToken: authToken
@@ -181,6 +202,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
 				return { success: false, error: PLAYER_NOT_FOUND }

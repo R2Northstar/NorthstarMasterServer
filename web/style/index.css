@@ -160,42 +160,14 @@ a.big-button:active {
 a.big-button > span {
     vertical-align: middle;
 }
-a.big-button > .material-icons {
-    vertical-align: middle;
-    font-size: 16px;
-    margin-right: 8px;
-}
 a.big-button > img {
     vertical-align: middle;
     width: 16px;
     height: 16px;
+    transform: scale(1.25);
     margin-right: 12px;
     pointer-events: none;
 }
-
-
-@font-face {
-    font-family: 'Material Icons';
-    font-style: normal;
-    font-weight: 400;
-    src: url(/assets/material-icons.woff2) format('woff2');
-  }
-
-  .material-icons {
-    font-family: 'Material Icons';
-    font-weight: normal;
-    font-style: normal;
-    font-size: 24px;
-    line-height: 1;
-    letter-spacing: normal;
-    text-transform: none;
-    display: inline-block;
-    white-space: nowrap;
-    word-wrap: normal;
-    direction: ltr;
-    -moz-font-feature-settings: 'liga';
-    -moz-osx-font-smoothing: grayscale;
-  }
 
 #topbg {
     position: fixed;

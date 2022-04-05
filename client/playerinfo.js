@@ -15,7 +15,7 @@ module.exports = ( fastify, opts, done ) =>
 	// show pdata for a given player as json
 	fastify.get( "/player/pdata",
 		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__PDATA" ) }, // ratelimit
 			schema: {
 				querystring: {
 					id: { type: "string" }, // the id of the player to get stats of
@@ -37,7 +37,7 @@ module.exports = ( fastify, opts, done ) =>
 	// show info for a given player as json
 	fastify.get( "/player/info",
 		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__PDATA" ) }, // ratelimit
 			schema: {
 				querystring: {
 					id: { type: "string" }, // the id of the player to get stats of
@@ -62,7 +62,7 @@ module.exports = ( fastify, opts, done ) =>
 			)
 
 			let ret = {
-				// name: account.username, // requires https://github.com/R2Northstar/NorthstarMasterServer/pull/42/
+				name: account.username,
 				id: account.id
 			}
 			Object.assign( ret, pdataFiltered )
@@ -74,7 +74,7 @@ module.exports = ( fastify, opts, done ) =>
 	// show stats for a given player as json
 	fastify.get( "/player/stats",
 		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__PDATA" ) }, // ratelimit
 			schema: {
 				querystring: {
 					id: { type: "string" }, // the id of the player to get stats of
@@ -113,7 +113,7 @@ module.exports = ( fastify, opts, done ) =>
 	// show louadout data for a given player as json
 	fastify.get( "/player/loadout",
 		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__PDATA" ) }, // ratelimit
 			schema: {
 				querystring: {
 					id: { type: "string" }, // the id of the player to get stats of

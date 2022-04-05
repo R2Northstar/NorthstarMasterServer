@@ -2,7 +2,10 @@ fetch('https://api.github.com/repos/R2Northstar/Northstar/releases/latest')
     .then(response => response.json())
     .then(data => {
         document.querySelectorAll('.download').forEach(d => { d.href = data.assets[0].browser_download_url });
-        console.log("Successfully fetched latest release download URL. Updating download links.")
+        console.log("Successfully fetched latest release download URL. Updating download links.");
+        var fileSize = data.assets[0].size;
+        var sizeInMb = fileSize/1024/1024;
+        document.querySelectorAll('.big-button.download > span').forEach(e => { e.innerText = 'DOWNLOAD ('+sizeInMb.toFixed(1)+' MB)'});
     }).catch(() => {
     console.warn("Failed to fetch latest release download URL, ratelimit was likely reached. Download links will fallback to the GitHub latest release page.")
     })

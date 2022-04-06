@@ -332,6 +332,46 @@ function PdataToJson( pdata, pdef )
 	return ret
 }
 
+function PdataToJsonUntyped( pdata, pdef )
+{
+	let ret = {}
+	let i = 0
+
+	function recursiveReadPdata( struct, base )
+	{
+		for ( let member of struct )
+		{
+			let arraySize = member.arraySize || 1
+			if ( typeof( arraySize ) == "string" )
+				arraySize = pdef.enums[ member.arraySize ].length
+
+			let retArray = []
+
+			for ( let j = 0; j < arraySize; j++ )
+			{
+				if ( member.type in NATIVE_TYPES )
+				{
+					retArray.push( NATIVE_TYPES[ member.type ].read( pdata, i, member.nativeArraySize ) )
+					i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
+				}
+				else if ( member.type in pdef.enums )
+					retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+				else if ( member.type in pdef.structs )
+				{
+					let newStruct = {}
+					recursiveReadPdata( pdef.structs[ member.type ], newStruct )
+					retArray.push( newStruct )
+				}
+			}
+
+			base[ member.name ] = member.arraySize ? retArray : retArray[ 0 ]
+		}
+	}
+
+	recursiveReadPdata( pdef.members, ret )
+
+	return ret
+}
 
 //function PdataJsonToBuffer( json, pdef )
 //{
@@ -431,5 +471,6 @@ module.exports = {
 	ParseDefinitionDiff: ParseDefinitionDiff,
 	GetMemberSize: GetMemberSize,
 	PdataToJson: PdataToJson,
+	PdataToJsonUntyped: PdataToJsonUntyped,
 	PdataJsonToBuffer: PdataJsonToBuffer,
 }

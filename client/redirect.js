@@ -23,7 +23,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request, reply ) =>
 		{
-			reply.redirect( "https://discord.gg/GYVRKC9pJh" )
+			reply.redirect( "https://discord.gg/northstar" )
 		} )
 
 	// GET /wiki
@@ -35,6 +35,17 @@ module.exports = ( fastify, opts, done ) =>
 		async ( request, reply ) =>
 		{
 			reply.redirect( "https://r2northstar.gitbook.io/" )
+		} )
+
+	// GET /thunderstore
+	// redirect anyone going to northstar.tf/thunderstore to the thunderstore website
+	fastify.get( "/thunderstore",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__REDIRECT" ) }, // ratelimit
+		},
+		async ( request, reply ) =>
+		{
+			reply.redirect( "https://northstar.thunderstore.io/" )
 		} )
 
 	done()

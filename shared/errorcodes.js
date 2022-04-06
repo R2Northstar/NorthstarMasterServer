@@ -34,6 +34,10 @@ const errorCodes = {
 	JSON_PARSE_ERROR: {
 		enum: "JSON_PARSE_ERROR",
 		msg: "Error parsing json response"
+	},
+	UNSUPPORTED_VERSION: {
+		enum: "UNSUPPORTED_VERSION",
+		msg: "The version you are using is no longer supported"
 	}
 }
 

@@ -63,7 +63,7 @@ class GameServer
 		// restrict modinfo keys
 		this.modInfo = { Mods:[] }
 		for ( let mod of modInfo.Mods )
-			this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null } )
+			this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null, DownloadLink: mod.DownloadLink || "" } )
 	}
 }
 

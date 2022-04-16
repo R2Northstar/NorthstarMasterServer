@@ -33,6 +33,28 @@ module.exports = ( fastify, opts, done ) =>
 			return pdata
 		} )
 
+	// GET /player/pdiff
+	// show pdiff for a given player as json
+	fastify.get( "/player/pdiff",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__PLAYER_DATA" ) }, // ratelimit
+			schema: {
+				querystring: {
+					id: { type: "string" }, // the id of the player to get stats of
+				}
+			}
+		},
+		async ( request ) =>
+		{
+			let account = await accounts.AsyncGetAllPlayerModPersistence( request.query.id,  )
+			if( !account )
+			{
+				return { success: false, error: PLAYER_NOT_FOUND }
+			}
+			let pdata = ParseDefinitionDiff( account.persistentDataBaseline, PLAYER_DATA_PDEF_231 )
+			return pdata
+		} )
+
 	// GET /player/info
 	// show info for a given player as json
 	fastify.get( "/player/info",

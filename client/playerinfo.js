@@ -46,14 +46,13 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-			let account = await accounts.AsyncGetAllPlayerModPersistence( request.query.id,  )
+			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if( !account )
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }
 			}
-			return account
 			let pdata = ParseDefinitionDiff( account.persistentDataBaseline, PLAYER_DATA_PDEF_231 )
-			return pdata
+			return pdata.pdef
 		} )
 
 	// GET /player/info

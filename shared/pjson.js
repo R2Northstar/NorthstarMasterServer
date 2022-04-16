@@ -38,6 +38,10 @@ function ParseDefinition( pdef )
 
 		members: []
 	}
+	// did this and used ++ because of some weird type stuff, 
+	// where it was making a dictionary sorta thing with the key as "0", "1", etc
+	// this meant it wouldnt let me iterate over it, idk
+	let memberIndex = 0
 
 	// falsey if not in use
 	let currentEnumName
@@ -144,7 +148,7 @@ function ParseDefinition( pdef )
 				if ( currentStructName )
 					ret.structs[ currentStructName ].push( newMember )
 				else
-					ret.members.push( newMember )
+					ret.members[ memberIndex++ ] = newMember
 			}
 		}
 	}
@@ -201,7 +205,7 @@ function ParseDefinitionDiff( pdiff )
 			break
 		}
 		else
-			throw Error( "hit unexpected case" )
+			throw Error( "hit unexpected case: " + type )
 	}
 
 	if ( pdefIdx != -1 )

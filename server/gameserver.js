@@ -64,7 +64,7 @@ async function ParseModPDiffs( request )
 				try
 				{
 					let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
-					mod.pdiff = pjson.ParseDefinitionDiffs( mod.pdiff )
+					mod.pdiff = pjson.ParseDefinitionDiff( mod.pdiff )
 					mod.pdiff.hash = pdiffHash
 				}
 				catch ( ex )

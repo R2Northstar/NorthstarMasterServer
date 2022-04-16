@@ -1,5 +1,6 @@
 const sqlite = require( "sqlite3" ).verbose()
 const fs = require( "fs" )
+const crypto = require( "crypto" )
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
@@ -238,7 +239,14 @@ module.exports = {
 
 	AsyncGetPlayerModPersistence: async function AsyncGetPlayerModPersistence( id, pdiffHash )
 	{
-		return JSON.parse( await asyncDBGet( "SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?", [ id, pdiffHash ] ) )
+		// prevent JSON parse problems when the user has no data in the database
+		let result = await asyncDBGet( "SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?", [ id, pdiffHash ] )
+		if ( result == undefined )
+		{
+			await asyncDBRun( "INSERT INTO modPersistentData ( id, pdiffHash, data ) VALUES ( ?, ?, ? )", [ id, pdiffHash, "{}" ] )
+			result = await asyncDBGet( "SELECT data from modPersistentData WHERE id = ? AND pdiffHash = ?", [ id, pdiffHash ] )
+		}
+		return JSON.parse( result.data )
 	},
 
 	// AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data )
@@ -262,16 +270,74 @@ module.exports = {
 			return null
 
 		// temp etc
-		for ( let pdiff of pdiffs )
+		for ( let pdiffstr of pdiffs )
 		{
-			for ( let enumAdd in pdiff.enums )
-				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+			let pdiff
+			if ( pdiffstr )
+			{
+				try
+				{
+					let pdiffHash = crypto.createHash( "sha1" ).update( pdiffstr ).digest( "hex" )
+					pdiff = pjson.ParseDefinitionDiff( pdiffstr )
+					pdiff.hash = pdiffHash
+				}
+				catch ( ex )
+				{
+					console.log( ex )
+				}
+			}
 
-			Object.assign( pdefCopy, pdiff.pdef )
+			for ( let enumAdd in pdiff.enums )
+			{
+				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+			}
+			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
 			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
-			Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
+			// i added an await, maybe that fixed it? - Spoon
+			// the issue was that assign doesnt recurse at all, we have to call for each thing inside it
+			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
+			newPdataJson = objCombine( newPdataJson, result )
 		}
-		console.warn( newPdataJson )
-		return pjson.PdataJsonToBuffer( newPdataJson, pdefCopy )
+		let ret
+		try
+		{
+			ret = pjson.PdataJsonToBuffer( newPdataJson, pdefCopy )
+		}
+		catch ( ex )
+		{
+			console.log( ex )
+		}
+		return ret
+
+		function objCombine( obj1, obj2 )
+		{
+			let combined = {}
+
+			for ( let key of Object.keys( obj1 ) )
+			{
+				if ( !combined[key] )
+				{
+					combined[key] = []
+				}
+				for ( let innerKey of Object.keys( obj1[key] ) )
+				{
+					combined[key][innerKey] = obj1[key][innerKey]
+				}
+			}
+
+			for ( let key of Object.keys( obj2 ) )
+			{
+				if ( !combined[key] )
+				{
+					combined[key] = []
+				}
+				for ( let innerKey of Object.keys( obj2[key] ) )
+				{
+					combined[key][innerKey] = obj2[key][innerKey]
+				}
+			}
+			return combined
+
+		}
 	}
 }

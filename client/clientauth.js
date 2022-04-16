@@ -5,6 +5,7 @@ const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
 const { getUserInfo, getOriginAuthState } = require( path.join( __dirname, "../shared/origin.js" ) )
+const { AsyncGetPlayerPersistenceBufferForMods } = require( path.join( __dirname, "../shared/modPersistentData.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -151,7 +152,7 @@ module.exports = ( fastify, opts, done ) =>
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 
 			// todo: build persistent data here, rather than sending baseline only
-			let pdata = await accounts.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
+			let pdata = await AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff ) )
 
 			let authResponse
 			try

@@ -51,7 +51,7 @@ module.exports = ( fastify, opts, done ) =>
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }
 			}
-			let pdiff = accounts.AsyncGetAllPlayerModPersistence( account.id )
+			let pdiff = accounts.AsyncGetPlayerModPersistenceHashes( account.id )
 			return pdiff
 		} )
 

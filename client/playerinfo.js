@@ -1,6 +1,6 @@
 const path = require( "path" )
 const { PLAYER_NOT_FOUND } = require( "../shared/errorcodes.js" )
-const { ParseDefinition, PdataToJsonUntyped } = require( "../shared/pjson.js" )
+const { ParseDefinition, PdataToJsonUntyped, ParseDefinitionDiff } = require( "../shared/pjson.js" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const fs = require( "fs" )
@@ -51,7 +51,7 @@ module.exports = ( fastify, opts, done ) =>
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }
 			}
-			let pdiff = AsyncGetAllPlayerModPersistence( account.id )
+			let pdiff = accounts.AsyncGetAllPlayerModPersistence( account.id )
 			return pdiff
 		} )
 

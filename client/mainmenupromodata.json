@@ -6,8 +6,8 @@
 	},
 
 	"largeButton": {
-		"Title": "",
-		"Text": "",
+		"Title": "Hello World",
+		"Text": "Testing",
 		"Url": "",
 		"ImageIndex": 0
 	},

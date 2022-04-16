@@ -28,10 +28,11 @@
         ],
         "no-mixed-spaces-and-tabs": ["error", "smart-tabs"],
         "eol-last": "error",
-        "linebreak-style": [
-            "error",
-            "unix"
-        ],
+        // fuck you vscode for constantly changing all my line endings when i commit, and then complaining about it
+        //"linebreak-style": [
+        //    "error",
+        //    "unix"
+        //],
         "no-multiple-empty-lines": [
             "error",
             {

@@ -3,9 +3,9 @@ const fs = require( "fs" )
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
-// const path = require( "path" )
-// const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
-// const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
+const path = require( "path" )
+const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
+const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
 const dbSchemaRaw = fs.readFileSync( "./dbSchema.json" )
 const dbSchema = JSON.parse( dbSchemaRaw )
@@ -250,28 +250,28 @@ module.exports = {
 	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs )
 	{
 		let player = await module.exports.AsyncGetPlayerByID( id )
-		return player.persistentDataBaseline
+		//return player.persistentDataBaseline
 
-		//	// disabling this for now
-		//	let pdefCopy = DEFAULT_PDEF_OBJECT
-		//	let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+		// disabling this for now
+		let pdefCopy = DEFAULT_PDEF_OBJECT
+		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
 
-		//	let newPdataJson = baselineJson
+		let newPdataJson = baselineJson
 
-		//	if ( !player )
-		//		return null
+		if ( !player )
+			return null
 
-		//	// temp etc
-		//	for ( let pdiff of pdiffs )
-		//	{
-		//		for ( let enumAdd in pdiff.enums )
-		//			pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+		// temp etc
+		for ( let pdiff of pdiffs )
+		{
+			for ( let enumAdd in pdiff.enums )
+				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
 
-		//		pdefCopy = Object.assign( pdefCopy, pdiff.pdef )
-		//		// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
-		//		newPdataJson = Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
-		//	}
+			Object.assign( pdefCopy, pdiff.pdef )
+			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
+			Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
+		}
 
-		//	return PdataJsonToBuffer( newPdataJson, pdefCopy )
+		return pjson.PdataJsonToBuffer( newPdataJson, pdefCopy )
 	}
 }

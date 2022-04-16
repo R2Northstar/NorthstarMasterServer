@@ -243,7 +243,7 @@ module.exports = {
 
 	AsyncGetAllPlayerModPersistence: async function AsyncGetAllPlayerModPersistence( id )
 	{
-		return JSON.parse( await asyncDBGet( "SELECT data from modPersistentData WHERE id = ?", [ id ] ) )
+		return /*JSON.parse(*/ await asyncDBGet( "SELECT data from modPersistentData WHERE id = ?", [ id ] ) //)
 	},
 
 	// AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data )

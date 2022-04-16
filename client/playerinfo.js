@@ -51,8 +51,8 @@ module.exports = ( fastify, opts, done ) =>
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }
 			}
-			let pdata = ParseDefinitionDiff( account.persistentDataBaseline, PLAYER_DATA_PDEF_231 )
-			return pdata.pdef
+			let pdiff = AsyncGetAllPlayerModPersistence( account.id )
+			return pdiff
 		} )
 
 	// GET /player/info

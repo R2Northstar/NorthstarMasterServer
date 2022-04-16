@@ -1,6 +1,6 @@
 const path = require( "path" )
 const { PLAYER_NOT_FOUND } = require( "../shared/errorcodes.js" )
-const { ParseDefinition, PdataToJsonUntyped, ParseDefinitionDiff } = require( "../shared/pjson.js" )
+const { ParseDefinition, PdataToJsonUntyped } = require( "../shared/pjson.js" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const fs = require( "fs" )
@@ -31,29 +31,6 @@ module.exports = ( fastify, opts, done ) =>
 			}
 			let pdata = PdataToJsonUntyped( account.persistentDataBaseline, PLAYER_DATA_PDEF_231 )
 			return pdata
-		} )
-
-	// GET /player/pdiff
-	// show pdiff for a given player as json
-	fastify.get( "/player/pdiff",
-		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__PLAYER_DATA" ) }, // ratelimit
-			schema: {
-				querystring: {
-					id: { type: "string" }, // the id of the player to get stats of
-				}
-			}
-		},
-		async ( request ) =>
-		{
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
-			if( !account )
-			{
-				return { success: false, error: PLAYER_NOT_FOUND }
-			}
-			let pdiff = accounts.AsyncGetPlayerModPersistenceHashes( account.id )
-			let returnMe = { value: pdiff }
-			return returnMe
 		} )
 
 	// GET /player/info

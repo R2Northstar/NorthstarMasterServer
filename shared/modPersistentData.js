@@ -271,7 +271,7 @@ module.exports = {
 			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
 			Object.assign( newPdataJson, this.AsyncGetPlayerModPersistence( id, pdiff.hash ) )
 		}
-
+		console.warn( newPdataJson )
 		return pjson.PdataJsonToBuffer( newPdataJson, pdefCopy )
 	}
 }

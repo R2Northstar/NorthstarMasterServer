@@ -254,7 +254,7 @@ module.exports = {
 		await asyncDBRun( "UPDATE modPersistentData SET data = ? WHERE id = ? AND pdiffHash = ?", [ data, id, pdiffHash ] )
 	},
 
-	AsyncModPersistenceBufferToJson: async function AsyncModPersistenceBufferToJson( server, buffer )
+	AsyncModPersistenceBufferToJson: async function AsyncModPersistenceBufferToJson( server, playerID, buffer )
 	{
 		// this returns an object in the form
 		/*
@@ -310,10 +310,64 @@ module.exports = {
 			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
 			ret.pdiffs.push( { hash: pdiff.hash, pdef: pdiff.pdef } )
 		}
-		//
 
 		let parsed = pjson.PdataToJson( buffer, pdefCopy )
-		console.log( parsed )
+		// seems correct up to here
+
+		// remove all keys that are the same as the stored pdata (makes my life easier)
+		// or not.
+		// let vanillaPdata = pjson.PdataToJson( await module.exports.AsyncGetPlayerByID( playerID ), DEFAULT_PDEF_OBJECT )
+
+		// split into baseline data and pdiff
+		// pdataCopy will be a vanilla compatible object
+		let pdataCopy = {}
+		// maybe manually copying wont pass by reference
+		Object.keys( parsed ).forEach( key =>
+		{
+			pdataCopy[key] = parsed[key]
+		} )
+		ret.pdiffs.forEach( pdiff =>
+		{
+			try
+			{
+				// iterate through members of the pdiff definitions
+				pdiff.pdef.members.forEach( pdiffMember =>
+				{
+					// find the member in the parsed pdata
+					let found = false
+
+					Object.keys( parsed ).forEach( parsedMemberName =>
+					{
+						if ( !found && parsedMemberName == pdiffMember.name )
+						{
+							found = true
+							console.log()
+							delete pdataCopy[parsedMemberName]
+							if ( pdiff.data == undefined )
+							{
+								pdiff.data = {}
+							}
+							/*pdiffMember.value = parsed[parsedMemberName].value
+							pdiffMember.value = parsed[parsedMemberName].value
+							let passThis = {}
+							passThis[result.name] = { type: result.type, arraySize: result.arraySize, nativeArraySize: result.nativeArraySize, value: result.value}
+							*/pdiff.data[parsedMemberName] = parsed[parsedMemberName]
+						}
+					} )
+				} )
+			}
+			catch ( ex )
+			{
+				console.log( ex )
+			}
+		} )
+
+		// remove all pdiff keys
+		// check remaining json to see if we need to store anything else
+		// get baseline data from db
+		// replace all baseline data from db that we can
+		// write resulting baseline data to db (buffer)
+		// write pdiff data to db (json)
 
 
 		return ret
@@ -361,6 +415,7 @@ module.exports = {
 			// i added an await, maybe that fixed it? - Spoon
 			// the issue was that assign doesnt recurse at all, we have to call for each thing inside it
 			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
+
 			newPdataJson = objCombine( newPdataJson, result )
 		}
 		let ret
@@ -387,7 +442,27 @@ function objCombine( target, object )
 		{
 			if ( combined[key] == null )
 				combined[key] = []
-			combined[ key ].push( target[key] )
+
+			// i dont see a nice way that we can override members, then again, you shouldn't ever need to? like what would be the point
+			// i did the not-nice thing because i think we need to be able to override members for cases where pdiffs change, say a loadout index
+			// this could make that loadout index not valid in non-modded pdata, for pdiff we split this into being stored in pdiff data
+			// therefore we need to be able to override a member to load that pdiff data
+			target[key].forEach( innerKey =>
+			{
+				let hasReplaced = false
+				// try and replace a key in the combined object, if we can't replace, add to the end
+				combined[key].forEach( otherKey =>
+				{
+					if ( !hasReplaced && otherKey.name == innerKey.name )
+					{
+						hasReplaced = true
+						otherKey = innerKey
+					}
+				} )
+				if ( !hasReplaced )
+					combined[ key ].push( innerKey )
+
+			} )
 		}
 		else
 		{
@@ -403,7 +478,21 @@ function objCombine( target, object )
 		{
 			if ( combined[key] == null )
 				combined[key] = []
-			combined[ key ].push( object[key] )
+			object[key].forEach( innerKey =>
+			{
+				let hasReplaced = false
+				// try and replace a key in the combined object, if we can't replace, add to the end
+				combined[key].forEach( otherKey =>
+				{
+					if ( !hasReplaced && otherKey.name == innerKey.name )
+					{
+						hasReplaced = true
+						otherKey = innerKey
+					}
+				} )
+				if ( !hasReplaced )
+					combined[ key ].push( innerKey )
+			} )
 		}
 		else
 		{
@@ -413,9 +502,7 @@ function objCombine( target, object )
 		}
 	} )
 
-	console.log( target )
-	console.log( object )
-	console.log( combined )
-
 	return combined
 }
+
+

@@ -55,12 +55,11 @@ module.exports = ( fastify, opts, done ) =>
 			}
 			else
 			{
-				let persistenceJSON = await modPersistence.AsyncModPersistenceBufferToJson( GetGameServers()[ request.query.serverId ], buf )
+				let persistenceJSON = await modPersistence.AsyncModPersistenceBufferToJson( GetGameServers()[ request.query.serverId ], request.query.id, buf )
 				//await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id,  persistenceJSON.baseline )
 				for ( let pdiff of persistenceJSON.pdiffs )
 				{
-					console.log( pdiff )
-					await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, pdiff.data )
+					await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
 				}
 			}
 

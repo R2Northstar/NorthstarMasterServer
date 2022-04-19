@@ -249,10 +249,75 @@ module.exports = {
 		return JSON.parse( result.data )
 	},
 
-	// AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data )
-	// {
+	AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data )
+	{
+		await asyncDBRun( "UPDATE modPersistentData SET data = ? WHERE id = ? AND pdiffHash = ?", [ data, id, pdiffHash ] )
+	},
 
-	// },
+	AsyncModPersistenceBufferToJson: async function AsyncModPersistenceBufferToJson( server, buffer )
+	{
+		// this returns an object in the form
+		/*
+		{
+			baseline: <baseline> // this is the vanilla persistence, that we will write like normal (as a buffer)
+			pdiffs: // array of all the mods and the persistence data they have stored
+			[
+				{
+					hash: <hash>, // hashed string 
+					data: <data>,  // Object
+					pdef: <pdef> // Object (just used for temp storage tbh)
+				},
+				{
+					hash: <hash>, // hashed string 
+					data: <data>,  // Object
+					pdef: <pdef> // Object (just used for temp storage tbh)
+				},
+				...
+			]
+		}
+		*/
+
+		let ret = {
+			baseline: Buffer,
+			pdiffs: []
+		}
+
+		let pdiffs = server.modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff )
+
+		//
+		let pdefCopy = DEFAULT_PDEF_OBJECT
+		for ( let pdiffstr of pdiffs )
+		{
+			let pdiff
+			if ( pdiffstr )
+			{
+				try
+				{
+					let pdiffHash = crypto.createHash( "sha1" ).update( pdiffstr ).digest( "hex" )
+					pdiff = pjson.ParseDefinitionDiff( pdiffstr )
+					pdiff.hash = pdiffHash
+				}
+				catch ( ex )
+				{
+					console.log( ex )
+				}
+			}
+
+			for ( let enumAdd in pdiff.enums )
+			{
+				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+			}
+			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
+			ret.pdiffs.push( { hash: pdiff.hash, pdef: pdiff.pdef } )
+		}
+		//
+
+		let parsed = pjson.PdataToJson( buffer, pdefCopy )
+		console.log( parsed )
+
+
+		return ret
+	},
 
 	// eslint-disable-next-line
 	AsyncGetPlayerPersistenceBufferForMods: async function( id, pdiffs )
@@ -309,35 +374,48 @@ module.exports = {
 		}
 		return ret
 
-		function objCombine( obj1, obj2 )
-		{
-			let combined = {}
-
-			for ( let key of Object.keys( obj1 ) )
-			{
-				if ( !combined[key] )
-				{
-					combined[key] = []
-				}
-				for ( let innerKey of Object.keys( obj1[key] ) )
-				{
-					combined[key][innerKey] = obj1[key][innerKey]
-				}
-			}
-
-			for ( let key of Object.keys( obj2 ) )
-			{
-				if ( !combined[key] )
-				{
-					combined[key] = []
-				}
-				for ( let innerKey of Object.keys( obj2[key] ) )
-				{
-					combined[key][innerKey] = obj2[key][innerKey]
-				}
-			}
-			return combined
-
-		}
 	}
+}
+
+function objCombine( target, object )
+{
+	let combined = {}
+
+	Object.keys( target ).forEach( key =>
+	{
+		if ( Array.isArray( target[key] ) )
+		{
+			if ( combined[key] == null )
+				combined[key] = []
+			combined[ key ].push( target[key] )
+		}
+		else
+		{
+			if ( combined[key] == null )
+				combined[key] = {}
+			Object.assign( combined[key], target[key] )
+		}
+	} )
+
+	Object.keys( object ).forEach( key =>
+	{
+		if ( Array.isArray( object[key] ) )
+		{
+			if ( combined[key] == null )
+				combined[key] = []
+			combined[ key ].push( object[key] )
+		}
+		else
+		{
+			if ( combined[key] == null )
+				combined[key] = {}
+			Object.assign( combined[key], object[key] )
+		}
+	} )
+
+	console.log( target )
+	console.log( object )
+	console.log( combined )
+
+	return combined
 }

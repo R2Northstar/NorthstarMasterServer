@@ -1,5 +1,6 @@
 const path = require( "path" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
+const modPersistence = require( path.join( __dirname, "../shared/modPersistentData.js" ) )
 
 const { GetGameServers } = require( "../shared/gameserver.js" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
@@ -46,8 +47,22 @@ module.exports = ( fastify, opts, done ) =>
 			// mostly temp
 			let buf = await ( await request.file() ).toBuffer()
 
+			// check if server has any pdiff
+			// this might be a bit unsafe? some pdiff might just override something and therefore not change the length, better implementation would be to check if any server mods implement pdiff
 			if ( buf.length == account.persistentDataBaseline.length )
+			{
 				await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
+			}
+			else
+			{
+				let persistenceJSON = await modPersistence.AsyncModPersistenceBufferToJson( GetGameServers()[ request.query.serverId ], buf )
+				//await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id,  persistenceJSON.baseline )
+				for ( let pdiff of persistenceJSON.pdiffs )
+				{
+					console.log( pdiff )
+					await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, pdiff.data )
+				}
+			}
 
 			return null
 		} )

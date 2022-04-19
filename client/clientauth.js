@@ -222,6 +222,20 @@ module.exports = ( fastify, opts, done ) =>
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 			accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
+			// authing with self doesnt send mod info, so cant get pdiff :/
+			// todo: build persistent data here, rather than sending baseline only
+			/*let modInfo = await ParseModPDiffs( request )
+			let pdata = await AsyncGetPlayerPersistenceBufferForMods( request.query.id, modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff ) )
+
+			return {
+				success: true,
+
+				id: account.id,
+				authToken: authToken,
+				// this fucking sucks, but i couldn't get game to behave if i sent it as an ascii string, so using this for now
+				persistentData: [pdata]
+			}*/
+
 			return {
 				success: true,
 

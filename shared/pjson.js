@@ -1,3 +1,5 @@
+const crypto = require( "crypto" )
+
 const NATIVE_TYPES = {
 	int: { size: 4,
 		read: ( buf, idx ) => buf.readInt32LE( idx ),
@@ -232,7 +234,7 @@ function GetMemberSize( member, parsedDef )
 		return NATIVE_TYPES[ member.type ].size * multiplier
 	}
 	else if ( member.type in parsedDef.enums )
-		return NATIVE_TYPES.int.size * multiplier
+		return multiplier
 	else if ( member.type in parsedDef.structs )
 	{
 		let structSize = 0
@@ -438,6 +440,7 @@ function PdataJsonToBuffer( json, pdef )
 			if ( typeof( arraySize ) == "string" )
 				arraySize = pdef.enums[ arraySize ].length
 
+			let oldi = i // debug
 			for ( let j = 0; j < arraySize; j++ )
 			{
 				let val = member.value
@@ -456,10 +459,20 @@ function PdataJsonToBuffer( json, pdef )
 				else if ( member.type in pdef.structs )
 					recursiveWritePdata( val )
 			}
+			// debug for when readhead has moved a weird amount
+			if ( i - oldi != GetMemberSize( member, pdef ) )
+			{
+				console.log( member )
+				console.log( "readhead moved: " + ( i - oldi ) )
+				console.log( "expected distance moved: " + GetMemberSize( member, pdef ) )
+			}
 		}
 	}
 
 	recursiveWritePdata( json )
+	console.log( size )
+	console.log( i )
+	// ideally these should be identical
 	return buf
 }
 
@@ -473,4 +486,49 @@ module.exports = {
 	PdataToJson: PdataToJson,
 	PdataToJsonUntyped: PdataToJsonUntyped,
 	PdataJsonToBuffer: PdataJsonToBuffer,
+
+	ParseModPDiffs: async function ( request )
+	{
+		let modInfo
+
+		if ( request.isMultipart() )
+		{
+			try
+			{
+				modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+			}
+			catch ( ex )
+			{
+				console.log( ex )
+				return
+			}
+		}
+		else
+		{
+			console.log( request )
+		}
+
+		// pdiff stuff
+		if ( modInfo && modInfo.Mods )
+		{
+			for ( let mod of modInfo.Mods )
+			{
+				if ( mod.pdiff )
+				{
+					try
+					{
+						let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
+						mod.pdiff = module.exports.ParseDefinitionDiff( mod.pdiff )
+						mod.pdiff.hash = pdiffHash
+					}
+					catch ( ex )
+					{
+						mod.pdiff = null
+					}
+				}
+			}
+		}
+
+		return modInfo
+	}
 }

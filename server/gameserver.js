@@ -1,5 +1,4 @@
 const path = require( "path" )
-const crypto = require( "crypto" )
 const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, GetGhostServer, RemoveGhostServer, HasGhostServer } = require( path.join( __dirname, "../shared/gameserver.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
@@ -38,46 +37,6 @@ async function TryVerifyServer( request )
 	return 0
 }
 
-async function ParseModPDiffs( request )
-{
-	let modInfo
-
-	if ( request.isMultipart() )
-	{
-		try
-		{
-			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
-		}
-		catch ( ex )
-		{
-			return
-		}
-	}
-
-	// pdiff stuff
-	if ( modInfo && modInfo.Mods )
-	{
-		for ( let mod of modInfo.Mods )
-		{
-			if ( mod.pdiff )
-			{
-				try
-				{
-					let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
-					mod.pdiff = pjson.ParseDefinitionDiff( mod.pdiff )
-					mod.pdiff.hash = pdiffHash
-				}
-				catch ( ex )
-				{
-					mod.pdiff = null
-				}
-			}
-		}
-	}
-
-	return modInfo
-}
-
 async function SharedTryAddServer( request )
 {
 	if( !minimumVersion( request ) )
@@ -87,7 +46,7 @@ async function SharedTryAddServer( request )
 	if( verifyStatus == 1 ) return { success: false, error: NO_GAMESERVER_RESPONSE }
 	if( verifyStatus == 2 ) return { success: false, error: BAD_GAMESERVER_RESPONSE }
 
-	let modInfo = await ParseModPDiffs( request )
+	let modInfo = await pjson.ParseModPDiffs( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
@@ -127,7 +86,7 @@ async function TryReviveServer( request )
 	if( verifyStatus == 1 ) return { success: false, error: NO_GAMESERVER_RESPONSE }
 	if( verifyStatus == 2 ) return { success: false, error: BAD_GAMESERVER_RESPONSE }
 
-	let modInfo = await ParseModPDiffs( request )
+	let modInfo = await pjson.ParseModPDiffs( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
@@ -156,8 +115,6 @@ async function TryReviveServer( request )
 module.exports = ( fastify, opts, done ) =>
 {
 	// exported routes
-
-	//ParseModPDiffs, ParseModPDiffs
 
 	// POST /server/add_server
 	// adds a gameserver to the server list

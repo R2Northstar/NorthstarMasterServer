@@ -6,6 +6,7 @@ const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
 const { getUserInfo, getOriginAuthState } = require( path.join( __dirname, "../shared/origin.js" ) )
 const { AsyncGetPlayerPersistenceBufferForMods } = require( path.join( __dirname, "../shared/modPersistentData.js" ) )
+const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -223,27 +224,28 @@ module.exports = ( fastify, opts, done ) =>
 			accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
 			// authing with self doesnt send mod info, so cant get pdiff :/
+			// ^ this is now fixed in launcher code, need to make a draft PR for that as well at some point
 			// todo: build persistent data here, rather than sending baseline only
-			/*let modInfo = await ParseModPDiffs( request )
+			let modInfo = await pjson.ParseModPDiffs( request )
 			let pdata = await AsyncGetPlayerPersistenceBufferForMods( request.query.id, modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff ) )
 
 			return {
 				success: true,
-
 				id: account.id,
 				authToken: authToken,
 				// this fucking sucks, but i couldn't get game to behave if i sent it as an ascii string, so using this for now
-				persistentData: [pdata]
-			}*/
+				persistentData: [...pdata]
+			}
 
-			return {
+			// old way
+			/*return {
 				success: true,
 
 				id: account.id,
 				authToken: authToken,
 				// this fucking sucks, but i couldn't get game to behave if i sent it as an ascii string, so using this for now
 				persistentData: Array.from( new Uint8Array( account.persistentDataBaseline ) )
-			}
+			}*/
 		} )
 
 	done()

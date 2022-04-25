@@ -252,9 +252,10 @@ module.exports = {
 	AsyncWritePlayerModPersistence: async function AsyncWritePlayerModPersistence( id, pdiffHash, data )
 	{
 		await asyncDBRun( "UPDATE modPersistentData SET data = ? WHERE id = ? AND pdiffHash = ?", [ data, id, pdiffHash ] )
+		console.log( "successfully written pdiff data" )
 	},
 
-	AsyncModPersistenceBufferToJson: async function AsyncModPersistenceBufferToJson( server, playerID, buffer )
+	AsyncModPersistenceBufferToJson: async function AsyncModPersistenceBufferToJson( modInfo, playerID, buffer )
 	{
 		// this returns an object in the form
 		/*
@@ -282,7 +283,7 @@ module.exports = {
 			pdiffs: []
 		}
 
-		let pdiffs = server.modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff )
+		let pdiffs = modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff )
 
 		//
 		let pdefCopy = DEFAULT_PDEF_OBJECT
@@ -341,7 +342,6 @@ module.exports = {
 						if ( !found && parsedMemberName == pdiffMember.name )
 						{
 							found = true
-							console.log()
 							delete pdataCopy[parsedMemberName]
 							if ( pdiff.data == undefined )
 							{
@@ -368,6 +368,8 @@ module.exports = {
 		// replace all baseline data from db that we can
 		// write resulting baseline data to db (buffer)
 		// write pdiff data to db (json)
+		// let baseline = pjson.PdataToJson( await ( await ( this.AsyncGetPlayerByID( playerID ) ) ).persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+		//console.log( baseline )
 
 
 		return ret
@@ -415,6 +417,7 @@ module.exports = {
 			// i added an await, maybe that fixed it? - Spoon
 			// the issue was that assign doesnt recurse at all, we have to call for each thing inside it
 			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
+			console.log( result )
 
 			newPdataJson = objCombine( newPdataJson, result )
 		}

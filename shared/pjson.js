@@ -7,7 +7,7 @@ const NATIVE_TYPES = {
 	},
 	float: { size: 4,
 		read: ( buf, idx ) => buf.readFloatLE( idx ),
-		write: ( buf, value, idx ) => buf.writeFloatLE( value, idx )
+		write: ( buf, value, idx ) => buf.writeFloatLE( Number( value ), idx )
 	},
 	bool: {
 		size: 1,
@@ -17,8 +17,25 @@ const NATIVE_TYPES = {
 	string: {
 		size: 1,
 		nativeArrayType: true,
-		read: ( buf, idx, length ) => buf.toString( "ascii", idx, idx + length ),
-		write: ( buf, value, idx, length ) => buf.write( value.padEnd( length, "\u0000" ), idx, length, "ascii" )
+		read: ( buf, idx, length ) =>
+		{
+			let ret = buf.toString( "ascii", idx, idx + length )
+			/*console.log( idx )
+			console.log( idx + length )*/
+			//console.log( ret )
+			return ret
+		},
+		write: ( buf, value, idx, length ) =>
+		{
+			/*console.log( value )
+			console.log( "LENGTH OF STRING: " )
+			console.log( value.length )
+			console.log( "TARGET LENGTH OF STRING: " )
+			console.log( length )
+			console.log( "LENGTH OF STRING AFTER:" )
+			console.log( value.padEnd( length, "\0" ).length )*/
+			buf.write( value.padEnd( length, "\0" ), idx, length, "ascii" )
+		}
 	}
 }
 
@@ -48,6 +65,8 @@ function ParseDefinition( pdef )
 	// read each line
 	for ( let line of pdef.split( "\n" ) )
 	{
+		if ( line == "string{64} trackedChallengeRefs[3]\r" )
+			console.log( "FOUND THING" )
 		// read types/names
 		let split = line.trim().split( /\s+/g )
 		let type = split[ 0 ]
@@ -112,7 +131,7 @@ function ParseDefinition( pdef )
 				checkType = type.substr( 0, type.indexOf( "{" ) )
 				isNativeArrayType = true
 			}
-			else if ( name.includes( "[" ) )
+			if ( name.includes( "[" ) )
 				isArray = true
 
 			// verify type stuff
@@ -130,7 +149,7 @@ function ParseDefinition( pdef )
 					// pretty sure this can't be an enum and has to be a number? unsure
 					newMember.nativeArraySize = parseInt( type.substr( type.indexOf( "{" ) + 1 ) )
 				}
-				else if ( isArray )
+				if ( isArray )
 				{
 					let bracketIndex = name.indexOf( "[" )
 					newMember.name = name.substr( 0, bracketIndex )
@@ -221,8 +240,11 @@ function GetMemberSize( member, parsedDef )
 {
 	let multiplier = 1
 
+
 	if ( typeof( member.arraySize ) == "string" )
+	{
 		member.arraySize = parsedDef.enums[ member.arraySize ].length
+	}
 
 	multiplier *= member.arraySize || 1
 
@@ -230,7 +252,6 @@ function GetMemberSize( member, parsedDef )
 	{
 		if ( NATIVE_TYPES[ member.type ].nativeArrayType )
 			multiplier *= member.nativeArraySize
-
 		return NATIVE_TYPES[ member.type ].size * multiplier
 	}
 	else if ( member.type in parsedDef.enums )
@@ -241,7 +262,8 @@ function GetMemberSize( member, parsedDef )
 		for ( let structMember of parsedDef.structs[ member.type ] )
 			structSize += GetMemberSize( structMember, parsedDef )
 
-		return structSize * multiplier
+		structSize *= multiplier
+		return structSize// + member.type.length
 	}
 	else
 		throw Error( `got unknown member type ${member.type}` )
@@ -329,7 +351,14 @@ function PdataToJson( pdata, pdef )
 		}
 	}
 
-	recursiveReadPdata( pdef.members, ret )
+	try
+	{
+		recursiveReadPdata( pdef.members, ret )
+	}
+	catch ( ex )
+	{
+		console.log( ex )
+	}
 
 	return ret
 }
@@ -423,12 +452,13 @@ function PdataJsonToBuffer( json, pdef )
 	let size = 0
 	for ( let member of pdef.members )
 		size += GetMemberSize( member, pdef )
-
+	size++ // game refuses to write to the final byte, so make the buffer 1 byte longer, that way the final, unwriteable byte isn't used
 	let buf = Buffer.alloc( size )
 
 	let i = 0
 	// let currentKey = 0
 	// let keys = Object.keys( json )
+
 
 	function recursiveWritePdata( struct )
 	{
@@ -440,10 +470,17 @@ function PdataJsonToBuffer( json, pdef )
 			if ( typeof( arraySize ) == "string" )
 				arraySize = pdef.enums[ arraySize ].length
 
-			let oldi = i // debug
+			//let oldi = i // debug
 			for ( let j = 0; j < arraySize; j++ )
 			{
 				let val = member.value
+				if ( typeof( val ) == "undefined" )
+				{
+					// console.log( "VAL IS NULL" ) // debug
+					val = "NULL"
+				}
+				if ( Number.isNaN( val ) )
+					console.log( val )
 				if ( Array.isArray( val ) )
 					val = member.value[ j ]
 
@@ -454,24 +491,35 @@ function PdataJsonToBuffer( json, pdef )
 				}
 				else if ( member.type in pdef.enums )
 				{
+					if ( pdef.enums[ member.type ].indexOf( val ) == -1 )
+						console.log( "not found in enum" )
 					buf.writeUInt8( pdef.enums[ member.type ].indexOf( val ), i++ ) // enums are uint8s
 				}
 				else if ( member.type in pdef.structs )
+				{
 					recursiveWritePdata( val )
+				}
 			}
 			// debug for when readhead has moved a weird amount
-			if ( i - oldi != GetMemberSize( member, pdef ) )
+			/*if ( i - oldi != GetMemberSize( member, pdef ) )
 			{
 				console.log( member )
 				console.log( "readhead moved: " + ( i - oldi ) )
 				console.log( "expected distance moved: " + GetMemberSize( member, pdef ) )
-			}
+			//}*/
+
+			//console.log( "written " + ( i - oldi ) + " bytes for member " + memberName )
 		}
 	}
 
-	recursiveWritePdata( json )
-	console.log( size )
-	console.log( i )
+	try
+	{
+		recursiveWritePdata( json )
+	}
+	catch ( ex )
+	{
+		console.log( ex )
+	}
 	// ideally these should be identical
 	return buf
 }

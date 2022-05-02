@@ -8,11 +8,16 @@ const Filter = require( "bad-words" )
 let filter = new Filter()
 let ASCIIRegex = new RegExp( "^\x20-\x7E]+" )
 
+let max_servers_per_ip = process.env.MAX_SERVER_PER_IP
+if (max_servers_per_ip == undefined) {
+	max_servers_per_ip = 10 // Default value
+}
+
 const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
-const {updateServerList} = require( "../shared/serverlist_state.js" )
-const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION, INVALID_STRING_DATA } = require( "../shared/errorcodes.js" )
+const {updateServerList, getServerList} = require( "../shared/serverlist_state.js" )
+const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION, INVALID_STRING_DATA, DUPLICATE_SERVER, MAX_SERVERS_FOR_IP } = require( "../shared/errorcodes.js" )
 
 async function TryVerifyServer( request )
 {
@@ -104,7 +109,6 @@ async function SharedTryAddServer( request )
 	if ( typeof request.query.authPort == "string" )
 		request.query.authPort = parseInt( request.query.authPort )
 	// Verify string is ASCII only
-	// TODO: add bad word filter
 	if (
 		request.query.name.match( ASCIIRegex ) ||
 		request.query.description.match( ASCIIRegex ) ||
@@ -113,6 +117,20 @@ async function SharedTryAddServer( request )
 	)
 	{
 		return { success: false, error: INVALID_STRING_DATA }
+	}
+	let counter = 0 // Usewd to track servers per ip, could maybe be optimized into a Hashmap(ip, counter)
+	let servers = GetGameServers()
+	for ( let key in servers ) {
+		let server = servers[ key ]
+		if ( server.ip == request.ip ) {
+			if ( server.port == request.query.port ) { // Block if server with that ip and port already exists
+				return { success: false, error: DUPLICATE_SERVER }
+			}
+			counter++
+			if ( counter >= max_servers_per_ip ) {
+				return { success: false, error: MAX_SERVERS_FOR_IP }
+			}
+		}
 	}
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )

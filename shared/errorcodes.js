@@ -42,6 +42,14 @@ const errorCodes = {
 	INVALID_STRING_DATA: {
 		enum: "INVALID_STRING_DATA",
 		msg: "Found one or more unsupported characters in the server's registration data"
+	},
+	DUPLICATE_SERVER: {
+		enum: "DUPLICATE_SERVER",
+		msg: "Combination ip and port already in use"
+	},
+	MAX_SERVERS_FOR_IP: {
+		enum: "MAX_SERVERS_FOR_IP",
+		msg: "Reached the limit of servers for this IP"
 	}
 }
 

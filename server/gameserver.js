@@ -110,7 +110,7 @@ async function SharedTryAddServer( request )
 		request.query.description.match( ASCIIRegex ) ||
 		request.query.map.match( ASCIIRegex ) ||
 		request.query.playlist.match( ASCIIRegex )
-		)
+	)
 	{
 		return { success: false, error: INVALID_STRING_DATA }
 	}

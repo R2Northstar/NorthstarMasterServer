@@ -119,17 +119,18 @@ async function SharedTryAddServer( request )
 	}
 	let counter = 0 // Usewd to track servers per ip, could maybe be optimized into a Hashmap(ip, counter)
 	let servers = GetGameServers()
-	for ( let key in servers ) 
+	for ( let key in servers )
 	{
 		let server = servers[ key ]
-		if ( server.ip == request.ip ) 
+		if ( server.ip == request.ip )
 		{
 			if ( server.port == request.query.port ) // Block if server with that ip and port already exists
 			{
 				return { success: false, error: DUPLICATE_SERVER }
 			}
 			counter++
-			if ( counter >= max_servers_per_ip ) {
+			if ( counter >= max_servers_per_ip )
+			{
 				return { success: false, error: MAX_SERVERS_FOR_IP }
 			}
 		}

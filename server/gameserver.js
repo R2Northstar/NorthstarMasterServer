@@ -6,12 +6,13 @@ const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
 const Filter = require( "bad-words" )
 let filter = new Filter()
+let ASCIIRegex = new RegExp("^\x20-\x7E]+")
 
 const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
-const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION } = require( "../shared/errorcodes.js" )
+const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION, INVALID_STRING_DATA } = require( "../shared/errorcodes.js" )
 
 async function TryVerifyServer( request )
 {
@@ -102,7 +103,18 @@ async function SharedTryAddServer( request )
 
 	if ( typeof request.query.authPort == "string" )
 		request.query.authPort = parseInt( request.query.authPort )
-
+	
+	// Verify string is ASCII only
+	// TODO: add bad word filter
+	if (
+		request.query.name.match(ASCIIRegex) ||
+		request.query.description.match(ASCIIRegex) ||
+		request.query.map.match(ASCIIRegex) ||
+		request.query.playlist.match(ASCIIRegex)
+		)
+	{
+		return { success: false, error: INVALID_STRING_DATA }
+	}
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )

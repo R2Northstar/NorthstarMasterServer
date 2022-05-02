@@ -9,14 +9,13 @@ let filter = new Filter()
 let ASCIIRegex = new RegExp( "^\x20-\x7E]+" )
 
 let max_servers_per_ip = process.env.MAX_SERVER_PER_IP
-if (max_servers_per_ip == undefined) {
+if ( max_servers_per_ip == undefined )
 	max_servers_per_ip = 10 // Default value
-}
 
 const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
-const {updateServerList, getServerList} = require( "../shared/serverlist_state.js" )
+const { updateServerList } = require( "../shared/serverlist_state.js" )
 const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION, INVALID_STRING_DATA, DUPLICATE_SERVER, MAX_SERVERS_FOR_IP } = require( "../shared/errorcodes.js" )
 
 async function TryVerifyServer( request )
@@ -120,10 +119,13 @@ async function SharedTryAddServer( request )
 	}
 	let counter = 0 // Usewd to track servers per ip, could maybe be optimized into a Hashmap(ip, counter)
 	let servers = GetGameServers()
-	for ( let key in servers ) {
+	for ( let key in servers ) 
+	{
 		let server = servers[ key ]
-		if ( server.ip == request.ip ) {
-			if ( server.port == request.query.port ) { // Block if server with that ip and port already exists
+		if ( server.ip == request.ip ) 
+		{
+			if ( server.port == request.query.port ) // Block if server with that ip and port already exists
+			{
 				return { success: false, error: DUPLICATE_SERVER }
 			}
 			counter++

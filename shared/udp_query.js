@@ -1,6 +1,6 @@
 const rSrcClient = require( "./a2s_challenge_query" )
 
-const encryptionKey = "WDNWLmJYQ2ZlM0VoTid3Yg=="
+const encryptionKey = "WDNWLmJYQ2ZlM0VoTid3Yg==" // standard r2 encryption key
 
 function QueryServerPort( ip, port )
 {

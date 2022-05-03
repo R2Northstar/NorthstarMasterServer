@@ -4,6 +4,7 @@ const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, GetGhostSer
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
+const { QueryServerPort } = require( path.join( __dirname, "../shared/udp_query.js" ) )
 const Filter = require( "bad-words" )
 let filter = new Filter()
 
@@ -34,6 +35,9 @@ async function TryVerifyServer( request )
 
 	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
 		return 1
+
+	let gamePortDoesRespond = await QueryServerPort( request.ip, request.query.port )
+	if( !gamePortDoesRespond ) return 1
 
 	return 0
 }

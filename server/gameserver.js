@@ -7,12 +7,13 @@ const { minimumVersion } = require( path.join( __dirname, "../shared/version.js"
 const { QueryServerPort } = require( path.join( __dirname, "../shared/udp_query.js" ) )
 const Filter = require( "bad-words" )
 let filter = new Filter()
+let ValidNameRegex = /[\p{Cc}\p{Cn}\p{Cs}]+/gu
 
 const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {updateServerList} = require( "../shared/serverlist_state.js" )
-const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION } = require( "../shared/errorcodes.js" )
+const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION, INVALID_STRING_DATA } = require( "../shared/errorcodes.js" )
 
 async function TryVerifyServer( request )
 {
@@ -106,7 +107,15 @@ async function SharedTryAddServer( request )
 
 	if ( typeof request.query.authPort == "string" )
 		request.query.authPort = parseInt( request.query.authPort )
-
+	if (
+		request.query.name.match( ValidNameRegex ) ||
+		request.query.description.match( ValidNameRegex ) ||
+		request.query.map.match( ValidNameRegex ) ||
+		request.query.playlist.match( ValidNameRegex )
+	)
+	{
+		return { success: false, error: INVALID_STRING_DATA }
+	}
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )

@@ -38,6 +38,10 @@ const errorCodes = {
 	UNSUPPORTED_VERSION: {
 		enum: "UNSUPPORTED_VERSION",
 		msg: "The version you are using is no longer supported"
+	},
+	INVALID_STRING_DATA: {
+		enum: "INVALID_STRING_DATA",
+		msg: "Found one or more unsupported characters in the server's registration data"
 	}
 }
 

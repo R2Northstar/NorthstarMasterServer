@@ -4,8 +4,8 @@ const { GameServer, GetGameServers, AddGameServer, RemoveGameServer, GetGhostSer
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
-const Filter = require( "bad-words" )
-let filter = new Filter()
+
+let { bannedwords } = require("../shared/filter.js")
 
 const VERIFY_STRING = "I am a northstar server!"
 
@@ -103,8 +103,10 @@ async function SharedTryAddServer( request )
 	if ( typeof request.query.authPort == "string" )
 		request.query.authPort = parseInt( request.query.authPort )
 
-	let name = filter.clean( request.query.name )
-	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
+	if ( bannedwords.isProfane( request.query.name ) || bannedwords.isProfane( request.query.description ) )
+		return { success: false, error: UNAUTHORIZED_GAMESERVER }
+	let name = request.query.name
+	let description = request.query.description == "" ? "" : request.query.description
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
 	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)

@@ -6,20 +6,27 @@ const { getRatelimit } = require( "../shared/ratelimit.js" )
 let promodataPath = path.join( __dirname, "mainmenupromodata.json" )
 
 // watch the mainmenupromodata file so we can update it without a masterserver restart
-// eslint-disable-next-line
-fs.watch( promodataPath, ( curr, prev ) =>
+if( fs.existsSync( promodataPath ) )
 {
-	try
+	// eslint-disable-next-line
+	fs.watch( promodataPath, ( curr, prev ) =>
 	{
-		mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
-		console.log( "updated main menu promo data successfully!" )
-	}
-	catch ( ex )
-	{
-		console.log( `encountered error updating main menu promo data: ${ ex }` )
-	}
+		try
+		{
+			mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
+			console.log( "updated main menu promo data successfully!" )
+		}
+		catch ( ex )
+		{
+			console.log( `encountered error updating main menu promo data: ${ ex }` )
+		}
 
-} )
+	} )
+}
+else
+{
+	console.log( "no main menu promo data found! restart required to update" )
+}
 
 let mainMenuPromoData = {}
 if ( fs.existsSync( promodataPath ) )

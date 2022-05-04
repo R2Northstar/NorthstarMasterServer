@@ -234,9 +234,6 @@ module.exports = ( fastify, opts, done ) =>
 			else if ( request.ip != server.ip ) // dont update if the server isnt the one sending the heartbeat
 				return null
 
-			// update heartbeat
-			server.lastHeartbeat = Date.now()
-
 			for ( let key of Object.keys( request.query ) )
 			{
 				if ( key == "id" || key == "port" || key == "authport" || !( key in server ) || request.query[ key ].length >= 512 )
@@ -251,6 +248,10 @@ module.exports = ( fastify, opts, done ) =>
 					server[ key ] = request.query[ key ]
 				}
 			}
+
+			// update heartbeat
+			server.lastHeartbeat = Date.now()
+
 			return null
 		} )
 

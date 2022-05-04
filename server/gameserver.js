@@ -6,7 +6,7 @@ const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
 const Filter = require( "bad-words" )
 let filter = new Filter()
-let ASCIIRegex = new RegExp( "^\x20-\x7E]+" )
+let ValidNameRegex = /[\p{Cc}\p{Cn}\p{Cs}]+/gu
 
 const VERIFY_STRING = "I am a northstar server!"
 
@@ -103,13 +103,11 @@ async function SharedTryAddServer( request )
 
 	if ( typeof request.query.authPort == "string" )
 		request.query.authPort = parseInt( request.query.authPort )
-	// Verify string is ASCII only
-	// TODO: add bad word filter
 	if (
-		request.query.name.match( ASCIIRegex ) ||
-		request.query.description.match( ASCIIRegex ) ||
-		request.query.map.match( ASCIIRegex ) ||
-		request.query.playlist.match( ASCIIRegex )
+		request.query.name.match( ValidNameRegex ) ||
+		request.query.description.match( ValidNameRegex ) ||
+		request.query.map.match( ValidNameRegex ) ||
+		request.query.playlist.match( ValidNameRegex )
 	)
 	{
 		return { success: false, error: INVALID_STRING_DATA }

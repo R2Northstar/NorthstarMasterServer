@@ -11,7 +11,7 @@ const VERIFY_STRING = "I am a northstar server!"
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const { updateServerList } = require( "../shared/serverlist_state.js" )
-const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION } = require( "../shared/errorcodes.js" )
+const { NO_GAMESERVER_RESPONSE, BAD_GAMESERVER_RESPONSE, JSON_PARSE_ERROR, UNAUTHORIZED_GAMESERVER, UNSUPPORTED_VERSION, DUPLICATE_SERVER } = require( "../shared/errorcodes.js" )
 
 async function TryVerifyServer( request )
 {
@@ -88,10 +88,10 @@ async function SharedTryAddServer( request )
 	{
 		let server = servers[ key ]
 		if ( server.ip == request.ip && server.port == request.query.port )
-		{
-			RemoveGameServer( server ) // New server replaces the old one
-		}
+			return { success: false, error: DUPLICATE_SERVER }
 	}
+
+	
 
 	let verifyStatus = await TryVerifyServer( request )
 	if( verifyStatus == 1 ) return { success: false, error: NO_GAMESERVER_RESPONSE }

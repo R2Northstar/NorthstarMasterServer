@@ -5,7 +5,7 @@ const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
 
-let { bannedwords } = require("../shared/filter.js")
+let { bannedwords } = require( "../shared/filter.js" )
 
 const VERIFY_STRING = "I am a northstar server!"
 
@@ -139,8 +139,10 @@ async function TryReviveServer( request )
 	if ( typeof request.query.maxPlayers == "string" )
 		request.query.maxPlayers = parseInt( request.query.maxPlayers )
 
-	let name = filter.clean( request.query.name )
-	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
+	if ( bannedwords.isProfane( request.query.name ) || bannedwords.isProfane( request.query.description ) )
+		return { success: false, error: UNAUTHORIZED_GAMESERVER }
+	let name = request.query.name
+	let description = request.query.description == "" ? "" : request.query.description
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, ghost.port, ghost.authPort, request.query.password, modInfo )
 	newServer.id = ghost.id
 	AddGameServer( newServer )

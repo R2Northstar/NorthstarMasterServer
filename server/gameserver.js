@@ -82,7 +82,7 @@ async function SharedTryAddServer( request )
 {
 	if( !minimumVersion( request ) )
 		return { success: false, error: UNSUPPORTED_VERSION }
-	
+
 	let servers = GetGameServers()
 	for ( let key in servers )
 	{

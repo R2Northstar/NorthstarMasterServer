@@ -91,8 +91,6 @@ async function SharedTryAddServer( request )
 			return { success: false, error: DUPLICATE_SERVER }
 	}
 
-	
-
 	let verifyStatus = await TryVerifyServer( request )
 	if( verifyStatus == 1 ) return { success: false, error: NO_GAMESERVER_RESPONSE }
 	if( verifyStatus == 2 ) return { success: false, error: BAD_GAMESERVER_RESPONSE }

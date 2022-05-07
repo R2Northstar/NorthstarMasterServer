@@ -279,7 +279,6 @@ module.exports = {
 		*/
 
 		let ret = {
-			baseline: Buffer,
 			pdiffs: []
 		}
 
@@ -309,19 +308,79 @@ module.exports = {
 				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
 			}
 			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
-			ret.pdiffs.push( { hash: pdiff.hash, pdef: pdiff.pdef } )
+			ret.pdiffs.push( { hash: pdiff.hash, pdef: pdiff.pdef, data: {} } )
 		}
 
 		let parsed = pjson.PdataToJson( buffer, pdefCopy )
-		// seems correct up to here
 
 		// remove all keys that are the same as the stored pdata (makes my life easier)
 		// or not.
-		// let vanillaPdata = pjson.PdataToJson( await module.exports.AsyncGetPlayerByID( playerID ), DEFAULT_PDEF_OBJECT )
+		let player = await ( module.exports.AsyncGetPlayerByID( playerID ) )//.persistentDataBaseline
+		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+		//let copiedVanilla = JSON.parse( JSON.stringify( vanillaPdata ) )
+
+		// iterate through the keys
+		Object.keys( parsed ).forEach( key =>
+		{
+			// THIS IS PROBABLY MISSING SOME CASES
+
+			// if key is directly added by a mod, add it to the mod's pdiff object
+			let found = false
+			ret.pdiffs.forEach( pdiff =>
+			{
+				pdiff.pdef.members.forEach( member =>
+				{
+					if ( key == member.name )
+					{
+						console.log( "key is a member defined in a pdiff" )
+
+						console.log( key )
+						console.log( parsed[key] )
+						// this is currently adding it to *all* pdiffs that add the member, which is not ideal i don't think?
+						// potential for two mods to have the same member, but implemented differently
+						pdiff.data[key] = parsed[key]
+						found = true
+					}
+				} )
+			} )
+			if ( found )
+			{
+				return // we have dealt with this key
+			}
+			// else if key is an enum member that is added by a mod, put it in the mod's pdiff object
+			let type = parsed[key].type
+			ret.pdiffs.forEach( pdiff =>
+			{
+				if ( typeof pdiff.pdef.enums[type] != "undefined" && pdiff.pdef.enums[type].includes( parsed[key].value ) ) // enums contains the type
+				{
+					console.log( "key is an enum member" )
+					console.log( key )
+
+					console.log( pdiff.pdef )
+					console.log( parsed[key].value )
+
+					pdiff.data[key] = parsed[key]
+					found = true
+				}
+
+			} )
+			if ( found )
+			{
+				return // we have dealt with this key
+			}
+			// else add to vanilla pdiff object
+			vanillaPdata[key] = parsed[key]
+			console.log( "key is not modded" )
+			console.log( key )
+		} )
+		console.log( "HELLO WORLD" )
+		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, DEFAULT_PDEF_OBJECT )
+
+		// THIS IS OLD STUFF I THINK
 
 		// split into baseline data and pdiff
 		// pdataCopy will be a vanilla compatible object
-		let pdataCopy = {}
+		/*let pdataCopy = {}
 		// maybe manually copying wont pass by reference
 		Object.keys( parsed ).forEach( key =>
 		{
@@ -351,7 +410,7 @@ module.exports = {
 							pdiffMember.value = parsed[parsedMemberName].value
 							let passThis = {}
 							passThis[result.name] = { type: result.type, arraySize: result.arraySize, nativeArraySize: result.nativeArraySize, value: result.value}
-							*/pdiff.data[parsedMemberName] = parsed[parsedMemberName]
+							pdiff.data[parsedMemberName] = parsed[parsedMemberName]
 						}
 					} )
 				} )
@@ -371,7 +430,7 @@ module.exports = {
 		// let baseline = pjson.PdataToJson( await ( await ( this.AsyncGetPlayerByID( playerID ) ) ).persistentDataBaseline, DEFAULT_PDEF_OBJECT )
 		//console.log( baseline )
 
-
+		*/
 		return ret
 	},
 

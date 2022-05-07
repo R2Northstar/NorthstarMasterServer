@@ -93,7 +93,6 @@ module.exports = ( fastify, opts, done ) =>
 			// this might be a bit unsafe? some pdiff might just override something and therefore not change the length, better implementation would be to check if any server mods implement pdiff
 			console.log ( buf.length )
 			console.log ( account.persistentDataBaseline.length )
-			console.log ( require ( "fs" ).readFileSync( "default.pdata" ).length )
 			if ( buf.length == account.persistentDataBaseline.length )
 			{
 				console.log( "no mod pdiffs found, writing baseline" )
@@ -110,6 +109,8 @@ module.exports = ( fastify, opts, done ) =>
 					console.log( pdiff.data )
 					await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
 				}
+				console.log( "writing persistence baseline" )
+				await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, persistenceJSON.baseline )
 			}
 
 			return null

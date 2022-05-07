@@ -452,7 +452,6 @@ function PdataJsonToBuffer( json, pdef )
 	let size = 0
 	for ( let member of pdef.members )
 		size += GetMemberSize( member, pdef )
-	size++ // game refuses to write to the final byte, so make the buffer 1 byte longer, that way the final, unwriteable byte isn't used
 	let buf = Buffer.alloc( size )
 
 	let i = 0

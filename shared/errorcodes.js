@@ -38,6 +38,10 @@ const errorCodes = {
 	UNSUPPORTED_VERSION: {
 		enum: "UNSUPPORTED_VERSION",
 		msg: "The version you are using is no longer supported"
+	},
+	DUPLICATE_SERVER: {
+		enum: "DUPLICATE_SERVER",
+		msg: "A server with this port already exists for your IP address"
 	}
 }
 

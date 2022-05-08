@@ -319,6 +319,9 @@ module.exports = {
 		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
 		//let copiedVanilla = JSON.parse( JSON.stringify( vanillaPdata ) )
 
+		// THIS IS BAD AND SHOULD RECURSE
+
+
 		// iterate through the keys
 		Object.keys( parsed ).forEach( key =>
 		{
@@ -467,14 +470,12 @@ module.exports = {
 				}
 			}
 
-			for ( let enumAdd in pdiff.enums )
+			// add to the enums
+			for ( let enumAdd in pdiff.enumAdds )
 			{
-				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+				pdefCopy.enums[ enumAdd ] = pdefCopy.enums[ enumAdd ].concat( pdiff.enumAdds[ enumAdd ] )
 			}
 			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
-			// this assign call won't work, but basically what it SHOULD do is replace any pdata keys that are in the mod pdata and append new ones to the end
-			// i added an await, maybe that fixed it? - Spoon
-			// the issue was that assign doesnt recurse at all, we have to call for each thing inside it
 			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
 			console.log( result )
 

@@ -29,11 +29,11 @@ module.exports = ( fastify, opts, done ) =>
 					error: "No username provided"
 				}
 			}
-			let matches = await accounts.AsyncGetPlayersByUsername( request.query.username )
+			let matches = await accounts.AsyncGetUIDsByUsername( request.query.username )
 			return {
 				success: true,
 				username: request.query.username,
-				matches: matches.map( m => m.id )
+				matches: matches
 			}
 		} )
 

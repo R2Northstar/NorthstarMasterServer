@@ -231,6 +231,13 @@ module.exports = {
 		return rows.map( row => new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp, row.username ) )
 	},
 
+	AsyncGetUIDsByUsername: async function AsyncGetUIDsByUsername( username )
+	{
+		let rows = await asyncDBAll( "SELECT id FROM accounts WHERE username = ?", [ username ] )
+
+		return rows
+	},
+
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id )
 	{
 		await asyncDBRun( "INSERT INTO accounts ( id, persistentDataBaseline ) VALUES ( ?, ? )", [ id, DEFAULT_PDATA_BASELINE ] )

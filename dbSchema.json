@@ -33,7 +33,7 @@
 				"modifier": "DEFAULT ''"
 			}
 		],
-		"indicies": [
+		"indices": [
 			{
 				"name": "usernameIdx",
 				"columns": ["username"],

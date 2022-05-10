@@ -29,7 +29,7 @@ module.exports = ( fastify, opts, done ) =>
 					error: "No username provided"
 				}
 			}
-			let matches = await accounts.AsyncGetUIDsByUsername( request.query.username )
+			let matches = await accounts.AsyncGetIDsByUsername( request.query.username )
 			return {
 				success: true,
 				username: request.query.username,
@@ -59,8 +59,7 @@ module.exports = ( fastify, opts, done ) =>
 					error: "No UID provided"
 				}
 			}
-			console.log( request.query.uid )
-			let match = await accounts.AsyncGetPlayerByID( request.query.uid )
+			let match = await accounts.AsyncGetUsernameByID( request.query.uid )
 			if( match == null )
 			{
 				return {
@@ -73,7 +72,7 @@ module.exports = ( fastify, opts, done ) =>
 			return {
 				success: true,
 				uid: request.query.uid,
-				matches: [match.username]
+				matches: [match]
 			}
 		} )
 

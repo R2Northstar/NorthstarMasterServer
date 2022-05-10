@@ -40,9 +40,9 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 				await addColumnToTable( tableName, col )
 			}
 		}
-		if( table.indicies )
+		if( table.indices )
 		{
-			for ( const idx of table.indicies )
+			for ( const idx of table.indices )
 			{
 				if( !await indexExists( idx.name ) )
 				{
@@ -231,11 +231,20 @@ module.exports = {
 		return rows.map( row => new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp, row.username ) )
 	},
 
-	AsyncGetUIDsByUsername: async function AsyncGetUIDsByUsername( username )
+	AsyncGetIDsByUsername: async function AsyncGetIDsByUsername( username )
 	{
 		let rows = await asyncDBAll( "SELECT id FROM accounts WHERE username = ?", [ username ] )
 
 		return rows
+	},
+	AsyncGetUsernameByID: async function AsyncGetUsernameByID( id )
+	{
+		let row = await asyncDBGet( "SELECT username FROM accounts WHERE id = ?", [ id ] )
+
+		if ( !row )
+			return null
+
+		return row
 	},
 
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id )

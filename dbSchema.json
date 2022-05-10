@@ -32,6 +32,13 @@
 				"type": "TEXT",
 				"modifier": "DEFAULT ''"
 			}
+		],
+		"indicies": [
+			{
+				"name": "usernameIdx",
+				"columns": ["username"],
+				"unique": false
+			}
 		]
 	},
 	"modPersistentData": {

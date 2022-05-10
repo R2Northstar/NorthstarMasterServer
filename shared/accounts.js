@@ -40,7 +40,8 @@ let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite
 				await addColumnToTable( tableName, col )
 			}
 		}
-		if( table.indicies ) {
+		if( table.indicies )
+		{
 			for ( const idx of table.indicies )
 			{
 				if( !await indexExists( idx.name ) )

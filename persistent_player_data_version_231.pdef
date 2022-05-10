@@ -1513,3 +1513,11 @@ gameModes lastAbandonedMode
 int lastAbandonTime
 
 struct_ranked ranked
+
+// ADDED BY NORTHSTAR
+$ENUM_START moddedPilotWeaponsAndOffhands
+	reserved
+$ENUM_END
+
+weaponMain moddedPilotWeapons[moddedPilotWeaponsAndOffhands]
+weaponOffhand moddedPilotOffhands[moddedPilotWeaponsAndOffhands]

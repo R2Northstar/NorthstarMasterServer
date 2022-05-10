@@ -2,16 +2,52 @@ const crypto = require( "crypto" )
 
 const NATIVE_TYPES = {
 	int: { size: 4,
-		read: ( buf, idx ) => buf.readInt32LE( idx ),
+		read: ( buf, idx ) =>
+		{
+			try
+			{
+				return buf.readInt32LE( idx )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume 0
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return 0
+			}
+		},
 		write: ( buf, value, idx ) => buf.writeInt32LE( value, idx )
 	},
 	float: { size: 4,
-		read: ( buf, idx ) => buf.readFloatLE( idx ),
+		read: ( buf, idx ) =>
+		{
+			try
+			{
+				return buf.readFloatLE( idx )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume 0
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return 0
+			}
+		},
 		write: ( buf, value, idx ) => buf.writeFloatLE( Number( value ), idx )
 	},
 	bool: {
 		size: 1,
-		read: ( buf, idx ) => !!buf.readUInt8( idx ),
+		read: ( buf, idx ) =>
+		{
+			try
+			{
+				return !!buf.readUInt8( idx )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume false
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return false
+			}
+		},
 		write: ( buf, value, idx ) => buf.writeUint8( value, idx )
 	},
 	string: {
@@ -19,21 +55,19 @@ const NATIVE_TYPES = {
 		nativeArrayType: true,
 		read: ( buf, idx, length ) =>
 		{
-			let ret = buf.toString( "ascii", idx, idx + length )
-			/*console.log( idx )
-			console.log( idx + length )*/
-			//console.log( ret )
-			return ret
+			try
+			{
+				return buf.toString( "ascii", idx, idx + length )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume all null chars
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return "\0".repeat( length )
+			}
 		},
 		write: ( buf, value, idx, length ) =>
 		{
-			/*console.log( value )
-			console.log( "LENGTH OF STRING: " )
-			console.log( value.length )
-			console.log( "TARGET LENGTH OF STRING: " )
-			console.log( length )
-			console.log( "LENGTH OF STRING AFTER:" )
-			console.log( value.padEnd( length, "\0" ).length )*/
 			buf.write( value.padEnd( length, "\0" ), idx, length, "ascii" )
 		}
 	}
@@ -65,8 +99,6 @@ function ParseDefinition( pdef )
 	// read each line
 	for ( let line of pdef.split( "\n" ) )
 	{
-		if ( line == "string{64} trackedChallengeRefs[3]\r" )
-			console.log( "FOUND THING" )
 		// read types/names
 		let split = line.trim().split( /\s+/g )
 		let type = split[ 0 ]
@@ -239,14 +271,23 @@ function ParseDefinitionDiff( pdiff )
 function GetMemberSize( member, parsedDef )
 {
 	let multiplier = 1
+	let arraySize
 
-
+	// pain and suffering
 	if ( typeof( member.arraySize ) == "string" )
 	{
-		member.arraySize = parsedDef.enums[ member.arraySize ].length
+		/*console.log( "ENUM NAME: " )
+		console.log( member.arraySize )
+		console.log( "ENUM LENGTH:" )
+		console.log( parsedDef.enums[ member.arraySize ].length )*/
+		arraySize = parsedDef.enums[ member.arraySize ].length
+	}
+	else
+	{
+		arraySize = member.arraySize
 	}
 
-	multiplier *= member.arraySize || 1
+	multiplier *= arraySize || 1
 
 	if ( member.type in NATIVE_TYPES )
 	{
@@ -263,7 +304,7 @@ function GetMemberSize( member, parsedDef )
 			structSize += GetMemberSize( structMember, parsedDef )
 
 		structSize *= multiplier
-		return structSize// + member.type.length
+		return structSize
 	}
 	else
 		throw Error( `got unknown member type ${member.type}` )

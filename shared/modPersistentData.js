@@ -284,8 +284,9 @@ module.exports = {
 
 		let pdiffs = modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff )
 
-		//
-		let pdefCopy = DEFAULT_PDEF_OBJECT
+		// i hate javascript so much
+		let pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
+
 		for ( let pdiffstr of pdiffs )
 		{
 			let pdiff
@@ -303,20 +304,20 @@ module.exports = {
 				}
 			}
 
-			for ( let enumAdd in pdiff.enums )
+			for ( let enumAdd in pdiff.enumAdds )
 			{
-				pdefCopy.enums[ enumAdd ] = [ ...pdefCopy.enums[ enumAdd ], ...pdiff.enums[ enumAdd ] ]
+				pdefCopy.enums[ enumAdd ] = pdefCopy.enums[ enumAdd ].concat( pdiff.enumAdds[ enumAdd ] )
 			}
 			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
-			ret.pdiffs.push( { hash: pdiff.hash, pdef: pdiff.pdef, data: {} } )
+			ret.pdiffs.push( { hash: pdiff.hash, pdef: pdiff.pdef, enumAdds: pdiff.enumAdds, data: {} } )
 		}
 
 		let parsed = pjson.PdataToJson( buffer, pdefCopy )
 
 		// remove all keys that are the same as the stored pdata (makes my life easier)
 		// or not.
-		let player = await ( module.exports.AsyncGetPlayerByID( playerID ) )//.persistentDataBaseline
-		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+		let player = await ( module.exports.AsyncGetPlayerByID( playerID ) )
+		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
 		//let copiedVanilla = JSON.parse( JSON.stringify( vanillaPdata ) )
 
 		// THIS IS BAD AND SHOULD RECURSE
@@ -377,63 +378,8 @@ module.exports = {
 			console.log( key )
 		} )
 		console.log( "HELLO WORLD" )
-		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, DEFAULT_PDEF_OBJECT )
+		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
 
-		// THIS IS OLD STUFF I THINK
-
-		// split into baseline data and pdiff
-		// pdataCopy will be a vanilla compatible object
-		/*let pdataCopy = {}
-		// maybe manually copying wont pass by reference
-		Object.keys( parsed ).forEach( key =>
-		{
-			pdataCopy[key] = parsed[key]
-		} )
-		ret.pdiffs.forEach( pdiff =>
-		{
-			try
-			{
-				// iterate through members of the pdiff definitions
-				pdiff.pdef.members.forEach( pdiffMember =>
-				{
-					// find the member in the parsed pdata
-					let found = false
-
-					Object.keys( parsed ).forEach( parsedMemberName =>
-					{
-						if ( !found && parsedMemberName == pdiffMember.name )
-						{
-							found = true
-							delete pdataCopy[parsedMemberName]
-							if ( pdiff.data == undefined )
-							{
-								pdiff.data = {}
-							}
-							/*pdiffMember.value = parsed[parsedMemberName].value
-							pdiffMember.value = parsed[parsedMemberName].value
-							let passThis = {}
-							passThis[result.name] = { type: result.type, arraySize: result.arraySize, nativeArraySize: result.nativeArraySize, value: result.value}
-							pdiff.data[parsedMemberName] = parsed[parsedMemberName]
-						}
-					} )
-				} )
-			}
-			catch ( ex )
-			{
-				console.log( ex )
-			}
-		} )
-
-		// remove all pdiff keys
-		// check remaining json to see if we need to store anything else
-		// get baseline data from db
-		// replace all baseline data from db that we can
-		// write resulting baseline data to db (buffer)
-		// write pdiff data to db (json)
-		// let baseline = pjson.PdataToJson( await ( await ( this.AsyncGetPlayerByID( playerID ) ) ).persistentDataBaseline, DEFAULT_PDEF_OBJECT )
-		//console.log( baseline )
-
-		*/
 		return ret
 	},
 
@@ -444,8 +390,8 @@ module.exports = {
 		//return player.persistentDataBaseline
 
 		// disabling this for now
-		let pdefCopy = DEFAULT_PDEF_OBJECT
-		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, DEFAULT_PDEF_OBJECT )
+		let pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
+		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
 
 		let newPdataJson = baselineJson
 
@@ -477,6 +423,7 @@ module.exports = {
 			}
 			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
 			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
+			console.log( "MOD PDATA: " )
 			console.log( result )
 
 			newPdataJson = objCombine( newPdataJson, result )

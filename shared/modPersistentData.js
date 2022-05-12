@@ -285,7 +285,7 @@ module.exports = {
 		let pdiffs = modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff )
 
 		// i hate javascript so much
-		let pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
+		let pdefCopy = { ...DEFAULT_PDEF_OBJECT }
 
 		for ( let pdiffstr of pdiffs )
 		{
@@ -377,8 +377,7 @@ module.exports = {
 			console.log( "key is not modded" )
 			console.log( key )
 		} )
-		console.log( "HELLO WORLD" )
-		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
+		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, { ...DEFAULT_PDEF_OBJECT } )
 
 		return ret
 	},
@@ -389,18 +388,18 @@ module.exports = {
 		let player = await module.exports.AsyncGetPlayerByID( id )
 		//return player.persistentDataBaseline
 
-		// disabling this for now
-		let pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
-		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
+		let pdefCopy = { ...DEFAULT_PDEF_OBJECT }
+		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, { ...DEFAULT_PDEF_OBJECT } )
 
 		let newPdataJson = baselineJson
 
 		if ( !player )
 			return null
 
-		// temp etc
+		// iterate through the mods which have pdiffs
 		for ( let pdiffstr of pdiffs )
 		{
+			// get the hash and pdef for the pdiff so we can get the data and splice it properly
 			let pdiff
 			if ( pdiffstr )
 			{
@@ -416,18 +415,92 @@ module.exports = {
 				}
 			}
 
-			// add to the enums
+			// add to the enums in the vanilla pdef
 			for ( let enumAdd in pdiff.enumAdds )
 			{
 				pdefCopy.enums[ enumAdd ] = pdefCopy.enums[ enumAdd ].concat( pdiff.enumAdds[ enumAdd ] )
 			}
-			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
-			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
-			console.log( "MOD PDATA: " )
-			console.log( result )
 
-			newPdataJson = objCombine( newPdataJson, result )
+			// This looks fine, don't really think it needs changing
+			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
+
+			// example of result: {"moddedPilotWeapons":{"mp_weapon_peacekraber":"..."}}
+			// second example: {"isPDiffWorking":1}}
+			// TODO: support dot notation in the member names i.e ranked.isPlayingRanked
+			// this format allows for dynamic editing of arrays with dynamic size
+			// including the type in this json is irrelevant as we can get that from the pdef anyway
+			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
+
+			// iterate through the members of the data
+			Object.keys( result ).forEach( pdiffMemberKey =>
+			{
+				let pdefObject
+				pdefCopy.members.forEach( member =>
+				{
+					if ( member.name === pdiffMemberKey )
+						pdefObject = member
+				} )
+				console.assert( pdefObject !== undefined, "Could not find key '" + pdiffMemberKey + "' in pdef" )
+
+				// if this is not an array
+				if ( pdefObject.arraySize === undefined )
+				{
+					// construct the Object that we are going to write to newPdataJson
+
+					// get info from the pdiff pdef
+					let write = { arraySize: pdefObject.arraySize, nativeArraySize: pdefObject.nativeArraySize, type: pdefObject.type }
+					// get info from the pdiff data
+					write.value = result[pdiffMemberKey]
+
+					// write the value
+					// we dont even check if the key exists or not here because we are kinda just blindly overriding, would be the mods fault if they break shit
+					newPdataJson[pdiffMemberKey] = write
+				}
+				// if this is an array
+				else
+				{
+					// construct base Object for the array (if needed)
+					if ( newPdataJson[pdiffMemberKey] === undefined )
+					{
+						// get data from the pdef
+						let length = pdefObject.arraySize
+						if ( isNaN( Number( length ) ) )
+						{
+							length = pdefCopy.enums[pdefObject.arraySize].length
+						}
+						let write = { arraySize: length, nativeArraySize: pdefObject.nativeArraySize, type: pdefObject.type }
+						write.value = []
+						newPdataJson[pdiffMemberKey] = write
+					}
+					// iterate through each member of the array
+					Object.keys( result[pdiffMemberKey] ).forEach( pdiffMemberDataKey =>
+					{
+						// convert the key into an index for the array
+						let pdiffMemberDataKey_Number = Number( pdiffMemberDataKey )
+						// i think this is safe because i dont think you can use numbers in enums for pdefs (game crashes afaik)
+						// check if the key is actually an enum member
+						if ( isNaN( pdiffMemberDataKey_Number ) )
+						{
+							// get the key's index from the enum
+							for ( let i = 0; i < pdefCopy.enums[pdefObject.arraySize].length; i++ )
+							{
+								if ( pdefCopy.enums[pdefObject.arraySize][i] == pdiffMemberDataKey )
+								{
+									pdiffMemberDataKey_Number = i
+									break
+								}
+							}
+							console.assert( !isNaN( pdiffMemberDataKey_Number ), "Pdiff member's key '" + pdiffMemberDataKey + "' is not in the enum '" + pdefObject.arraySize + "'" )
+						}
+						// write the value
+						newPdataJson[pdiffMemberKey].value[pdiffMemberDataKey_Number] = result[pdiffMemberKey][pdiffMemberDataKey]
+					} )
+				}
+			}, { newPdataJson: newPdataJson } )
+
 		}
+		// SEEMS TO WORK UP TO HERE
+
 		let ret
 		try
 		{

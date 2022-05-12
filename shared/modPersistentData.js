@@ -314,17 +314,74 @@ module.exports = {
 
 		let parsed = pjson.PdataToJson( buffer, pdefCopy )
 
-		// remove all keys that are the same as the stored pdata (makes my life easier)
-		// or not.
+		// get the vanilla pdata we are already storing in the DB for the player, we will make changes to this and re-write it to the DB
 		let player = await ( module.exports.AsyncGetPlayerByID( playerID ) )
-		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
-		//let copiedVanilla = JSON.parse( JSON.stringify( vanillaPdata ) )
+		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, { ...DEFAULT_PDEF_OBJECT } )
 
-		// THIS IS BAD AND SHOULD RECURSE
+		// NEW STUFF
+		// the pdata can be thought of like a tree, we need to find all the branches that are modified by the pdiffs
+		// to do this we should recurse through each branch
 
+		/*function RecursiveCheckPdata( pdata, pdiff )
+		{
+			Object.keys( pdata ).forEach( key =>
+			{
+				console.log( key )
+				// checking if key was directly added by the pdiff
+				let found = false
+				pdiff.pdef.members.forEach( member =>
+				{
+					if ( member.name == key )
+						found = true
+				} )
+				if ( found )
+				{
+					console.log( "KEY '" + key + "' WAS DIRECTLY ADDED BY PDIFF" )
+				}
+				else
+				{
+					console.log( "KEY '" + key + "' WAS DIRECTLY ADDED BY PDIFF" )
+				}
+				// checking array stuff
+				if ( pdata[key].arraySize === undefined )
+				{
+					console.log( "KEY '" + key + "' IS NOT AN ARRAY" )
+				}
+				else if ( isNaN( Number( pdata[key].arraySize ) ) )
+				{
+					console.log( "KEY '" + key + "' IS AN ARRAY OF DYNAMIC LENGTH '" + pdata[key].arraySize + "'" )
+				}
+				else
+				{
+					console.log( "KEY '" + key + "' IS AN ARRAY OF FIXED LENGTH '" + pdata[key].arraySize + "'" )
+				}
+			} )
+		}*/
+
+		ret.pdiffs.forEach( pdiff =>
+		{
+			console.log( "FINDING PDATA CHANGES RELATED TO PDIFF '" + pdiff.hash + "'" )
+
+			// look through the pdef members and find them in the pdata
+			pdiff.pdef.members.forEach( member =>
+			{
+				console.log( member )
+
+				// find data on the member from pdata
+				console.assert( Object.keys( parsed ).includes( member.name ), "PDATA DOES NOT CONTAIN AN ENTRY FOR '" + member.name + "'" )
+				let data = parsed[member.name]
+				// add to ret
+				pdiff.data[member.name] = data.value
+			} )
+
+			// find all instances of enumAdds being used TODO
+		} )
+		console.log( "DONE" )
+
+		// OLD STUFF
 
 		// iterate through the keys
-		Object.keys( parsed ).forEach( key =>
+		/*Object.keys( parsed ).forEach( key =>
 		{
 			// THIS IS PROBABLY MISSING SOME CASES
 
@@ -376,7 +433,10 @@ module.exports = {
 			vanillaPdata[key] = parsed[key]
 			console.log( "key is not modded" )
 			console.log( key )
-		} )
+		} )*/
+
+
+		// convert the vanilla pdata to buffer and put it in ret.baseline to be written
 		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, { ...DEFAULT_PDEF_OBJECT } )
 
 		return ret

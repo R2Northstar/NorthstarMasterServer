@@ -108,7 +108,7 @@ module.exports = ( fastify, opts, done ) =>
 				{
 					console.log( pdiff.data )
 					// commenting for now while i rewrite the reading of pdiffs
-					//await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
+					await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
 				}
 				console.log( "writing persistence baseline" )
 				await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, persistenceJSON.baseline )

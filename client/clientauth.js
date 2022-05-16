@@ -162,7 +162,7 @@ module.exports = ( fastify, opts, done ) =>
 					method: "POST",
 					host: server.ip,
 					port: server.authPort,
-					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}&username=${account.username}`
+					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}&username=${encodeURI( account.username )}`
 				}, pdata )
 			}
 			catch

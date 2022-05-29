@@ -248,7 +248,7 @@ module.exports = ( fastify, opts, done ) =>
 
 			for ( let key of Object.keys( request.query ) )
 			{
-				if ( key == "id" || key == "port" || key == "authport" || !( key in server ) || request.query[ key ].length >= 512 )
+				if ( key == "id" || key == "port" || key == "authport" || !( key in server ) || request.query[ key ].length >= 512 || typeof request.query[ key ] != "string" )
 					continue
 
 				if ( key == "playerCount" || key == "maxPlayers" )

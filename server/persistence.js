@@ -1,5 +1,5 @@
 const path = require( "path" )
-const accounts = require( path.join( __dirname, "../shared/accounts" ) )
+const db = require( path.join( __dirname, "../shared/db" ) )
 
 const { GetGameServers } = require( "../shared/gameserver_base" )
 const { getRatelimit } = require( "../shared/ratelimit" )
@@ -24,7 +24,7 @@ module.exports = ( fastify, opts, done ) =>
 		async ( request ) =>
 		{
 			// check if account exists 
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
 				return null
 
@@ -47,7 +47,7 @@ module.exports = ( fastify, opts, done ) =>
 			let buf = await ( await request.file() ).toBuffer()
 
 			if ( buf.length == account.persistentDataBaseline.length )
-				await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
+				await db.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
 
 			return null
 		} )

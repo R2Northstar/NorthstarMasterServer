@@ -1,4 +1,4 @@
-const accounts = require( "../shared/accounts" )
+const db = require( "../shared/db" )
 const { getRatelimit } = require( "../shared/ratelimit" )
 
 module.exports = ( fastify, opts, done ) =>
@@ -27,7 +27,7 @@ module.exports = ( fastify, opts, done ) =>
 					error: "No username provided"
 				}
 			}
-			let matches = await accounts.AsyncGetPlayersByUsername( request.query.username )
+			let matches = await db.AsyncGetPlayersByUsername( request.query.username )
 			return {
 				success: true,
 				username: request.query.username,
@@ -58,7 +58,7 @@ module.exports = ( fastify, opts, done ) =>
 				}
 			}
 			console.log( request.query.uid )
-			let match = await accounts.AsyncGetPlayerByID( request.query.uid )
+			let match = await db.AsyncGetPlayerByID( request.query.uid )
 			if( match == null )
 			{
 				return {

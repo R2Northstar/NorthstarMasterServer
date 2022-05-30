@@ -1,6 +1,6 @@
 const crypto = require( "crypto" )
 const { GetGameServers } = require( "../shared/gameserver_base" )
-const accounts = require( "../shared/accounts" )
+const db = require( "../shared/db" )
 const asyncHttp = require( "../shared/asynchttp" )
 const { minimumVersion } = require( "../shared/version" )
 const { getUserInfo, getOriginAuthState } = require( "../shared/origin" )
@@ -89,27 +89,27 @@ module.exports = ( fastify, opts, done ) =>
 				// don't do this: return { success: false } // fail if we can't find it
 			}
 
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if ( !account ) // create account for user
 			{
-				await accounts.AsyncCreateAccountForID( request.query.id )
-				account = await accounts.AsyncGetPlayerByID( request.query.id )
+				await db.AsyncCreateAccountForID( request.query.id )
+				account = await db.AsyncGetPlayerByID( request.query.id )
 			}
 
 			// check token reuse
-			if( await accounts.AsyncHasPlayerUsedGameToken( request.query.id, request.query.token ) )
+			if( await db.AsyncHasPlayerUsedGameToken( request.query.id, request.query.token ) )
 			{
 				return { success: false, error: REUSED_GAME_TOKEN }
 			}
-			accounts.AsyncAddPlayerUsedGameToken( request.query.id, request.query.token )
+			db.AsyncAddPlayerUsedGameToken( request.query.id, request.query.token )
 
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" )
-			accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
+			db.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
 
-			if ( playerUsername ) accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
+			if ( playerUsername ) db.AsyncUpdatePlayerUsername( account.id, playerUsername )
 
-			accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
+			db.AsyncUpdatePlayerAuthIp( account.id, request.ip )
 
 			return {
 				success: true,
@@ -135,7 +135,7 @@ module.exports = ( fastify, opts, done ) =>
 			if( !minimumVersion( request ) )
 				return { success: false, error: UNSUPPORTED_VERSION }
 
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
 				return { success: false, error: PLAYER_NOT_FOUND }
 
@@ -149,7 +149,7 @@ module.exports = ( fastify, opts, done ) =>
 
 			// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
-			accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
+			db.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
 			return {
 				success: true,
@@ -186,7 +186,7 @@ module.exports = ( fastify, opts, done ) =>
 			if ( !server || ( server.hasPassword && request.query.password != server.password ) )
 				return { success: false, error: UNAUTHORIZED_PWD }
 
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
 				return { success: false, error: PLAYER_NOT_FOUND }
 
@@ -202,7 +202,7 @@ module.exports = ( fastify, opts, done ) =>
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 
 			// todo: build persistent data here, rather than sending baseline only
-			let pdata = await accounts.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
+			let pdata = await db.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
 
 			let authResponse
 			try
@@ -227,7 +227,7 @@ module.exports = ( fastify, opts, done ) =>
 				return { success: false, error: JSON_PARSE_ERROR }
 
 			// update the current server for the player account
-			accounts.AsyncUpdatePlayerCurrentServer( account.id, server.id )
+			db.AsyncUpdatePlayerCurrentServer( account.id, server.id )
 
 			return {
 				success: true,

@@ -1,3 +1,5 @@
+const crypto = require( "crypto" )
+
 const NATIVE_TYPES = {
 	int: { size: 4,
 		read: ( buf, idx ) => buf.readInt32LE( idx ),
@@ -463,14 +465,54 @@ function PdataJsonToBuffer( json, pdef )
 	return buf
 }
 
+async function ParseModPDiffs( request )
+{
+	let modInfo
+
+	if ( request.isMultipart() )
+	{
+		try
+		{
+			modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+		}
+		catch ( ex )
+		{
+			return
+		}
+	}
+
+	// pdiff stuff
+	if ( modInfo && modInfo.Mods )
+	{
+		for ( let mod of modInfo.Mods )
+		{
+			if ( mod.pdiff )
+			{
+				try
+				{
+					let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
+					mod.pdiff = ParseDefinitionDiff( mod.pdiff )
+					mod.pdiff.hash = pdiffHash
+				}
+				catch ( ex )
+				{
+					mod.pdiff = null
+				}
+			}
+		}
+	}
+
+	return modInfo
+}
 
 module.exports = {
-	NATIVE_TYPES: NATIVE_TYPES,
+	NATIVE_TYPES,
 
-	ParseDefinition: ParseDefinition,
-	ParseDefinitionDiff: ParseDefinitionDiff,
-	GetMemberSize: GetMemberSize,
-	PdataToJson: PdataToJson,
-	PdataToJsonUntyped: PdataToJsonUntyped,
-	PdataJsonToBuffer: PdataJsonToBuffer,
+	ParseDefinition,
+	ParseDefinitionDiff,
+	GetMemberSize,
+	PdataToJson,
+	PdataToJsonUntyped,
+	PdataJsonToBuffer,
+	ParseModPDiffs
 }

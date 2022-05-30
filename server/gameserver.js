@@ -47,6 +47,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+
 			if ( !( "id" in request.query ) )
 				return null
 
@@ -115,6 +118,9 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
+			if( !minimumVersion( request ) )
+				return { success: false, error: UNSUPPORTED_VERSION }
+
 			let server = GetGameServers()[ request.query.id ]
 			// dont remove if the server doesnt exist, or the server isnt the one sending the heartbeat
 			if ( !server || request.ip != server.ip )

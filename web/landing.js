@@ -9,16 +9,16 @@ module.exports = ( fastify, opts, done ) =>
 
 	// add static routes
 	fastify.register( fastifyStatic, {
-		root: path.join( __dirname, "../web/assets" ),
+		root: path.join( __dirname, "landing/assets" ),
 		prefix: "/assets/"
 	} )
 	fastify.register( fastifyStatic, {
-		root: path.join( __dirname, "../web/script" ),
+		root: path.join( __dirname, "landing/script" ),
 		prefix: "/script/",
 		decorateReply: false
 	} )
 	fastify.register( fastifyStatic, {
-		root: path.join( __dirname, "../web/style" ),
+		root: path.join( __dirname, "landing/style" ),
 		prefix: "/style/",
 		decorateReply: false
 	} )
@@ -31,7 +31,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request, reply ) =>
 		{
-			const stream = fs.createReadStream( path.join( __dirname, "../web/index.html" ), "utf-8" )
+			const stream = fs.createReadStream( path.join( __dirname, "landing/index.html" ), "utf-8" )
 			reply.type( "text/html" ).send( stream )
 		} )
 

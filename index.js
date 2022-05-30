@@ -36,7 +36,7 @@ else
 
 fastify.register( require( "fastify-multipart" ) )
 
-const ROUTE_PATHS = [ "client", "server", "account" ]
+const ROUTE_PATHS = [ "client", "server", "web", "api" ]
 
 if( process.env.USE_RATELIMIT )
 {

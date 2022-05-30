@@ -1,5 +1,5 @@
 const { GetGameServers, RemoveGameServer, HasGhostServer } = require( "../shared/gameserver_base" )
-const { TryAddServer, TryReviveServer } = require( "../shared/gameserver_con" )
+const { TryAddServer, TryReviveServer } = require( "../shared/gameserver_create" )
 const { minimumVersion } = require( "../shared/version" )
 const { getRatelimit } = require( "../shared/ratelimit" )
 const { updateServerList } = require( "../shared/serverlist" )

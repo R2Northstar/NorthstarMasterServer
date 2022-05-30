@@ -1,4 +1,5 @@
 const { GetGameServers, RemoveGameServer, HasGhostServer } = require( "../shared/gameserver_base" )
+const { ParseModPDiffs } = require( "../shared/pjson" )
 const { TryAddServer, TryReviveServer } = require( "../shared/gameserver_create" )
 const { minimumVersion } = require( "../shared/version" )
 const { getRatelimit } = require( "../shared/ratelimit" )
@@ -64,16 +65,34 @@ module.exports = ( fastify, opts, done ) =>
 
 			for ( let key of Object.keys( request.query ) )
 			{
-				if ( key == "id" || key == "port" || key == "authport" || !( key in server ) || request.query[ key ].length >= 512 || typeof request.query[ key ] != "string" )
+				const allowedKeys = ["name", "description", "playerCount", "maxPlayers", "map", "playlist", "password"]
+
+				if ( !allowedKeys.includes( key ) || !( key in server ) || request.query[ key ].length >= 512 || typeof request.query[ key ] != "string" )
 					continue
 
 				if ( key == "playerCount" || key == "maxPlayers" )
 				{
 					server[ key ] = parseInt( request.query[ key ] )
 				}
-				else						//i suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
+				else //i suppose maybe add the brackets here to as upper one works with it. but actually its fine not to i guess.
 				{
 					server[ key ] = request.query[ key ]
+				}
+			}
+
+
+			let modInfo = await ParseModPDiffs( request )
+			if( modInfo )
+			{
+				try
+				{
+					server.modInfo = { Mods: [] }
+					for ( let mod of modInfo.Mods )
+						server.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null } )
+				}
+				catch( e )
+				{
+					// Do nothing
 				}
 			}
 

@@ -23,7 +23,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-		// check if account exists 
+			// check if account exists 
 			let account = await accounts.AsyncGetPlayerByID( request.query.id )
 			if ( !account )
 				return null

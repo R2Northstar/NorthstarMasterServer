@@ -4,7 +4,8 @@ const fs = require( "fs" )
 const { getRatelimit } = require( "../shared/ratelimit" )
 const { getLastUpdated, getServerList, updateServerList } = require( "../shared/serverlist" )
 
-let promodataPath = path.join( __dirname, "mainmenupromodata.json" )
+// Promo data
+let promodataPath = path.join( __dirname, "data/mainmenupromodata.json" )
 
 // watch the mainmenupromodata file so we can update it without a masterserver restart
 // eslint-disable-next-line
@@ -12,7 +13,7 @@ fs.watch( promodataPath, ( curr, prev ) =>
 {
 	try
 	{
-		mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
+		mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath, "utf8" ) )
 		console.log( "updated main menu promo data successfully!" )
 	}
 	catch ( ex )
@@ -24,10 +25,10 @@ fs.watch( promodataPath, ( curr, prev ) =>
 
 let mainMenuPromoData = {}
 if ( fs.existsSync( promodataPath ) )
-	mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath ).toString() )
+	mainMenuPromoData = JSON.parse( fs.readFileSync( promodataPath, "utf8" ) )
 
-
-let announcementsPath = path.join( __dirname, "announcements.json" )
+// Announcements
+let announcementsPath = path.join( __dirname, "data/announcements.json" )
 
 // watch the announcements file so we can update it without a masterserver restart
 // eslint-disable-next-line
@@ -35,7 +36,31 @@ fs.watch( announcementsPath, ( curr, prev ) =>
 {
 	try
 	{
-		announcementsData = JSON.parse( fs.readFileSync( announcementsPath ).toString() )
+		announcementsData = JSON.parse( fs.readFileSync( announcementsPath, "utf8" ) )
+		console.log( "updated announcements data successfully!" )
+	}
+	catch ( ex )
+	{
+		console.log( `encountered error updating announcements data: ${ ex }` )
+	}
+
+} )
+
+let announcementsData = {}
+if ( fs.existsSync( announcementsPath ) )
+	announcementsData = JSON.parse( fs.readFileSync( announcementsPath, "utf8" ) )
+
+
+// MOTD
+let motdPath = path.join( __dirname, "data/motd.txt" )
+
+// watch the announcements file so we can update it without a masterserver restart
+// eslint-disable-next-line
+fs.watch( motdPath, ( curr, prev ) =>
+{
+	try
+	{
+		motdData = fs.readFileSync( motdPath, "utf8" )
 		console.log( "updated main menu promo data successfully!" )
 	}
 	catch ( ex )
@@ -45,9 +70,9 @@ fs.watch( announcementsPath, ( curr, prev ) =>
 
 } )
 
-let announcementsData = {}
-if ( fs.existsSync( announcementsPath ) )
-	announcementsData = JSON.parse( fs.readFileSync( announcementsPath ).toString() )
+let motdData = ""
+if ( fs.existsSync( motdPath ) )
+	motdData = fs.readFileSync( motdPath, "utf8" )
 
 module.exports = ( fastify, opts, done ) =>
 {
@@ -73,6 +98,17 @@ module.exports = ( fastify, opts, done ) =>
 		async ( ) =>
 		{
 			return announcementsData
+		} )
+
+	// GET /client/motd
+	// returns motd
+	fastify.get ( "/client/motd",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__CLIENT_MOTD" ) }, // ratelimit
+		},
+		async ( ) =>
+		{
+			return motdData
 		} )
 
 	// GET /client/servers

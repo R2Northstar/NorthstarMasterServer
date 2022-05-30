@@ -34,7 +34,7 @@ else
 	} )
 }
 
-fastify.register( require( "fastify-multipart" ) )
+fastify.register( require( "@fastify/multipart" ) )
 
 const ROUTE_PATHS = [ "client", "server", "web", "api" ]
 

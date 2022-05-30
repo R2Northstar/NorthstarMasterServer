@@ -31,6 +31,10 @@ const errorCodes = {
 		enum: "INVALID_MASTERSERVER_TOKEN",
 		msg: "Invalid or expired masterserver token"
 	},
+	REUSED_GAME_TOKEN: {
+		enum: "REUSED_GAME_TOKEN",
+		msg: "Reused Origin game token"
+	},
 	JSON_PARSE_ERROR: {
 		enum: "JSON_PARSE_ERROR",
 		msg: "Error parsing json response"
@@ -42,6 +46,10 @@ const errorCodes = {
 	DUPLICATE_SERVER: {
 		enum: "DUPLICATE_SERVER",
 		msg: "A server with this port already exists for your IP address"
+	},
+	MALFORMED_REQUEST: {
+		enum: "MALFORMED_REQUEST",
+		msg: "An invalid request was sent to the server"
 	}
 }
 

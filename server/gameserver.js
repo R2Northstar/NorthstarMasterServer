@@ -1,8 +1,9 @@
-const { GetGameServers, RemoveGameServer, HasGhostServer, TryAddServer, TryReviveServer } = require( "../shared/gameserver.js" )
-const { minimumVersion } = require( "../shared/version.js" )
-const { getRatelimit } = require( "../shared/ratelimit.js" )
-const { updateServerList } = require( "../shared/serverlist.js" )
-const { UNSUPPORTED_VERSION } = require( "../shared/errorcodes.js" )
+const { GetGameServers, RemoveGameServer, HasGhostServer } = require( "../shared/gameserver_base" )
+const { TryAddServer, TryReviveServer } = require( "../shared/gameserver_con" )
+const { minimumVersion } = require( "../shared/version" )
+const { getRatelimit } = require( "../shared/ratelimit" )
+const { updateServerList } = require( "../shared/serverlist" )
+const { UNSUPPORTED_VERSION } = require( "../shared/errorcodes" )
 
 
 module.exports = ( fastify, opts, done ) =>

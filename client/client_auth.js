@@ -1,14 +1,13 @@
-const path = require( "path" )
 const crypto = require( "crypto" )
-const { GetGameServers } = require( path.join( __dirname, "../shared/gameserver.js" ) )
-const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
-const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
-const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
-const { getUserInfo, getOriginAuthState } = require( path.join( __dirname, "../shared/origin.js" ) )
+const { GetGameServers } = require( "../shared/gameserver_base" )
+const accounts = require( "../shared/accounts" )
+const asyncHttp = require( "../shared/asynchttp" )
+const { minimumVersion } = require( "../shared/version" )
+const { getUserInfo, getOriginAuthState } = require( "../shared/origin" )
 
 let shouldRequireSessionToken = ( process.env.REQUIRE_SESSION_TOKEN != undefined ? process.env.REQUIRE_SESSION_TOKEN : true )
 
-const { getRatelimit } = require( "../shared/ratelimit.js" )
+const { getRatelimit } = require( "../shared/ratelimit" )
 const {
 	STRYDER_RESPONSE,
 	UNAUTHORIZED_GAME,
@@ -21,7 +20,7 @@ const {
 	UNSUPPORTED_VERSION,
 	MALFORMED_REQUEST,
 	REUSED_GAME_TOKEN
-} = require( "../shared/errorcodes.js" )
+} = require( "../shared/errorcodes" )
 
 module.exports = ( fastify, opts, done ) =>
 {

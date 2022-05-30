@@ -1,4 +1,4 @@
-const { getRatelimit } = require( "../shared/ratelimit.js" )
+const { getRatelimit } = require( "../shared/ratelimit" )
 const fs = require( "fs" )
 const path = require( "path" )
 const fastifyStatic = require( "fastify-static" )

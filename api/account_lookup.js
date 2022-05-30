@@ -1,7 +1,5 @@
-const path = require( "path" )
-const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
-
-const { getRatelimit } = require( "../shared/ratelimit.js" )
+const accounts = require( "../shared/accounts" )
+const { getRatelimit } = require( "../shared/ratelimit" )
 
 module.exports = ( fastify, opts, done ) =>
 {

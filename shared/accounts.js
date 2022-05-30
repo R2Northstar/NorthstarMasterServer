@@ -6,8 +6,7 @@ const bcrypt = require( "bcrypt" )
 const BCRYPT_SALT_ROUNDS = 10
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
-// const path = require( "path" )
-// const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
+// const pjson = require( "../shared/pjson" )
 // const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
 const dbSchemaRaw = fs.readFileSync( "./dbSchema.json" )

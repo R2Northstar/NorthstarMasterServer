@@ -1,7 +1,7 @@
 let serverList = []
 let lastUpdated = Date.now()
 
-const { GameServer, GetGameServers, RemoveGameServer } = require( "../shared/gameserver.js" )
+const { GameServer, GetGameServers, RemoveGameServer } = require( "./gameserver_base" )
 
 module.exports = {
 	getLastUpdated: function ()

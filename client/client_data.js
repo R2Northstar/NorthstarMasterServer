@@ -1,8 +1,8 @@
 const path = require( "path" )
 const fs = require( "fs" )
 
-const { getRatelimit } = require( "../shared/ratelimit.js" )
-const { getLastUpdated, getServerList, updateServerList } = require( "../shared/serverlist.js" )
+const { getRatelimit } = require( "../shared/ratelimit" )
+const { getLastUpdated, getServerList, updateServerList } = require( "../shared/serverlist" )
 
 let promodataPath = path.join( __dirname, "mainmenupromodata.json" )
 

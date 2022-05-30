@@ -166,7 +166,7 @@ function PostData( location, postData, headers = {} )
 	} )
 }
 
-const asyncHttp = require( "./asynchttp.js" )
+const asyncHttp = require( "./asynchttp" )
 
 async function getUserInfo( uid )
 {

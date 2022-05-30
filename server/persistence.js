@@ -1,7 +1,7 @@
 const path = require( "path" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 
-const { GetGameServers } = require( "../shared/gameserver.js" )
+const { GetGameServers } = require( "../shared/gameserver_base.js" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 
 module.exports = ( fastify, opts, done ) =>

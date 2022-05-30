@@ -1,8 +1,8 @@
 const path = require( "path" )
-const { PLAYER_NOT_FOUND } = require( "../shared/errorcodes.js" )
-const { ParseDefinition, PdataToJsonUntyped } = require( "../shared/pjson.js" )
-const { getRatelimit } = require( "../shared/ratelimit.js" )
-const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
+const { PLAYER_NOT_FOUND } = require( "../shared/errorcodes" )
+const { ParseDefinition, PdataToJsonUntyped } = require( "../shared/pjson" )
+const { getRatelimit } = require( "../shared/ratelimit" )
+const accounts = require( path.join( __dirname, "../shared/accounts" ) )
 const fs = require( "fs" )
 
 const PLAYER_DATA_PDEF_231 = ParseDefinition( fs.readFileSync( "./persistent_player_data_version_231.pdef", "utf8" ) )

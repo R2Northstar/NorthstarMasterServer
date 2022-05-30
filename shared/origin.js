@@ -2,8 +2,10 @@ let sidCookie
 let AuthToken
 let authed = false
 const fs = require( "fs" )
+const crypto = require( "crypto" )
 const https = require( "https" )
-const { parseString } = require( "xml2js" )
+
+const secureOptions = crypto.constants.SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION
 
 async function authWithOrigin()
 { // thanks to r-ex for the help
@@ -91,7 +93,7 @@ function GetHeaders( location, headers = {} )
 {
 	return new Promise( resolve =>
 	{
-		let params = { headers }
+		let params = { headers, secureOptions }
 		let href = new URL( location )
 		params.host = href.host
 		params.path = href.pathname + href.search
@@ -105,7 +107,7 @@ function GetData( location, headers = {} )
 {
 	return new Promise( resolve =>
 	{
-		let params = { headers }
+		let params = { headers, secureOptions }
 		let href = new URL( location )
 		params.host = href.host
 		params.path = href.pathname + href.search
@@ -124,7 +126,7 @@ function PostData( location, postData, headers = {} )
 {
 	return new Promise( ( resolve, reject ) =>
 	{
-		let params = { headers }
+		let params = { headers, secureOptions }
 		let href = new URL( location )
 		params.method = "POST"
 
@@ -177,19 +179,16 @@ async function getUserInfo( uid )
 			host: "https://api1.origin.com",
 			port: 443,
 			path: `/atom/users?userIds=${uid}`,
-			headers: { "AuthToken": AuthToken }
+			headers: {
+				"AuthToken": AuthToken,
+				Accept: "application/json"
+			}
 		} )
 
 		let json
 		try
 		{
-			json = await new Promise( resolve =>
-			{
-				parseString( response.toString(), function ( err, result )
-				{
-					resolve( result )
-				} )
-			} )
+			json = JSON.parse( response.toString() )
 		}
 		catch ( error )
 		{

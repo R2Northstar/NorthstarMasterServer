@@ -24,8 +24,7 @@
 		"fastify-rate-limit": "^5.7.0",
 		"fastify-static": "^4.5.0",
 		"semver": "^7.3.5",
-		"sqlite3": "^5.0.2",
-		"xml2js": "^0.4.23"
+		"sqlite3": "^5.0.2"
 	},
 	"devDependencies": {
 		"eslint": "^8.6.0",

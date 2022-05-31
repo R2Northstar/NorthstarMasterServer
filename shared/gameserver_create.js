@@ -40,6 +40,8 @@ async function TryVerifyServer( request )
 
 async function TryAddServer( request )
 {
+	updateServerList()
+
 	let servers = GetGameServers()
 	for ( let key in servers )
 	{
@@ -68,8 +70,10 @@ async function TryAddServer( request )
 	if ( typeof request.query.authPort == "string" )
 		request.query.authPort = parseInt( request.query.authPort )
 
+
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
+
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
 	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)

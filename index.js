@@ -14,11 +14,34 @@ if( trustProxy && process.env.TRUST_PROXY_LIST_PATH )
 	trustProxy = addressList.split( "\n" ).map( a => a.trim() ).filter( a => !a.startsWith( "#" ) && a != "" )
 }
 
+const { getReasonPhrase } = require( "http-status-codes" )
+const loggerOpts = {
+	prettyPrint: {
+		colorize: false,
+		translateTime: "HH:MM:ss Z",
+		ignore: "pid,hostname,req,res,reqId,responseTime",
+		singleLine: true,
+		messageFormat: ( log, messageKey ) =>
+		{
+			let msg = log[messageKey]
+			if( log.req )
+			{
+				msg = `INCOMING REQUEST \t${log.reqId} \t${log.req.remoteAddress} \t${log.req.method} ${log.req.url}`
+			}
+			if( log.res )
+			{
+				msg = `REQUEST COMPLETE \t${log.reqId} \t${log.responseTime.toFixed( 4 )}ms \t${log.res.statusCode} ${getReasonPhrase( log.res.statusCode )}`
+			}
+			return msg
+		}
+	}
+}
+
 let fastify = require( "fastify" )
 if ( process.env.USE_HTTPS )
 {
 	fastify = fastify( {
-		logger: process.env.USE_FASTIFY_LOGGER || false,
+		logger: process.env.USE_FASTIFY_LOGGER ? loggerOpts : false,
 		https: {
 			key: fs.readFileSync( process.env.SSL_KEY_PATH ),
 			cert: fs.readFileSync( process.env.SSL_CERT_PATH )
@@ -29,7 +52,7 @@ if ( process.env.USE_HTTPS )
 else
 {
 	fastify = fastify( {
-		logger: process.env.USE_FASTIFY_LOGGER || false,
+		logger: process.env.USE_FASTIFY_LOGGER ? loggerOpts : false,
 		trustProxy
 	} )
 }

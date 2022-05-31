@@ -24,12 +24,14 @@
 		"fastify-cors": "^6.0.2",
 		"fastify-rate-limit": "^5.7.0",
 		"fastify-static": "^4.5.0",
+		"http-status-codes": "^2.2.0",
 		"semver": "^7.3.5",
 		"sqlite3": "^5.0.2"
 	},
 	"devDependencies": {
 		"eslint": "^8.6.0",
 		"husky": "^7.0.0",
-		"nodemon": "^2.0.15"
+		"nodemon": "^2.0.15",
+		"pino-pretty": "^7.6.1"
 	}
 }

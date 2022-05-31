@@ -12,7 +12,12 @@ const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 const dbSchemaRaw = fs.readFileSync( "./dbSchema.json" )
 const dbSchema = JSON.parse( dbSchemaRaw )
 
-let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, async ex =>
+if( fs.existsSync( "playerdata.db" ) ) // migrate to agnostic db file
+{
+	fs.renameSync( "playerdata.db", "northstar.db" )
+}
+
+let playerDB = new sqlite.Database( "northstar.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, async ex =>
 {
 	if ( ex )
 		console.error( ex )

@@ -126,3 +126,6 @@ playerdata.db
 
 # origin sid cookie
 sid.cookie
+
+# main menu promos (prevents overwrites)
+client/mainmenupromodata.json

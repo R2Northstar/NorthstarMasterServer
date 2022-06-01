@@ -358,6 +358,16 @@ function GetMemberSize( member, parsedDef )
 
 function PdataToJson( pdata, pdef )
 {
+	// calc size
+	let size = 0
+	for ( let member of pdef.members )
+		size += GetMemberSize( member, pdef )
+
+	if ( size != pdata.length )
+	{
+		console.log( "calculated size does not match pdata length" )
+	}
+
 	let ret = {}
 	let i = 0
 
@@ -379,7 +389,15 @@ function PdataToJson( pdata, pdef )
 					i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
 				}
 				else if ( member.type in pdef.enums )
-					retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					try
+					{
+						retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					}
+					catch ( ex )
+					{
+						// if we are out of the bounds of the array we just assume the data is 0
+						retArray.push( pdef.enums[ member.type ][ 0 ] )
+					}
 				else if ( member.type in pdef.structs )
 				{
 					let newStruct = {}
@@ -401,11 +419,25 @@ function PdataToJson( pdata, pdef )
 		console.log( ex )
 	}
 
+	if ( i != size )
+	{
+		console.log( "did not reach the end of the pdata" )
+	}
+
 	return ret
 }
 
 function PdataToJsonUntyped( pdata, pdef )
 {
+	// calc size
+	let size = 0
+	for ( let member of pdef.members )
+		size += GetMemberSize( member, pdef )
+
+	if ( size != pdata.length )
+	{
+		console.log( "calculated size does not match pdata length" )
+	}
 	let ret = {}
 	let i = 0
 
@@ -427,7 +459,15 @@ function PdataToJsonUntyped( pdata, pdef )
 					i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
 				}
 				else if ( member.type in pdef.enums )
-					retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					try
+					{
+						retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					}
+					catch ( ex )
+					{
+						// if we are out of the bounds of the array we just assume the data is 0
+						retArray.push( pdef.enums[ member.type ][ 0 ] )
+					}
 				else if ( member.type in pdef.structs )
 				{
 					let newStruct = {}
@@ -510,13 +550,11 @@ function PdataJsonToBuffer( json, pdef )
 			if ( typeof( arraySize ) == "string" )
 				arraySize = pdef.enums[ arraySize ].length
 
-			//let oldi = i // debug
 			for ( let j = 0; j < arraySize; j++ )
 			{
 				let val = member.value
 				if ( typeof( val ) == "undefined" )
 				{
-					// console.log( "VAL IS NULL" ) // debug
 					val = "NULL"
 				}
 				if ( Number.isNaN( val ) )
@@ -532,8 +570,14 @@ function PdataJsonToBuffer( json, pdef )
 				else if ( member.type in pdef.enums )
 				{
 					if ( pdef.enums[ member.type ].indexOf( val ) == -1 )
+					{
 						console.log( "not found in enum" )
-					buf.writeUInt8( pdef.enums[ member.type ].indexOf( val ), i++ ) // enums are uint8s
+						buf.writeUInt8( 0, i++ )
+					}
+					else
+					{
+						buf.writeUInt8( pdef.enums[ member.type ].indexOf( val ), i++ ) // enums are uint8s
+					}
 				}
 				else if ( member.type in pdef.structs )
 				{
@@ -584,6 +628,21 @@ module.exports = {
 			try
 			{
 				modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+				modInfo.Mods.sort( ( a, b ) =>
+				{
+					if ( a.LoadPriority > b.LoadPriority )
+					{
+						return 1
+					}
+					else if ( a.LoadPriority < b.LoadPriority )
+					{
+						return -1
+					}
+					else
+					{
+						return 1
+					}
+				} )
 			}
 			catch ( ex )
 			{

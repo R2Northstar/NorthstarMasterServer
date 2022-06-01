@@ -1514,10 +1514,22 @@ int lastAbandonTime
 
 struct_ranked ranked
 
-// ADDED BY NORTHSTAR
+// ADDED BY NORTHSTAR - USE THESE IN PDIFF
+
+// reserved only exists because im not allowed an empty enum, shame cos its a bit of a waste of data
 $ENUM_START moddedPilotWeaponsAndOffhands
 	reserved
 $ENUM_END
 
 weaponMain moddedPilotWeapons[moddedPilotWeaponsAndOffhands]
 weaponOffhand moddedPilotOffhands[moddedPilotWeaponsAndOffhands]
+
+$ENUM_START skinAndCamoOverrides
+	none
+$ENUM_END
+
+// hardcoded 10 because thats the amount of pilot loadouts we have, and respawn hardcoded it as well
+skinAndCamoOverrides pilotMainSkinAndCamoOverrides[10]
+skinAndCamoOverrides pilotWeapon1SkinAndCamoOverrides[10]
+skinAndCamoOverrides pilotWeapon2SkinAndCamoOverrides[10]
+skinAndCamoOverrides pilotWeapon3SkinAndCamoOverrides[10]

@@ -85,34 +85,36 @@ module.exports = ( fastify, opts, done ) =>
 			}
 
 			let modInfo = JSON.parse( ( await ( await file2 ).toBuffer() ).toString() )
+			modInfo.Mods.sort( ( a, b ) =>
+			{
+				if ( a.LoadPriority > b.LoadPriority )
+				{
+					return 1
+				}
+				else if ( a.LoadPriority < b.LoadPriority )
+				{
+					return -1
+				}
+				else
+				{
+					return 1
+				}
+			} )
 
 			// mostly temp
 			let buf = ( await ( await file1 ).toBuffer() )
 
-			// check if server has any pdiff
-			// this might be a bit unsafe? some pdiff might just override something and therefore not change the length, better implementation would be to check if any server mods implement pdiff
-			console.log ( buf.length )
-			console.log ( account.persistentDataBaseline.length )
-			if ( buf.length == account.persistentDataBaseline.length )
+			let persistenceJSON = await modPersistence.AsyncModPersistenceBufferToJson( modInfo, request.query.id, buf )
+			//await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id,  persistenceJSON.baseline )
+			console.log( "writing pdiff data" )
+			for ( let pdiff of persistenceJSON.pdiffs )
 			{
-				console.log( "no mod pdiffs found, writing baseline" )
-				await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
+				console.log( pdiff.data )
+				// commenting for now while i rewrite the reading of pdiffs
+				await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
 			}
-			else
-			{
-				console.log( "mod pdiffs found" )
-				let persistenceJSON = await modPersistence.AsyncModPersistenceBufferToJson( modInfo, request.query.id, buf )
-				//await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id,  persistenceJSON.baseline )
-				console.log( "writing pdiff data" )
-				for ( let pdiff of persistenceJSON.pdiffs )
-				{
-					console.log( pdiff.data )
-					// commenting for now while i rewrite the reading of pdiffs
-					await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
-				}
-				console.log( "writing persistence baseline" )
-				await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, persistenceJSON.baseline )
-			}
+			console.log( "writing persistence baseline" )
+			await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, persistenceJSON.baseline )
 
 			return null
 		} )

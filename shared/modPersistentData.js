@@ -284,8 +284,7 @@ module.exports = {
 
 		let pdiffs = modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff )
 
-		// i hate javascript so much
-		let pdefCopy = { ...DEFAULT_PDEF_OBJECT }
+		var pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
 
 		for ( let pdiffstr of pdiffs )
 		{
@@ -316,128 +315,119 @@ module.exports = {
 
 		// get the vanilla pdata we are already storing in the DB for the player, we will make changes to this and re-write it to the DB
 		let player = await ( module.exports.AsyncGetPlayerByID( playerID ) )
-		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, { ...DEFAULT_PDEF_OBJECT } )
+		let vanillaPdata = await pjson.PdataToJson( player.persistentDataBaseline, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
 
-		// NEW STUFF
-		// the pdata can be thought of like a tree, we need to find all the branches that are modified by the pdiffs
-		// to do this we should recurse through each branch
-
-		/*function RecursiveCheckPdata( pdata, pdiff )
+		// recurse through all of the members of the vanilla pdata and get the respective values from the parsed pdata
+		// this will hopefully make any pdiffs safe as long as they dont do bad pdata stuff in script (which hopefully they wont but i cant stop them)
+		function RecursiveGetVanillaPdata( vanilla, pdata, key )
 		{
-			Object.keys( pdata ).forEach( key =>
+			if ( JSON.stringify( vanilla.value ) != JSON.stringify( pdata.value ) )
 			{
-				console.log( key )
-				// checking if key was directly added by the pdiff
-				let found = false
-				pdiff.pdef.members.forEach( member =>
+				console.log( "'" + key + "' has been changed" )
+			}
+			else
+			{
+				// if it's not been changed, no point in doing anything
+				return
+			}
+
+			// native type
+			if ( ["int", "float", "bool", "string" ].includes( vanilla.type ) )
+			{
+				// not an array
+				if ( Object.keys( vanilla.value ).length == 0 )
 				{
-					if ( member.name == key )
-						found = true
-				} )
-				if ( found )
-				{
-					console.log( "KEY '" + key + "' WAS DIRECTLY ADDED BY PDIFF" )
+					// should be safe to copy over here
+					vanilla.value = pdata.value
 				}
 				else
 				{
-					console.log( "KEY '" + key + "' WAS DIRECTLY ADDED BY PDIFF" )
-				}
-				// checking array stuff
-				if ( pdata[key].arraySize === undefined )
-				{
-					console.log( "KEY '" + key + "' IS NOT AN ARRAY" )
-				}
-				else if ( isNaN( Number( pdata[key].arraySize ) ) )
-				{
-					console.log( "KEY '" + key + "' IS AN ARRAY OF DYNAMIC LENGTH '" + pdata[key].arraySize + "'" )
-				}
-				else
-				{
-					console.log( "KEY '" + key + "' IS AN ARRAY OF FIXED LENGTH '" + pdata[key].arraySize + "'" )
-				}
-			} )
-		}*/
-
-		ret.pdiffs.forEach( pdiff =>
-		{
-			console.log( "FINDING PDATA CHANGES RELATED TO PDIFF '" + pdiff.hash + "'" )
-
-			// look through the pdef members and find them in the pdata
-			pdiff.pdef.members.forEach( member =>
-			{
-				console.log( member )
-
-				// find data on the member from pdata
-				console.assert( Object.keys( parsed ).includes( member.name ), "PDATA DOES NOT CONTAIN AN ENTRY FOR '" + member.name + "'" )
-				let data = parsed[member.name]
-				// add to ret
-				pdiff.data[member.name] = data.value
-			} )
-
-			// find all instances of enumAdds being used TODO
-		} )
-		console.log( "DONE" )
-
-		// OLD STUFF
-
-		// iterate through the keys
-		/*Object.keys( parsed ).forEach( key =>
-		{
-			// THIS IS PROBABLY MISSING SOME CASES
-
-			// if key is directly added by a mod, add it to the mod's pdiff object
-			let found = false
-			ret.pdiffs.forEach( pdiff =>
-			{
-				pdiff.pdef.members.forEach( member =>
-				{
-					if ( key == member.name )
+					// copy over only the amount of values we need, ignore any extras
+					Object.keys( vanilla.value ).forEach( valueKey =>
 					{
-						console.log( "key is a member defined in a pdiff" )
+						// should be safe to copy over here
+						vanilla.value[valueKey] = pdata.value[valueKey]
+					} )
+				}
+				return
+			}
 
-						console.log( key )
-						console.log( parsed[key] )
-						// this is currently adding it to *all* pdiffs that add the member, which is not ideal i don't think?
-						// potential for two mods to have the same member, but implemented differently
-						pdiff.data[key] = parsed[key]
-						found = true
+
+			// enum member
+			if ( Object.keys( DEFAULT_PDEF_OBJECT.enums ).includes( vanilla.type ) )
+			{
+				let vanillaPdefEnum = DEFAULT_PDEF_OBJECT.enums[vanilla.type]
+				// check that it wasnt added by an enumAdd
+				if ( vanillaPdefEnum.includes( pdata.value ) )
+					vanilla.value = pdata.value
+				else
+					console.log( "Not writing to vanilla pdata: Enum member is not present in the enum '" + vanilla.type + "'" )
+				return
+			}
+
+			// array
+			if ( typeof( vanilla.arraySize ) != "undefined" )
+			{
+				Object.keys( vanilla.value ).forEach( arrayKey =>
+				{
+					if ( JSON.stringify( vanilla.value[arrayKey] ) != JSON.stringify( pdata.value[arrayKey] ) )
+					{
+						console.log( "Index '" + arrayKey + "' has been changed" )
+					}
+					else
+					{
+						return
+					}
+
+					// shouldnt be any possibility of vanilla array length being more than modded array length, as they can only add to enums, and other arrays are hardcoded size
+					let vanillaMember = vanilla.value[arrayKey]
+					let pdataMember = pdata.value[arrayKey]
+
+					// if the array is just of native types/enum members
+					if ( ["int", "float", "bool", "string" ].concat( Object.keys( DEFAULT_PDEF_OBJECT.enums ) ).includes( vanilla.type ) )
+					{
+						// we already handled arrays of native types so this must be an enum member array i think?
+						let vanillaPdefEnum = DEFAULT_PDEF_OBJECT.enums[vanilla.type]
+
+						// copy over only the amount of values we need, ignore any extras
+						Object.keys( vanilla.value ).forEach( valueKey =>
+						{
+							// check that it wasnt added by an enumAdd
+							if ( vanillaPdefEnum.includes( pdata.value[valueKey] ) )
+								vanilla.value[valueKey] = pdata.value[valueKey]
+							else
+								console.log( "Not writing to vanilla pdata: Enum member is not present in the enum '" + vanilla.type + "'" )
+						} )
+					}
+					// if the array is of a struct
+					else
+					{
+						Object.keys( vanillaMember ).forEach( vanillaMemberKey =>
+						{
+							RecursiveGetVanillaPdata( vanillaMember[vanillaMemberKey], pdataMember[vanillaMemberKey], vanillaMemberKey )
+						} )
 					}
 				} )
-			} )
-			if ( found )
-			{
-				return // we have dealt with this key
+				return
 			}
-			// else if key is an enum member that is added by a mod, put it in the mod's pdiff object
-			let type = parsed[key].type
-			ret.pdiffs.forEach( pdiff =>
+
+			// not an array or anything, so must be a singleton struct?
+			Object.keys( vanilla.value ).forEach( vanillaKey =>
 			{
-				if ( typeof pdiff.pdef.enums[type] != "undefined" && pdiff.pdef.enums[type].includes( parsed[key].value ) ) // enums contains the type
-				{
-					console.log( "key is an enum member" )
-					console.log( key )
-
-					console.log( pdiff.pdef )
-					console.log( parsed[key].value )
-
-					pdiff.data[key] = parsed[key]
-					found = true
-				}
-
+				RecursiveGetVanillaPdata( vanilla.value[vanillaKey], pdata.value[vanillaKey], vanillaKey )
 			} )
-			if ( found )
-			{
-				return // we have dealt with this key
-			}
-			// else add to vanilla pdiff object
-			vanillaPdata[key] = parsed[key]
-			console.log( "key is not modded" )
-			console.log( key )
-		} )*/
+		}
 
+		// construct the vanilla pdata 
+		Object.keys( vanillaPdata ).forEach( key =>
+		{
+			RecursiveGetVanillaPdata( vanillaPdata[key], parsed[key], key )
+		} )
 
 		// convert the vanilla pdata to buffer and put it in ret.baseline to be written
-		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, { ...DEFAULT_PDEF_OBJECT } )
+		ret.baseline = pjson.PdataJsonToBuffer( vanillaPdata, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
+
+		// handle the actual pdiff data here
 
 		return ret
 	},
@@ -448,8 +438,8 @@ module.exports = {
 		let player = await module.exports.AsyncGetPlayerByID( id )
 		//return player.persistentDataBaseline
 
-		let pdefCopy = { ...DEFAULT_PDEF_OBJECT }
-		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, { ...DEFAULT_PDEF_OBJECT } )
+		let pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
+		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
 
 		let newPdataJson = baselineJson
 

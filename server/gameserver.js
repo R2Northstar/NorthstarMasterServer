@@ -103,6 +103,9 @@ async function SharedTryAddServer( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
+	
+	let serverHost = request.query.host || request.ip
+	
 	if ( typeof playerCount == "string" )
 		playerCount = parseInt( playerCount )
 
@@ -117,7 +120,7 @@ async function SharedTryAddServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, serverHost, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
 	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)
 	updateServerList()

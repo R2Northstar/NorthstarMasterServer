@@ -19,11 +19,12 @@ async function TryVerifyServer( request )
 	// check server's verify endpoint on their auth server, make sure it's fine
 	// in the future we could probably check the server's connect port too, with a c2s_connect packet or smth, but atm this is good enough
 	let authServerResponse
+	let serverHost = request.query.host || request.ip
 	try
 	{
 		authServerResponse = await asyncHttp.request( {
 			method: "GET",
-			host: request.ip,
+			host: serverHost,
 			port: request.query.authPort,
 			path: "/verify"
 		} )
@@ -36,7 +37,7 @@ async function TryVerifyServer( request )
 	if ( !authServerResponse || authServerResponse.toString() != VERIFY_STRING )
 		return 1
 
-	let gamePortDoesRespond = await QueryServerPort( request.ip, request.query.port )
+	let gamePortDoesRespond = await QueryServerPort( serverHost, request.query.port )
 	if( !gamePortDoesRespond ) return 1
 
 	return 0
@@ -120,7 +121,7 @@ async function SharedTryAddServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, serverHost, request.query.port, request.query.authPort, request.query.password, modInfo )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, serverHost, request.query.port, request.query.authPort, request.query.password, modInfo )
 	AddGameServer( newServer )
 	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)
 	updateServerList()
@@ -146,6 +147,9 @@ async function TryReviveServer( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
+	
+	let serverHost = request.query.host || request.ip
+	
 	if ( typeof playerCount == "string" )
 		playerCount = parseInt( playerCount )
 
@@ -154,7 +158,7 @@ async function TryReviveServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, ghost.port, ghost.authPort, request.query.password, modInfo )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, serverHost, ghost.port, ghost.authPort, request.query.password, modInfo )
 	newServer.id = ghost.id
 	AddGameServer( newServer )
 	RemoveGhostServer( ghost.id )
@@ -179,6 +183,7 @@ module.exports = ( fastify, opts, done ) =>
 			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__SERVER_ADDSERVER" ) }, // ratelimit
 			schema: {
 				querystring: {
+					host: { type: "string" }, // the hostname the gameserver listens to ( for reverse proxies )
 					port: { type: "integer" }, // the port the gameserver is being hosted on ( for connect )
 					authPort: { type: "integer" }, // the port the server's http auth server is being hosted on
 					name: { type: "string" }, // the name of the server

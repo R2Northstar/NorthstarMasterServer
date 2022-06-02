@@ -38,6 +38,7 @@ module.exports = {
 			// create a copy of the gameserver obj for clients so we can hide sensitive info
 			let copy = new GameServer( servers[ i ] )
 			delete copy.ip
+			delete copy.host
 			delete copy.port
 			delete copy.authPort
 			delete copy.password

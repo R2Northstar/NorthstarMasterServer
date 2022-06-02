@@ -10,6 +10,7 @@ class GameServer
 	// string playlist
 
 	// string ip
+	// string host
 	// int port
 	// int authPort
 
@@ -19,7 +20,7 @@ class GameServer
 	// object modInfo
 	// object pdiff
 
-	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = { Mods: [] } )
+	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, host, port, authPort, password = "", modInfo = { Mods: [] } )
 	{
 		if ( nameOrServer instanceof( GameServer ) ) // copy constructor
 		{
@@ -27,7 +28,7 @@ class GameServer
 
 			this.id = nameOrServer.id
 			this.serverAuthToken = nameOrServer.serverAuthToken
-			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.pdiffs )
+			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.host, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.pdiffs )
 		}
 		else // normal constructor
 		{
@@ -35,11 +36,11 @@ class GameServer
 
 			this.id = crypto.randomBytes( 16 ).toString( "hex" )
 			this.serverAuthToken = crypto.randomBytes( 16 ).toString( "hex" )
-			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
+			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, host, port, authPort, password, modInfo )
 		}
 	}
 
-	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
+	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, host, port, authPort, password, modInfo )
 	{
 		this.name = name
 		this.description = description
@@ -49,6 +50,7 @@ class GameServer
 		this.playlist = playlist
 
 		this.ip = ip
+		this.host = host;
 		this.port = port
 		this.authPort = authPort
 
@@ -78,6 +80,7 @@ class GameServerGhost
 {
 	// string id
 	// string ip
+	// string host
 	// int port
 	// int authPort
 
@@ -89,6 +92,7 @@ class GameServerGhost
 
 		this.id = server.id
 		this.ip = server.ip
+		this.host = server.host
 		this.port = server.port
 		this.authPort = server.authPort
 	}

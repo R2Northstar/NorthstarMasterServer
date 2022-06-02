@@ -50,7 +50,7 @@ class GameServer
 		this.playlist = playlist
 
 		this.ip = ip
-		this.host = host;
+		this.host = host
 		this.port = port
 		this.authPort = authPort
 

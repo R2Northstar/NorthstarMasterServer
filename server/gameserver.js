@@ -104,9 +104,9 @@ async function SharedTryAddServer( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
-	
+
 	let serverHost = request.query.host || request.ip
-	
+
 	if ( typeof playerCount == "string" )
 		playerCount = parseInt( playerCount )
 
@@ -147,9 +147,9 @@ async function TryReviveServer( request )
 	if( !modInfo ) return { success: false, error: JSON_PARSE_ERROR }
 
 	let playerCount = request.query.playerCount || 0
-	
+
 	let serverHost = request.query.host || request.ip
-	
+
 	if ( typeof playerCount == "string" )
 		playerCount = parseInt( playerCount )
 

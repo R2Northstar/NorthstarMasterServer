@@ -158,7 +158,7 @@ module.exports = ( fastify, opts, done ) =>
 			{
 				authResponse = await asyncHttp.request( {
 					method: "POST",
-					host: server.ip,
+					host: server.host,
 					port: server.authPort,
 					path: `/authenticate_incoming_player?id=${request.query.id}&authToken=${authToken}&serverAuthToken=${server.serverAuthToken}&username=${encodeURI( account.username )}`
 				}, pdata )
@@ -181,7 +181,7 @@ module.exports = ( fastify, opts, done ) =>
 			return {
 				success: true,
 
-				ip: server.ip,
+				ip: server.host,
 				port: server.port,
 				authToken: authToken
 			}

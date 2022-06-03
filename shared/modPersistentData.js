@@ -429,6 +429,301 @@ module.exports = {
 
 		// handle the actual pdiff data here
 
+		// recurse through the members of the pdata and write to the pdiff data
+		// pdiffWrite is the object in the pdiff's data that we are writing to currently
+		// isModded is for writing data through a struct/array without having to check each child when we know they have to be modded because their parent is
+		function RecursiveGetPdiffData( pdata, key, pdiff, pdiffWrite, isModded = false )
+		{
+			// create object in pdiff data (this will be removed later if it's empty)
+			pdiffWrite[key] = {}
+
+			// check if this was added directly by the pdiff
+			let memberIsModded = false
+
+			// not all pdiffs have members
+			// no need to check this stuff if we already know it's modded data
+			if ( typeof( pdiff.pdef.members ) != "undefined" && !isModded )
+			{
+				pdiff.pdef.members.forEach( member =>
+				{
+					if ( memberIsModded )
+						return
+					if ( member.name === key )
+						memberIsModded = true
+				} )
+			}
+			isModded = isModded || memberIsModded
+
+			// single:
+			if ( typeof( pdata.arraySize ) == "undefined" )
+			{
+				// native type
+				if ( ["int", "float", "bool", "string"].includes( pdata.type ) )
+				{
+					// if this, or its parent member are modded, write it
+					if ( isModded )
+					{
+						// write the data
+						pdiffWrite[key] = pdata.value
+					}
+				}
+				// enum member
+				else if ( Object.keys( pdefCopy.enums ).includes( pdata.type ) )
+				{
+					// is this or it's parent added directly?
+					if ( isModded )
+					{
+						// does the enum value come from vanilla or us?
+						if (
+							// comes from vanilla
+							(
+								typeof( DEFAULT_PDEF_OBJECT.enums[pdata.type] ) != "undefined"
+								&& DEFAULT_PDEF_OBJECT.enums[pdata.type].includes( pdata.value )
+							)
+							// or comes from our enumAdds
+							|| (
+								typeof( pdiff.enumAdds[pdata.type] ) != "undefined"
+								&& pdiff.enumAdds[pdata.type].includes( pdata.value )
+							)
+							// or comes from us directly
+							|| (
+								typeof( pdiff.pdef.enums[pdata.type] ) != "undefined"
+								&& pdiff.pdef.enums[pdata.type].includes( pdata.value )
+							) )
+						{
+							// if it does, write the data
+							pdiffWrite[key] = pdata.value
+						}
+						else
+						{
+							// if not, default to the first entry in the enum and write it
+							pdiffWrite[key] = pdefCopy.enums[pdata.type][0]
+						}
+					}
+					else
+					{
+						// did we add to the enum?
+						if ( Object.keys( pdiff.enumAdds ).includes( pdata.type ) )
+						{
+							// does the enum value come from us?
+							// if it does, write the data
+							if ( pdiff.enumAdds[pdata.type].includes( pdata.value ) )
+							{
+								pdiffWrite[key] = pdata.value
+							}
+						}
+					}
+				}
+				// struct
+				else
+				{
+					// recurse for all of the children
+					Object.keys( pdata.value ).forEach( childKey =>
+					{
+						RecursiveGetPdiffData( pdata.value[childKey], childKey, pdiff, pdiffWrite[key], isModded )
+					} )
+				}
+			}
+			// fixed size array of:
+			else if ( typeof( pdata.arraySize ) == "number" )
+			{
+				Object.keys( pdata.value ).forEach( i =>
+				{
+					// native type
+					if ( ["int", "float", "bool", "string"].includes( pdata.type ) )
+					{
+						// if this, or its parent member are modded, write it
+						if ( isModded )
+						{
+							// write the data
+							pdiffWrite[key][i] = pdata.value[i]
+						}
+					}
+					// enum member
+					else if ( Object.keys( pdefCopy.enums ).includes( pdata.type ) )
+					{
+						// is this or it's parent added directly?
+						if ( isModded )
+						{
+							// does the enum value come from vanilla or us?
+							if (
+								// comes from vanilla
+								(
+									typeof( DEFAULT_PDEF_OBJECT.enums[pdata.type] ) != "undefined"
+									&& DEFAULT_PDEF_OBJECT.enums[pdata.type].includes( pdata.value )
+								)
+								// or comes from our enumAdds
+								|| (
+									typeof( pdiff.enumAdds[pdata.type] ) != "undefined"
+									&& pdiff.enumAdds[pdata.type].includes( pdata.value )
+								)
+								// or comes from us directly
+								|| (
+									typeof( pdiff.pdef.enums[pdata.type] ) != "undefined"
+									&& pdiff.pdef.enums[pdata.type].includes( pdata.value )
+								) )
+							{
+								// if it does, write the data
+								pdiffWrite[key][i] = pdata.value[i]
+							}
+							else
+							{
+								// if not, default to the first entry in the enum and write it
+								pdiffWrite[key][i] = pdefCopy.enums[pdata.type][0]
+							}
+						}
+						else
+						{
+							// did we add to the enum?
+							if ( Object.keys( pdiff.enumAdds ).includes( pdata.type ) )
+							{
+								// does the enum value come from us?
+								// if it does, write the data
+								if ( pdiff.enumAdds[pdata.type].includes( pdata.value[i] ) )
+								{
+									pdiffWrite[key][i] = pdata.value[i]
+								}
+							}
+						}
+					}
+					// struct
+					else
+					{
+						pdiffWrite[key][i] = {}
+						// recurse for all of the children
+						Object.keys( pdata.value[i] ).forEach( childKey =>
+						{
+							RecursiveGetPdiffData( pdata.value[i][childKey], childKey, pdiff, pdiffWrite[key][i], isModded )
+
+							// remove the object if it is empty (we found nothing)
+							if ( typeof( pdiffWrite[key][i][childKey] ) === "object" && Object.keys( pdiffWrite[key][i][childKey] ).length === 0 )
+							{
+								delete pdiffWrite[key][i][childKey]
+							}
+						} )
+
+						// remove the object if it is empty (we found nothing)
+						if ( typeof( pdiffWrite[key][i] ) === "object" && Object.keys( pdiffWrite[key][i] ).length === 0 )
+						{
+							delete pdiffWrite[key][i]
+						}
+					}
+				} )
+			}
+			// dynamic size array of:
+			else if ( typeof( pdata.arraySize ) == "string" )
+			{
+				Object.keys( pdata.value ).forEach( i =>
+				{
+					let enumString = pdefCopy.enums[pdata.arraySize][i]
+					// if the enum member was added by the mod we know its modded
+					if ( typeof( pdiff.enumAdds[ pdata.arraySize ] ) != "undefined" && pdiff.enumAdds[ pdata.arraySize ].includes( enumString ) )
+					{
+						isModded = true
+					}
+					// native type
+					if ( ["int", "float", "bool", "string"].includes( pdata.type ) )
+					{
+						// if this, or its parent member are modded, write it
+						if ( isModded )
+						{
+							// write the data
+							pdiffWrite[key][enumString] = pdata.value[i]
+						}
+					}
+					// enum member
+					else if ( Object.keys( pdefCopy.enums ).includes( pdata.type ) )
+					{
+						// is this or it's parent added directly?
+						if ( isModded )
+						{
+							// does the enum value come from vanilla or us?
+							if (
+								// comes from vanilla
+								(
+									typeof( DEFAULT_PDEF_OBJECT.enums[pdata.type] ) != "undefined"
+									&& DEFAULT_PDEF_OBJECT.enums[pdata.type].includes( pdata.value )
+								)
+								// or comes from our enumAdds
+								|| (
+									typeof( pdiff.enumAdds[pdata.type] ) != "undefined"
+									&& pdiff.enumAdds[pdata.type].includes( pdata.value )
+								)
+								// or comes from us directly
+								|| (
+									typeof( pdiff.pdef.enums[pdata.type] ) != "undefined"
+									&& pdiff.pdef.enums[pdata.type].includes( pdata.value )
+								) )
+							{
+								// if it does, write the data
+								pdiffWrite[key][enumString] = pdata.value[i]
+							}
+							else
+							{
+								// if not, default to the first entry in the enum and write it
+								pdiffWrite[key][enumString] = pdefCopy.enums[pdata.type][0]
+							}
+						}
+						else
+						{
+							// did we add to the enum?
+							if ( Object.keys( pdiff.enumAdds ).includes( pdata.type ) )
+							{
+								// does the enum value come from us?
+								// if it does, write the data
+								if ( pdiff.enumAdds[pdata.type].includes( pdata.value[i] ) )
+								{
+									pdiffWrite[key][enumString] = pdata.value[i]
+								}
+							}
+						}
+					}
+					// struct
+					else
+					{
+						pdiffWrite[key][enumString] = {}
+						// recurse for all of the children
+						Object.keys( pdata.value[i] ).forEach( childKey =>
+						{
+							RecursiveGetPdiffData( pdata.value[i][childKey], childKey, pdiff, pdiffWrite[key][enumString], isModded )
+
+							// remove the object if it is empty (we found nothing)
+							if ( typeof( pdiffWrite[key][enumString][childKey] ) === "object" && Object.keys( pdiffWrite[key][enumString][childKey] ).length === 0 )
+							{
+								delete pdiffWrite[key][enumString][childKey]
+							}
+						} )
+
+						// remove the object if it is empty (we found nothing)
+						if ( typeof( pdiffWrite[key][enumString] ) === "object" && Object.keys( pdiffWrite[key][enumString] ).length === 0 )
+						{
+							delete pdiffWrite[key][enumString]
+						}
+					}
+				} )
+			}
+			// something went wrong
+			else
+			{
+				// this should be unreachable
+				console.log( "typeof arraySize for '" + key + "' is not valid" )
+			}
+
+			// remove the object if it is empty (we found nothing)
+			if ( typeof( pdiffWrite[key] ) === "object" && Object.keys( pdiffWrite[key] ).length === 0 )
+			{
+				delete pdiffWrite[key]
+			}
+		}
+
+		ret.pdiffs.forEach( pdiff =>
+		{
+			Object.keys( parsed ).forEach( key =>
+			{
+				RecursiveGetPdiffData( parsed[key], key, pdiff, pdiff.data )
+			} )
+		} )
+
 		return ret
 	},
 
@@ -438,10 +733,188 @@ module.exports = {
 		let player = await module.exports.AsyncGetPlayerByID( id )
 		//return player.persistentDataBaseline
 
-		let pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
+		var pdefCopy = JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) )
 		let baselineJson = pjson.PdataToJson( player.persistentDataBaseline, JSON.parse( JSON.stringify( DEFAULT_PDEF_OBJECT ) ) )
 
-		let newPdataJson = baselineJson
+		let newPdataJson = JSON.parse( JSON.stringify( baselineJson ) )
+
+		function RecursiveSplicePdiffData( base, pdiff, key, parentIsModded = false, parentStruct = undefined )
+		{
+			let target = base[key]
+			// member is not in the base pdata, check if this mod adds it directly
+			if ( typeof( target ) == "undefined" || parentIsModded )
+			{
+				// if we add this member directly in the pdef, then get info from the pdef and create the object
+				let newMember = { "type":undefined, "arraySize":undefined, "nativeArraySize":undefined, "value":undefined }
+				// get the info on this member from the pdef
+				if ( typeof( parentStruct ) == "undefined" )
+				{
+					// get the info from pdefCopy.members
+					pdefCopy.members.forEach( pdefMember =>
+					{
+						if ( pdefMember.name == key )
+						{
+							// copy the data over
+							Object.keys( pdefMember ).forEach( pdefMemberKey =>
+							{
+								if ( pdefMemberKey != "name" )
+									newMember[pdefMemberKey] = pdefMember[pdefMemberKey]
+							} )
+						}
+					} )
+				}
+				else
+				{
+					// get the info from pdefCopy.structs
+					let pdefStruct = pdefCopy.structs[parentStruct]
+					pdefStruct.forEach( structMember =>
+					{
+						// if the names match copy the information over
+						if ( structMember.name == key )
+						{
+							// copy the data over
+							Object.keys( structMember ).forEach( structMemberKey =>
+							{
+								if ( structMemberKey != "name" )
+									newMember[structMemberKey] = structMember[structMemberKey]
+							} )
+						}
+					} )
+				}
+				base[key] = newMember
+				target = base[key]
+			}
+
+			// single member of
+			if ( typeof( target.arraySize ) == "undefined" )
+			{
+				// native type
+				if ( ["int", "float", "bool", "string"].includes( target.type ) )
+				{
+					// write the data
+					target.value = pdiff[key]
+				}
+				// enum member
+				else if ( Object.keys( pdefCopy.enums ).includes( target.type ) )
+				{
+					// write the data
+					target.value = pdiff[key]
+				}
+				// struct
+				else
+				{
+					// create object if doesnt exist
+					if ( typeof( target.value ) == "undefined" )
+						target.value = {}
+					// populate object
+					Object.keys( pdiff[key] ).forEach( structMember =>
+					{
+						RecursiveSplicePdiffData( target.value, pdiff[key], structMember, true, target.type )
+					} )
+				}
+			}
+			// fixed length array of
+			else if ( typeof( target.arraySize ) == "number" )
+			{
+				// native types
+				if ( ["int", "float", "bool", "string"].includes( target.type ) )
+				{
+					if ( typeof( target.value ) == "undefined" )
+						target.value = []
+					Object.keys( pdiff[key] ).forEach( index =>
+					{
+						target.value[index] = pdiff[key][index]
+					} )
+				}
+				// enum members
+				else if ( Object.keys( pdefCopy.enums ).includes( target.type ) )
+				{
+					if ( typeof( target.value ) == "undefined" )
+						target.value = []
+					Object.keys( pdiff[key] ).forEach( index =>
+					{
+						target.value[index] = pdiff[key][index]
+					} )
+				}
+				// structs
+				else
+				{
+					if ( typeof( target.value ) == "undefined" )
+						target.value = []
+					// iterate through all the entries
+					Object.keys( pdiff[key] ).forEach( enumMember =>
+					{
+						// get the index of the enumMember from the enum
+						let index = enumMember
+						// create object if doesnt exist
+						if ( typeof( target.value[index] ) == "undefined" )
+							target.value[index] = {}
+						// populate object
+						Object.keys( pdiff[key][enumMember] ).forEach( structMember =>
+						{
+							RecursiveSplicePdiffData( target.value[index], pdiff[key][enumMember], structMember, true, target.type )
+						} )
+					} )
+				}
+			}
+			// dynamic length array of
+			else if ( typeof( target.arraySize ) == "string" )
+			{
+				// native types
+				if ( ["int", "float", "bool", "string"].includes( target.type ) )
+				{
+					if ( typeof( target.value ) == "undefined" )
+						target.value = []
+					// iterate through all the entries
+					Object.keys( pdiff[key] ).forEach( enumMember =>
+					{
+						// get the index of the enumMember from the enum
+						let index = pdefCopy.enums[target.arraySize].indexOf( enumMember )
+						// write our data to it
+						target.value[index] = pdiff[key][enumMember]
+					} )
+				}
+				// enum members
+				else if ( Object.keys( pdefCopy.enums ).includes( target.type ) )
+				{
+					if ( typeof( target.value ) == "undefined" )
+						target.value = []
+					// iterate through all the entries
+					Object.keys( pdiff[key] ).forEach( enumMember =>
+					{
+						// get the index of the enumMember from the enum
+						let index = pdefCopy.enums[target.arraySize].indexOf( enumMember )
+						// write our data to it
+						target.value[index] = pdiff[key][enumMember]
+					} )
+				}
+				// structs
+				else
+				{
+					if ( typeof( target.value ) == "undefined" )
+						target.value = []
+					// iterate through all the entries
+					Object.keys( pdiff[key] ).forEach( enumMember =>
+					{
+						// get the index of the enumMember from the enum
+						let index = pdefCopy.enums[target.arraySize].indexOf( enumMember )
+						// create object if doesnt exist
+						if ( typeof( target.value[index] ) == "undefined" )
+							target.value[index] = {}
+						// populate object
+						Object.keys( pdiff[key][enumMember] ).forEach( structMember =>
+						{
+							RecursiveSplicePdiffData( target.value[index], pdiff[key][enumMember], structMember, true, target.type )
+						} )
+					} )
+				}
+			}
+			// something went wrong D:
+			else
+			{
+				console.log( "arraySize '" + target.arraySize + "' is not valid" )
+			}
+		}
 
 		if ( !player )
 			return null
@@ -474,79 +947,12 @@ module.exports = {
 			// This looks fine, don't really think it needs changing
 			pdefCopy = objCombine( pdefCopy, pdiff.pdef )
 
-			// example of result: {"moddedPilotWeapons":{"mp_weapon_peacekraber":"..."}}
-			// second example: {"isPDiffWorking":1}}
-			// TODO: support dot notation in the member names i.e ranked.isPlayingRanked
-			// this format allows for dynamic editing of arrays with dynamic size
-			// including the type in this json is irrelevant as we can get that from the pdef anyway
-			let result = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
-
-			// iterate through the members of the data
-			Object.keys( result ).forEach( pdiffMemberKey =>
+			// splice the pdiff data into the json
+			let pdiffPdata = await module.exports.AsyncGetPlayerModPersistence( id, pdiff.hash )
+			Object.keys( pdiffPdata ).forEach( member =>
 			{
-				let pdefObject
-				pdefCopy.members.forEach( member =>
-				{
-					if ( member.name === pdiffMemberKey )
-						pdefObject = member
-				} )
-				console.assert( pdefObject !== undefined, "Could not find key '" + pdiffMemberKey + "' in pdef" )
-
-				// if this is not an array
-				if ( pdefObject.arraySize === undefined )
-				{
-					// construct the Object that we are going to write to newPdataJson
-
-					// get info from the pdiff pdef
-					let write = { arraySize: pdefObject.arraySize, nativeArraySize: pdefObject.nativeArraySize, type: pdefObject.type }
-					// get info from the pdiff data
-					write.value = result[pdiffMemberKey]
-
-					// write the value
-					// we dont even check if the key exists or not here because we are kinda just blindly overriding, would be the mods fault if they break shit
-					newPdataJson[pdiffMemberKey] = write
-				}
-				// if this is an array
-				else
-				{
-					// construct base Object for the array (if needed)
-					if ( newPdataJson[pdiffMemberKey] === undefined )
-					{
-						// get data from the pdef
-						let length = pdefObject.arraySize
-						if ( isNaN( Number( length ) ) )
-						{
-							length = pdefCopy.enums[pdefObject.arraySize].length
-						}
-						let write = { arraySize: length, nativeArraySize: pdefObject.nativeArraySize, type: pdefObject.type }
-						write.value = []
-						newPdataJson[pdiffMemberKey] = write
-					}
-					// iterate through each member of the array
-					Object.keys( result[pdiffMemberKey] ).forEach( pdiffMemberDataKey =>
-					{
-						// convert the key into an index for the array
-						let pdiffMemberDataKey_Number = Number( pdiffMemberDataKey )
-						// i think this is safe because i dont think you can use numbers in enums for pdefs (game crashes afaik)
-						// check if the key is actually an enum member
-						if ( isNaN( pdiffMemberDataKey_Number ) )
-						{
-							// get the key's index from the enum
-							for ( let i = 0; i < pdefCopy.enums[pdefObject.arraySize].length; i++ )
-							{
-								if ( pdefCopy.enums[pdefObject.arraySize][i] == pdiffMemberDataKey )
-								{
-									pdiffMemberDataKey_Number = i
-									break
-								}
-							}
-							console.assert( !isNaN( pdiffMemberDataKey_Number ), "Pdiff member's key '" + pdiffMemberDataKey + "' is not in the enum '" + pdefObject.arraySize + "'" )
-						}
-						// write the value
-						newPdataJson[pdiffMemberKey].value[pdiffMemberDataKey_Number] = result[pdiffMemberKey][pdiffMemberDataKey]
-					} )
-				}
-			}, { newPdataJson: newPdataJson } )
+				RecursiveSplicePdiffData( newPdataJson, pdiffPdata, member )
+			} )
 
 		}
 		// SEEMS TO WORK UP TO HERE

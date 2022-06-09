@@ -98,11 +98,11 @@ module.exports = ( fastify, opts, done ) =>
 			}
 
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" )
-			accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
+			await accounts.AsyncUpdateCurrentPlayerAuthToken( account.id, authToken )
 
-			if ( playerUsername ) accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
+			if ( playerUsername ) await accounts.AsyncUpdatePlayerUsername( account.id, playerUsername )
 
-			accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
+			await accounts.AsyncUpdatePlayerAuthIp( account.id, request.ip )
 
 			return {
 				success: true,
@@ -176,7 +176,7 @@ module.exports = ( fastify, opts, done ) =>
 				return { success: false, error: JSON_PARSE_ERROR }
 
 			// update the current server for the player account
-			accounts.AsyncUpdatePlayerCurrentServer( account.id, server.id )
+			await accounts.AsyncUpdatePlayerCurrentServer( account.id, server.id )
 
 			return {
 				success: true,
@@ -219,7 +219,7 @@ module.exports = ( fastify, opts, done ) =>
 
 			// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
-			accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
+			await accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
 			return {
 				success: true,

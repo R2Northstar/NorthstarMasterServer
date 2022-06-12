@@ -1469,7 +1469,10 @@ $STRUCT_START eFDPostGamePlayer
 	string{22}	xuid
 	int 		awardId
 	float 		awardValue
-	int 		suitIndex
+	// this used to be "int suitIndex" but that might cause issues with pdiffs that add more suits
+	pilotSuit 	suitIndex
+	// this is just here to avoid changing the size of the pdef without just appending data
+	bool 		unused[3]
 $STRUCT_END
 
 $STRUCT_START eFDPostGameData
@@ -1514,22 +1517,59 @@ int lastAbandonTime
 
 struct_ranked ranked
 
-// ADDED BY NORTHSTAR - USE THESE IN PDIFF
+// ADDED BY NORTHSTAR - USE THESE IN PDIFFS TO ADD NEW WEAPONS/SKINS/TITANS
 
-// reserved only exists because im not allowed an empty enum, shame cos its a bit of a waste of data
-$ENUM_START moddedPilotWeaponsAndOffhands
+// for all of the enums with "reserved", it only exists because I'm not allowed an empty enum, shame about the wasted data but it is what it is
+
+// pilot things
+$ENUM_START e_moddedPilotWeapons
 	reserved
 $ENUM_END
 
-weaponMain moddedPilotWeapons[moddedPilotWeaponsAndOffhands]
-weaponOffhand moddedPilotOffhands[moddedPilotWeaponsAndOffhands]
+// suits (tacticals) are just a type of offhand
+$ENUM_START e_moddedPilotOffhands
+	reserved
+$ENUM_END
 
+weaponMain moddedPilotWeapons[e_moddedPilotWeapons]
+weaponOffhand moddedPilotOffhands[e_moddedPilotOffhands]
+
+$ENUM_START e_moddedTitanWeapons
+	reserved
+$ENUM_END
+
+$ENUM_START e_moddedTitanOffhands
+	reserved
+$ENUM_END
+
+$ENUM_START e_moddedTitanChassis
+	reserved
+$ENUM_END
+
+weaponMain moddedTitanWeapons[e_moddedTitanWeapons]
+weaponOffhand moddedTitanOffhands[e_moddedTitanOffhands]
+
+titanMain moddedTitanChassis[e_moddedTitanChassis]
+
+
+// COSMETIC OVERRIDES - these are hardcoded to length 10 to match the hardcoding of 10 loadouts
 $ENUM_START skinAndCamoOverrides
 	none
 $ENUM_END
 
-// hardcoded 10 because thats the amount of pilot loadouts we have, and respawn hardcoded it as well
 skinAndCamoOverrides pilotMainSkinAndCamoOverrides[10]
 skinAndCamoOverrides pilotWeapon1SkinAndCamoOverrides[10]
 skinAndCamoOverrides pilotWeapon2SkinAndCamoOverrides[10]
 skinAndCamoOverrides pilotWeapon3SkinAndCamoOverrides[10]
+
+skinAndCamoOverrides titanMainSkinAndCamoOverrides[10]
+skinAndCamoOverrides titanWeaponSkinAndCamoOverrides[10]
+skinAndCamoOverrides titanPrimeSkinAndCamoOverrides[10]
+
+// these are nose arts
+$ENUM_START titanDecalOverrides
+	none
+$ENUM_END
+
+titanDecalOverrides titanDecalOverrides[10]
+titanDecalOverrides titanPrimeDecalOverrides[10]

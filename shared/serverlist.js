@@ -1,12 +1,12 @@
 let serverList = []
-let lastChecked = Date.now()
+let lastUpdated = Date.now()
 
-const { GameServer, GetGameServers, RemoveGameServer } = require( "../shared/gameserver.js" )
+const { GameServer, GetGameServers, RemoveGameServer } = require( "./gameserver_base" )
 
 module.exports = {
-	getLastChecked: function ()
+	getLastUpdated: function ()
 	{
-		return lastChecked
+		return lastUpdated
 	},
 	getServerList: function ()
 	{
@@ -52,6 +52,6 @@ module.exports = {
 			RemoveGameServer( server )
 
 		serverList = displayServerArray
-		lastChecked = Date.now()
+		lastUpdated = Date.now()
 	}
 }

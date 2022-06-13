@@ -1,72 +1,63 @@
 const sqlite = require( "sqlite3" ).verbose()
 const fs = require( "fs" )
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
+const TOKEN_STORE_LIMIT = 10
+
+const bcrypt = require( "bcrypt" )
+const BCRYPT_SALT_ROUNDS = 10
 
 const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
-// const path = require( "path" )
-// const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
+// const pjson = require( "../shared/pjson" )
 // const DEFAULT_PDEF_OBJECT = pjson.ParseDefinition( fs.readFileSync( "persistent_player_data_version_231.pdef" ).toString() )
 
 const dbSchemaRaw = fs.readFileSync( "./dbSchema.json" )
 const dbSchema = JSON.parse( dbSchemaRaw )
 
-let playerDB = new sqlite.Database( "playerdata.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, async ex =>
+if( fs.existsSync( "playerdata.db" )  && !fs.existsSync( "northstar.db" ) ) // migrate to agnostic db file
+{
+	fs.renameSync( "playerdata.db", "northstar.db" )
+}
+
+let playerDB = new sqlite.Database( "northstar.db", sqlite.OPEN_CREATE | sqlite.OPEN_READWRITE, async ex =>
 {
 	if ( ex )
 		console.error( ex )
 	else
 		console.log( "Connected to player database successfully" )
 
-	// create account table
-	// this should mirror the PlayerAccount class's	properties
-	playerDB.run( `
-	CREATE TABLE IF NOT EXISTS accounts (
-		${ dbSchema.accounts.columns.map( ( col ) =>
+	for( const [tableName, table] of Object.entries( dbSchema ) )
 	{
-		return `${col.name} ${col.type} ${col.modifier ? col.modifier : ""}`
-	} ).join( ",\n\r\t\t" ) }
-		${ dbSchema.accounts.extra ? ","+dbSchema.accounts.extra : "" }
-	)
-	`, ex =>
-	{
-		if ( ex )
-			console.error( ex )
-		else
-			console.log( "Created player account table successfully" )
-	} )
-
-	// create mod persistent data table
-	// this should mirror the PlayerAccount class's	properties
-	playerDB.run( `
-	CREATE TABLE IF NOT EXISTS modPersistentData (
-		${ dbSchema.modPersistentData.columns.map( ( col ) =>
-	{
-		return `${col.name} ${col.type} ${col.modifier ? col.modifier : ""}`
-	} ).join( ",\n\r\t\t" ) }
-		${ dbSchema.modPersistentData.extra ? ","+dbSchema.modPersistentData.extra : "" }
-	)
-	`, ex =>
-	{
-		if ( ex )
-			console.error( ex )
-		else
-			console.log( "Created mod persistent data table successfully" )
-	} )
-
-	for ( const col of dbSchema.accounts.columns )
-	{
-		if( !await columnExists( "accounts", col.name ) )
+		playerDB.run( `
+            CREATE TABLE IF NOT EXISTS ${tableName} (
+                ${ table.columns.map( ( col ) => `${col.name} ${col.type} ${col.modifier ? col.modifier : ""}` ).join( ", " ) }
+                ${ table.extra ? ","+table.extra : "" }
+            )
+            `, ex =>
 		{
-			console.log( `The 'accounts' table is missing the '${col.name}' column` )
-			await addColumnToTable( "accounts", col )
+			if ( ex )
+				console.error( ex )
+			else
+				console.log( `Created player ${tableName} table successfully` )
+		} )
+
+		for ( const col of table.columns )
+		{
+			if( !await columnExists( tableName, col.name ) )
+			{
+				console.log( `The '${tableName}' table is missing the '${col.name}' column` )
+				await addColumnToTable( tableName, col )
+			}
 		}
-	}
-	for ( const col of dbSchema.modPersistentData.columns )
-	{
-		if( !await columnExists( "modPersistentData", col.name ) )
+		if( table.indices )
 		{
-			console.log( `The 'modPersistentData' table is missing the '${col.name}' column` )
-			await addColumnToTable( "modPersistentData", col )
+			for ( const idx of table.indices )
+			{
+				if( !await indexExists( idx.name ) )
+				{
+					console.log( `The '${tableName}' table is missing the '${idx.name}' index` )
+					await addIndexToTable( tableName, idx )
+				}
+			}
 		}
 	}
 } )
@@ -166,6 +157,50 @@ function addColumnToTable( tableName, column )
 	} )
 }
 
+function indexExists( idxName )
+{
+	return new Promise( ( resolve, reject ) =>
+	{
+		playerDB.get( `
+        SELECT COUNT(*) AS CNTREC FROM sqlite_master WHERE type='index' AND name='${idxName}'
+        `, [], ( ex, row ) =>
+		{
+			if ( ex )
+			{
+				console.error( "Encountered error querying database: " + ex )
+				reject( ex )
+			}
+			else
+			{
+				resolve( row.CNTREC == 1 )
+			}
+		} )
+	} )
+}
+
+function addIndexToTable( tableName, index )
+{
+	return new Promise( ( resolve, reject ) =>
+	{
+		playerDB.run( `
+        CREATE ${index.unique ? "UNIQUE " : ""}INDEX ${index.name} ON ${tableName}(${index.columns.join( ", " )})
+        `, ex =>
+		{
+			if ( ex )
+			{
+				console.error( "Encountered error adding index to database: " + ex )
+				reject( ex )
+			}
+			else
+			{
+				console.log( `Added '${index.name}' index to the '${tableName}' table` )
+				resolve()
+			}
+		} )
+	} )
+}
+
+
 class PlayerAccount
 {
 	// mirrors account struct in db
@@ -204,6 +239,22 @@ module.exports = {
 		let rows = await asyncDBAll( "SELECT * FROM accounts WHERE username = ?", [ username ] )
 
 		return rows.map( row => new PlayerAccount( row.id, row.currentAuthToken, row.currentAuthTokenExpirationTime, row.currentServerId, row.persistentDataBaseline, row.lastAuthIp, row.username ) )
+	},
+
+	AsyncGetIDsByUsername: async function AsyncGetIDsByUsername( username )
+	{
+		let rows = await asyncDBAll( "SELECT id FROM accounts WHERE username = ?", [ username ] )
+
+		return rows
+	},
+	AsyncGetUsernameByID: async function AsyncGetUsernameByID( id )
+	{
+		let row = await asyncDBGet( "SELECT username FROM accounts WHERE id = ?", [ id ] )
+
+		if ( !row )
+			return null
+
+		return row
 	},
 
 	AsyncCreateAccountForID: async function AsyncCreateAccountForID( id )
@@ -273,5 +324,27 @@ module.exports = {
 		//	}
 
 		//	return PdataJsonToBuffer( newPdataJson, pdefCopy )
+	},
+
+	AsyncHasPlayerUsedGameToken: async function( id, token )
+	{
+		let hashedToken = await bcrypt.hash( token, BCRYPT_SALT_ROUNDS )
+
+		let row = await asyncDBGet( "SELECT usedGameTokens FROM accounts WHERE id = ?", [ id ] )
+
+		return ( row.usedGameTokens.split( "," ).indexOf( hashedToken ) >= 0 )
+	},
+
+	AsyncAddPlayerUsedGameToken: async function( id, token )
+	{
+		let hashedToken = await bcrypt.hash( token, BCRYPT_SALT_ROUNDS )
+
+		let row = await asyncDBGet( "SELECT usedGameTokens FROM accounts WHERE id = ?", [ id ] )
+
+		let tokenHashArray = row.length == 0 ? [] : row.usedGameTokens.split( "," )
+		tokenHashArray.push( hashedToken )
+
+		let newRow = tokenHashArray.slice( TOKEN_STORE_LIMIT * -1 ).join( "," )
+		await asyncDBRun( "UPDATE accounts SET usedGameTokens = ? WHERE id = ?", [ newRow, id ] )
 	}
 }

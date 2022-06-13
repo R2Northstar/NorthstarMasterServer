@@ -98,6 +98,33 @@ let gameServers = {}
 let gameServerGhosts = {}
 let gameServerGhostTimeouts = {}
 
+function GetGameServers()
+{
+	return gameServers
+}
+function AddGameServer( gameserver )
+{
+	gameServers[ gameserver.id ] = gameserver
+}
+function RemoveGameServer( gameserver )
+{
+	clearTimeout( gameServerGhostTimeouts[gameserver.id] )
+	gameServerGhosts[gameserver.id] = new GameServerGhost( gameserver )
+	gameServerGhostTimeouts[gameserver.id] = setTimeout( () =>
+	{  // purge ghost after timeout
+		RemoveGhostServer( gameserver.id )
+	}, process.env.GAMESERVER_GHOST_TIMEOUT_MINS*60000 )
+	delete gameServers[ gameserver.id ]
+}
+
+function GetGhostServer( id )
+{
+	return gameServerGhosts[id]
+}
+function HasGhostServer( id )
+{
+	return Object.hasOwn( gameServerGhosts, id )
+}
 function RemoveGhostServer( id )
 {
 	clearTimeout( gameServerGhostTimeouts[id] )
@@ -106,34 +133,13 @@ function RemoveGhostServer( id )
 }
 
 module.exports = {
-	GameServer: GameServer,
-	GameServerGhost: GameServerGhost,
+	GameServer,
+	GameServerGhost,
 
-	GetGameServers: function()
-	{
-		return gameServers
-	},
-	AddGameServer: function( gameserver )
-	{
-		gameServers[ gameserver.id ] = gameserver
-	},
-	RemoveGameServer: function( gameserver )
-	{
-		clearTimeout( gameServerGhostTimeouts[gameserver.id] )
-		gameServerGhosts[gameserver.id] = new GameServerGhost( gameserver )
-		gameServerGhostTimeouts[gameserver.id] = setTimeout( () =>
-		{  // purge ghost after timeout
-			RemoveGhostServer( gameserver.id )
-		}, process.env.GAMESERVER_GHOST_TIMEOUT_MINS*60000 )
-		delete gameServers[ gameserver.id ]
-	},
-	GetGhostServer: function( id )
-	{
-		return gameServerGhosts[id]
-	},
-	HasGhostServer: function( id )
-	{
-		return Object.hasOwn( gameServerGhosts, id )
-	},
-	RemoveGhostServer: RemoveGhostServer
+	GetGameServers,
+	AddGameServer,
+	RemoveGameServer,
+	GetGhostServer,
+	HasGhostServer,
+	RemoveGhostServer
 }

@@ -31,6 +31,11 @@
 				"name": "username",
 				"type": "TEXT",
 				"modifier": "DEFAULT ''"
+			},
+			{
+				"name": "usedGameTokens",
+				"type": "TEXT",
+				"modifier": "DEFAULT ''"
 			}
 		]
 	},

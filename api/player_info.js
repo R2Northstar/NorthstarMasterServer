@@ -1,8 +1,8 @@
 const path = require( "path" )
-const { PLAYER_NOT_FOUND } = require( "../shared/errorcodes.js" )
-const { ParseDefinition, PdataToJsonUntyped } = require( "../shared/pjson.js" )
-const { getRatelimit } = require( "../shared/ratelimit.js" )
-const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
+const { PLAYER_NOT_FOUND } = require( "../shared/errorcodes" )
+const { ParseDefinition, PdataToJsonUntyped } = require( "../shared/pjson" )
+const { getRatelimit } = require( "../shared/ratelimit" )
+const db = require( path.join( __dirname, "../shared/db" ) )
 const fs = require( "fs" )
 
 const PLAYER_DATA_PDEF_231 = ParseDefinition( fs.readFileSync( "./persistent_player_data_version_231.pdef", "utf8" ) )
@@ -24,7 +24,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if( !account )
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }
@@ -46,7 +46,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if( !account )
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }
@@ -83,7 +83,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if( !account )
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }
@@ -122,7 +122,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( request ) =>
 		{
-			let account = await accounts.AsyncGetPlayerByID( request.query.id )
+			let account = await db.AsyncGetPlayerByID( request.query.id )
 			if( !account )
 			{
 				return { success: false, error: PLAYER_NOT_FOUND }

@@ -119,7 +119,7 @@ dist
 
 # db files
 .db
-playerdata.db
+*.db
 
 # ssl keys
 *.pem

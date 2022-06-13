@@ -1,4 +1,4 @@
-const { getRatelimit } = require( "../shared/ratelimit.js" )
+const { getRatelimit } = require( "../shared/ratelimit" )
 
 module.exports = ( fastify, opts, done ) =>
 {

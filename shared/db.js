@@ -12,7 +12,7 @@ const DEFAULT_PDATA_BASELINE = fs.readFileSync( "default.pdata" )
 const dbSchemaRaw = fs.readFileSync( "./dbSchema.json" )
 const dbSchema = JSON.parse( dbSchemaRaw )
 
-if( fs.existsSync( "playerdata.db" ) ) // migrate to agnostic db file
+if( fs.existsSync( "playerdata.db" )  && !fs.existsSync( "northstar.db" ) ) // migrate to agnostic db file
 {
 	fs.renameSync( "playerdata.db", "northstar.db" )
 }

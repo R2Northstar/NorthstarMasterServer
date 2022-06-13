@@ -61,11 +61,11 @@ fs.watch( motdPath, ( curr, prev ) =>
 	try
 	{
 		motdData = fs.readFileSync( motdPath, "utf8" )
-		console.log( "updated main menu promo data successfully!" )
+		console.log( "updated motd data successfully!" )
 	}
 	catch ( ex )
 	{
-		console.log( `encountered error updating main menu promo data: ${ ex }` )
+		console.log( `encountered error updating motd data: ${ ex }` )
 	}
 
 } )

@@ -1,6 +1,7 @@
 const sqlite = require( "sqlite3" ).verbose()
 const fs = require( "fs" )
 const TOKEN_EXPIRATION_TIME = 3600000 * 24 // 24 hours
+const TOKEN_STORE_LIMIT = 10
 
 const bcrypt = require( "bcrypt" )
 const BCRYPT_SALT_ROUNDS = 10
@@ -343,7 +344,7 @@ module.exports = {
 		let tokenHashArray = row.length == 0 ? [] : row.usedGameTokens.split( "," )
 		tokenHashArray.push( hashedToken )
 
-		let newRow = tokenHashArray.join( "," )
+		let newRow = tokenHashArray.slice( TOKEN_STORE_LIMIT * -1 ).join( "," )
 		await asyncDBRun( "UPDATE accounts SET usedGameTokens = ? WHERE id = ?", [ newRow, id ] )
 	}
 }

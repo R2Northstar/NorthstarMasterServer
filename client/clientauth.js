@@ -224,23 +224,31 @@ module.exports = ( fastify, opts, done ) =>
 			accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
 			let modInfo = await pjson.ParseModPDiffs( request )
-			modInfo.Mods.sort( ( a, b ) =>
+			let pdata
+			// sometimes no modInfo is sent, presumably because of no RequiredOnClient mods or something idk
+			if ( modInfo )
 			{
-				if ( a.LoadPriority > b.LoadPriority )
+				modInfo.Mods.sort( ( a, b ) =>
 				{
-					return 1
-				}
-				else if ( a.LoadPriority < b.LoadPriority )
-				{
-					return -1
-				}
-				else
-				{
-					return 1
-				}
-			} )
-
-			let pdata = await AsyncGetPlayerPersistenceBufferForMods( request.query.id, modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff ) )
+					if ( a.LoadPriority > b.LoadPriority )
+					{
+						return 1
+					}
+					else if ( a.LoadPriority < b.LoadPriority )
+					{
+						return -1
+					}
+					else
+					{
+						return 1
+					}
+				} )
+				pdata = await AsyncGetPlayerPersistenceBufferForMods( request.query.id, modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff ) )
+			}
+			else
+			{
+				pdata = account.persistentDataBaseline
+			}
 
 			return {
 				success: true,

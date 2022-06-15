@@ -652,7 +652,8 @@ module.exports = {
 		}
 		else
 		{
-			console.log( request )
+			// console.log( request ) isnt particularly helpful so im just gonna return
+			return
 		}
 
 		// pdiff stuff

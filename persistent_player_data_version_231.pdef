@@ -1550,7 +1550,7 @@ weaponMain moddedTitanWeapons[e_moddedTitanWeapons]
 weaponOffhand moddedTitanOffhands[e_moddedTitanOffhands]
 
 titanMain moddedTitanChassis[e_moddedTitanChassis]
-
+titanLoadout moddedTitanLoadouts[e_moddedTitanChassis] // to avoid messing with vanilla titan loadouts
 
 // COSMETIC OVERRIDES - these are hardcoded to length 10 to match the hardcoding of 10 loadouts
 $ENUM_START skinAndCamoOverrides

@@ -273,13 +273,8 @@ function GetMemberSize( member, parsedDef )
 	let multiplier = 1
 	let arraySize
 
-	// pain and suffering
 	if ( typeof( member.arraySize ) == "string" )
 	{
-		/*console.log( "ENUM NAME: " )
-		console.log( member.arraySize )
-		console.log( "ENUM LENGTH:" )
-		console.log( parsedDef.enums[ member.arraySize ].length )*/
 		arraySize = parsedDef.enums[ member.arraySize ].length
 	}
 	else
@@ -358,16 +353,6 @@ function GetMemberSize( member, parsedDef )
 
 function PdataToJson( pdata, pdef )
 {
-	// calc size
-	let size = 0
-	for ( let member of pdef.members )
-		size += GetMemberSize( member, pdef )
-
-	if ( size != pdata.length )
-	{
-		console.log( "calculated size does not match pdata length" )
-	}
-
 	let ret = {}
 	let i = 0
 
@@ -419,25 +404,11 @@ function PdataToJson( pdata, pdef )
 		console.log( ex )
 	}
 
-	if ( i != size )
-	{
-		console.log( "did not reach the end of the pdata" )
-	}
-
 	return ret
 }
 
 function PdataToJsonUntyped( pdata, pdef )
 {
-	// calc size
-	let size = 0
-	for ( let member of pdef.members )
-		size += GetMemberSize( member, pdef )
-
-	if ( size != pdata.length )
-	{
-		console.log( "calculated size does not match pdata length" )
-	}
 	let ret = {}
 	let i = 0
 
@@ -533,12 +504,12 @@ function PdataJsonToBuffer( json, pdef )
 	let size = 0
 	for ( let member of pdef.members )
 		size += GetMemberSize( member, pdef )
+
 	let buf = Buffer.alloc( size )
 
 	let i = 0
 	// let currentKey = 0
 	// let keys = Object.keys( json )
-
 
 	function recursiveWritePdata( struct )
 	{
@@ -554,11 +525,8 @@ function PdataJsonToBuffer( json, pdef )
 			{
 				let val = member.value
 				if ( typeof( val ) == "undefined" )
-				{
 					val = "NULL"
-				}
-				if ( Number.isNaN( val ) )
-					console.log( val )
+
 				if ( Array.isArray( val ) )
 					val = member.value[ j ]
 
@@ -570,29 +538,13 @@ function PdataJsonToBuffer( json, pdef )
 				else if ( member.type in pdef.enums )
 				{
 					if ( pdef.enums[ member.type ].indexOf( val ) == -1 )
-					{
-						console.log( "not found in enum" )
 						buf.writeUInt8( 0, i++ )
-					}
 					else
-					{
 						buf.writeUInt8( pdef.enums[ member.type ].indexOf( val ), i++ ) // enums are uint8s
-					}
 				}
 				else if ( member.type in pdef.structs )
-				{
 					recursiveWritePdata( val )
-				}
 			}
-			// debug for when readhead has moved a weird amount
-			/*if ( i - oldi != GetMemberSize( member, pdef ) )
-			{
-				console.log( member )
-				console.log( "readhead moved: " + ( i - oldi ) )
-				console.log( "expected distance moved: " + GetMemberSize( member, pdef ) )
-			//}*/
-
-			//console.log( "written " + ( i - oldi ) + " bytes for member " + memberName )
 		}
 	}
 
@@ -604,7 +556,6 @@ function PdataJsonToBuffer( json, pdef )
 	{
 		console.log( ex )
 	}
-	// ideally these should be identical
 	return buf
 }
 
@@ -652,7 +603,6 @@ module.exports = {
 		}
 		else
 		{
-			// console.log( request ) isnt particularly helpful so im just gonna return
 			return
 		}
 

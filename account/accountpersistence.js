@@ -3,8 +3,6 @@ const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const modPersistence = require( path.join( __dirname, "../shared/modPersistentData.js" ) )
 
 const { GetGameServers } = require( "../shared/gameserver.js" )
-//const { AsyncGetPlayerPersistenceBufferForMods } = require("../shared/modPersistentData.js")
-//const { PdataToJson } = require("../shared/pjson.js")
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 
 module.exports = ( fastify, opts, done ) =>
@@ -101,19 +99,14 @@ module.exports = ( fastify, opts, done ) =>
 				}
 			} )
 
-			// mostly temp
 			let buf = ( await ( await file1 ).toBuffer() )
 
 			let persistenceJSON = await modPersistence.AsyncModPersistenceBufferToJson( modInfo, request.query.id, buf )
-			//await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id,  persistenceJSON.baseline )
-			console.log( "writing pdiff data" )
+
 			for ( let pdiff of persistenceJSON.pdiffs )
 			{
-				console.log( pdiff.data )
-				// commenting for now while i rewrite the reading of pdiffs
 				await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
 			}
-			console.log( "writing persistence baseline" )
 			await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, persistenceJSON.baseline )
 
 			return null

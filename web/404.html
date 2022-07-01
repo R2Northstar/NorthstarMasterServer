@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Titan Not Found</title>
+    <link rel="stylesheet" href="/style/index.css">
+    <style>
+        body {
+            text-align: center;
+        }
+        h1 {
+            font-size: 40px;
+        }
+        @media screen and (max-width: 600px) {
+            #mainbuttons {
+                top: calc(40% + 25.6vw - 7.2vw);
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="videofull">
+        <video class="lazy" autoplay loop muted playsinline poster="assets/NorthstarPromoPoster.jpg">
+            <source src="assets/NorthstarPromoVid.mp4">
+        </video>
+        <div class="overlay"></div>
+        <div id="centerlogo">
+            <h1>404</h1>
+            <h2>Titan Not Found</h2>
+        </div>
+        <div id="mainbuttons">
+            <a href="/" class="big-button">Go Home</a>
+        </div>     
+    </div>
+</body>
+</html>

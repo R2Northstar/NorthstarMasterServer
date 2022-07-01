@@ -7,6 +7,12 @@ module.exports = ( fastify, opts, done ) =>
 {
 	// exported routes
 
+	// security.txt
+	fastify.register( fastifyStatic, {
+		root: path.join( __dirname, "../web/.well-known" ),
+		prefix: "/.well-known/"
+	} )
+
 	// add static routes
 	fastify.register( fastifyStatic, {
 		root: path.join( __dirname, "../web/assets" ),

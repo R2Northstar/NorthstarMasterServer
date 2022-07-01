@@ -35,5 +35,14 @@ module.exports = ( fastify, opts, done ) =>
 			reply.type( "text/html" ).send( stream )
 		} )
 
+	// 404 page
+	fastify.decorate( "notFound", ( request, reply ) =>
+	{
+		const stream = fs.createReadStream( path.join( __dirname, "../web/404.html" ), "utf-8" )
+		reply.code( 404 ).type( "text/html" ).send( stream )
+	} )
+
+	fastify.setNotFoundHandler( fastify.notFound )
+
 	done()
 }

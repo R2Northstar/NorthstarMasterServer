@@ -8,10 +8,15 @@ module.exports = ( fastify, opts, done ) =>
 	// exported routes
 
 	// security.txt
-	fastify.register( fastifyStatic, {
-		root: path.join( __dirname, "../web/.well-known" ),
-		prefix: "/.well-known/"
-	} )
+	fastify.get( "/.well-known/security.txt",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__LANDING" ) }, // ratelimit
+		},
+		async ( request, reply ) =>
+		{
+			const stream = fs.createReadStream( path.join( __dirname, "../web/.well-known/security.txt" ), "utf-8" )
+			reply.type( "text/plain" ).send( stream )
+		} )
 
 	// add static routes
 	fastify.register( fastifyStatic, {

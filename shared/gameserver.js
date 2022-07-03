@@ -19,7 +19,7 @@ class GameServer
 	// object modInfo
 	// object pdiff
 
-	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = {} )
+	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = { Mods: [] } )
 	{
 		if ( nameOrServer instanceof( GameServer ) ) // copy constructor
 		{
@@ -62,8 +62,15 @@ class GameServer
 
 		// restrict modinfo keys
 		this.modInfo = { Mods:[] }
-		for ( let mod of modInfo.Mods )
-			this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null, DownloadLink: mod.DownloadLink || "" } )
+    try
+    {
+		  for ( let mod of modInfo.Mods )
+		  	this.modInfo.Mods.push( { Name: mod.Name || "", Version: mod.Version || "0.0.0", RequiredOnClient: mod.RequiredOnClient || false, Pdiff: mod.Pdiff || null, DownloadLink: mod.DownloadLink || "" } )
+    }
+    catch( e )
+    {
+      // Do nothing
+     }
 	}
 }
 

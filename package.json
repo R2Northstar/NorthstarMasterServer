@@ -16,6 +16,7 @@
 	},
 	"dependencies": {
 		"bad-words": "^3.0.4",
+		"bit-buffer": "^0.2.5",
 		"dotenv": "^10.0.0",
 		"fastify": "^3.24.0",
 		"fastify-cors": "^6.0.2",

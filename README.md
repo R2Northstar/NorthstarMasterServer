@@ -16,3 +16,5 @@ A little explanation of the run command arguments -
 3. `-v $(pwd):/app` - It maps a virtual directory from the host machine (`$(pwd)`) to the specified folder in the Docker image (`/app`), meaning that the docker image sees the contents of the hosts directory in runtime (on-the-fly) without having to rebuild the image
 4. `northstarmasterserver` - The image tag name as mentioned when building it
 5. `<script>` - This should be replaced by any one scripts such as **start**, **watch** etc from *package.json*
+
+Alternatively the above commands can also be used as-is with `podman`.

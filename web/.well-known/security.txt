@@ -1,0 +1,12 @@
+# If you would like to report or fix a bug
+# Create an issue or a pull request on the
+# Northstar Github page
+
+# Northstar Master Server
+https://github.com/R2Northstar/NorthstarMasterServer
+
+# Northstar Launcher
+https://github.com/R2Northstar/NorthstarLauncher
+
+# Northstar Game Scripts
+https://github.com/R2Northstar/NorthstarMods

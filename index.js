@@ -34,6 +34,16 @@ else
 	} )
 }
 
+fastify.addHook( "onRequest", ( request, reply, done ) =>
+{ // check host immediately on request
+	if( process.env.EXPECTED_HOST && process.env.EXPECTED_HOST != request.headers["host"] )
+	{
+		reply.code( 401 ).send() // send 401 to requests from outside of expected host
+		return
+	}
+	done()
+} )
+
 fastify.register( require( "fastify-multipart" ) )
 
 const ROUTE_PATHS = [ "client", "server", "account" ]

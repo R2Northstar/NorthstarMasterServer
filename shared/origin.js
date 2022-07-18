@@ -63,7 +63,7 @@ async function authWithOrigin()
 	}
 }
 
-if( process.env.ORIGIN_ENABLE )
+if( Number( process.env.ORIGIN_ENABLE ) )
 {
 	console.log( "Attempting to auth with Origin" )
 	if( process.env.ORIGIN_PERSIST_SID && fs.existsSync( "./sid.cookie" ) )

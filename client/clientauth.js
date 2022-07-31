@@ -5,6 +5,8 @@ const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
 const asyncHttp = require( path.join( __dirname, "../shared/asynchttp.js" ) )
 const { minimumVersion } = require( path.join( __dirname, "../shared/version.js" ) )
 const { getUserInfo, getOriginAuthState } = require( path.join( __dirname, "../shared/origin.js" ) )
+const { AsyncGetPlayerPersistenceBufferForMods } = require( path.join( __dirname, "../shared/modPersistentData.js" ) )
+const pjson = require( path.join( __dirname, "../shared/pjson.js" ) )
 
 let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 
@@ -150,8 +152,7 @@ module.exports = ( fastify, opts, done ) =>
 			// fix this: game doesnt seem to set serverFilter right if it's >31 chars long, so restrict it to 31
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 
-			// todo: build persistent data here, rather than sending baseline only
-			let pdata = await accounts.AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.pdiff ).map( m => m.pdiff ) )
+			let pdata = await AsyncGetPlayerPersistenceBufferForMods( request.query.id, server.modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff ) )
 
 			let authResponse
 			try
@@ -221,13 +222,38 @@ module.exports = ( fastify, opts, done ) =>
 			let authToken = crypto.randomBytes( 16 ).toString( "hex" ).substr( 0, 31 )
 			accounts.AsyncUpdatePlayerCurrentServer( account.id, "self" ) // bit of a hack: use the "self" id for local servers
 
+			let modInfo = await pjson.ParseModPDiffs( request )
+			let pdata
+			// sometimes no modInfo is sent, presumably because of no RequiredOnClient mods or something idk
+			if ( modInfo )
+			{
+				modInfo.Mods.sort( ( a, b ) =>
+				{
+					if ( a.LoadPriority > b.LoadPriority )
+					{
+						return 1
+					}
+					else if ( a.LoadPriority < b.LoadPriority )
+					{
+						return -1
+					}
+					else
+					{
+						return 1
+					}
+				} )
+				pdata = await AsyncGetPlayerPersistenceBufferForMods( request.query.id, modInfo.Mods.filter( m => !!m.Pdiff ).map( m => m.Pdiff ) )
+			}
+			else
+			{
+				pdata = account.persistentDataBaseline
+			}
+
 			return {
 				success: true,
-
 				id: account.id,
 				authToken: authToken,
-				// this fucking sucks, but i couldn't get game to behave if i sent it as an ascii string, so using this for now
-				persistentData: Array.from( new Uint8Array( account.persistentDataBaseline ) )
+				persistentData: [...pdata]
 			}
 		} )
 

@@ -1,5 +1,6 @@
 const path = require( "path" )
 const accounts = require( path.join( __dirname, "../shared/accounts.js" ) )
+const modPersistence = require( path.join( __dirname, "../shared/modPersistentData.js" ) )
 
 const { GetGameServers } = require( "../shared/gameserver.js" )
 const { getRatelimit } = require( "../shared/ratelimit.js" )
@@ -37,17 +38,76 @@ module.exports = ( fastify, opts, done ) =>
 			}
 			else
 			{
-				let server = GetGameServers()[ request.query.serverId ]
+				var server = GetGameServers()[ request.query.serverId ]
 				// dont update if the server doesnt exist, or the server isnt the one sending the heartbeat
 				if ( !server || request.ip != server.ip || account.currentServerId != request.query.serverId )
 					return null
 			}
+			if ( !request.isMultipart() )
+			{
+				console.log( "request is not multipart" )
+				return null
+			}
 
-			// mostly temp
-			let buf = await ( await request.file() ).toBuffer()
+			let files = await request.files()
+			let file1
+			let file2
+			try
+			{
+				for await ( const part of files )
+				{
+					if ( !part )
+						continue
+					if ( ( part.fieldname ) == "pdata" )
+					{
+						file1 = part
+						console.log( "found pdata" )
+					}
+					else if ( ( part.fieldname ) == "modinfo" )
+					{
+						file2 = part
+						console.log( "found modinfo" )
+					}
+					else
+					{
+						console.log( "UNKNOWN PART" )
+						console.log( part.fieldname )
+					}
+					if ( file1 && file2 )
+						break
+				}
+			}
+			catch ( ex )
+			{
+				console.log( ex )
+			}
 
-			if ( buf.length == account.persistentDataBaseline.length )
-				await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, buf )
+			let modInfo = JSON.parse( ( await ( await file2 ).toBuffer() ).toString() )
+			modInfo.Mods.sort( ( a, b ) =>
+			{
+				if ( a.LoadPriority > b.LoadPriority )
+				{
+					return 1
+				}
+				else if ( a.LoadPriority < b.LoadPriority )
+				{
+					return -1
+				}
+				else
+				{
+					return 1
+				}
+			} )
+
+			let buf = ( await ( await file1 ).toBuffer() )
+
+			let persistenceJSON = await modPersistence.AsyncModPersistenceBufferToJson( modInfo, request.query.id, buf )
+
+			for ( let pdiff of persistenceJSON.pdiffs )
+			{
+				await modPersistence.AsyncWritePlayerModPersistence( request.query.id, pdiff.hash, JSON.stringify( pdiff.data ) )
+			}
+			await accounts.AsyncWritePlayerPersistenceBaseline( request.query.id, persistenceJSON.baseline )
 
 			return null
 		} )

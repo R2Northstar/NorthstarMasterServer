@@ -1,22 +1,75 @@
+const crypto = require( "crypto" )
+
 const NATIVE_TYPES = {
 	int: { size: 4,
-		read: ( buf, idx ) => buf.readInt32LE( idx ),
+		read: ( buf, idx ) =>
+		{
+			try
+			{
+				return buf.readInt32LE( idx )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume 0
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return 0
+			}
+		},
 		write: ( buf, value, idx ) => buf.writeInt32LE( value, idx )
 	},
 	float: { size: 4,
-		read: ( buf, idx ) => buf.readFloatLE( idx ),
-		write: ( buf, value, idx ) => buf.writeFloatLE( value, idx )
+		read: ( buf, idx ) =>
+		{
+			try
+			{
+				return buf.readFloatLE( idx )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume 0
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return 0
+			}
+		},
+		write: ( buf, value, idx ) => buf.writeFloatLE( Number( value ), idx )
 	},
 	bool: {
 		size: 1,
-		read: ( buf, idx ) => !!buf.readUInt8( idx ),
+		read: ( buf, idx ) =>
+		{
+			try
+			{
+				return !!buf.readUInt8( idx )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume false
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return false
+			}
+		},
 		write: ( buf, value, idx ) => buf.writeUint8( value, idx )
 	},
 	string: {
 		size: 1,
 		nativeArrayType: true,
-		read: ( buf, idx, length ) => buf.toString( "ascii", idx, idx + length ),
-		write: ( buf, value, idx, length ) => buf.write( value.padEnd( length, "\u0000" ), idx, length, "ascii" )
+		read: ( buf, idx, length ) =>
+		{
+			try
+			{
+				return buf.toString( "ascii", idx, idx + length )
+			}
+			catch
+			{
+				// if we went outside the bounds of the buffer, just assume all null chars
+				// this allows us to add to the end of the pdef without breaking shit, provided we dont care about the value
+				return "\0".repeat( length )
+			}
+		},
+		write: ( buf, value, idx, length ) =>
+		{
+			buf.write( value.padEnd( length, "\0" ), idx, length, "ascii" )
+		}
 	}
 }
 
@@ -110,7 +163,7 @@ function ParseDefinition( pdef )
 				checkType = type.substr( 0, type.indexOf( "{" ) )
 				isNativeArrayType = true
 			}
-			else if ( name.includes( "[" ) )
+			if ( name.includes( "[" ) )
 				isArray = true
 
 			// verify type stuff
@@ -128,7 +181,7 @@ function ParseDefinition( pdef )
 					// pretty sure this can't be an enum and has to be a number? unsure
 					newMember.nativeArraySize = parseInt( type.substr( type.indexOf( "{" ) + 1 ) )
 				}
-				else if ( isArray )
+				if ( isArray )
 				{
 					let bracketIndex = name.indexOf( "[" )
 					newMember.name = name.substr( 0, bracketIndex )
@@ -201,7 +254,7 @@ function ParseDefinitionDiff( pdiff )
 			break
 		}
 		else
-			throw Error( "hit unexpected case" )
+			throw Error( "hit unexpected case: " + type )
 	}
 
 	if ( pdefIdx != -1 )
@@ -218,28 +271,35 @@ function ParseDefinitionDiff( pdiff )
 function GetMemberSize( member, parsedDef )
 {
 	let multiplier = 1
+	let arraySize
 
 	if ( typeof( member.arraySize ) == "string" )
-		member.arraySize = parsedDef.enums[ member.arraySize ].length
+	{
+		arraySize = parsedDef.enums[ member.arraySize ].length
+	}
+	else
+	{
+		arraySize = member.arraySize
+	}
 
-	multiplier *= member.arraySize || 1
+	multiplier *= arraySize || 1
 
 	if ( member.type in NATIVE_TYPES )
 	{
 		if ( NATIVE_TYPES[ member.type ].nativeArrayType )
 			multiplier *= member.nativeArraySize
-
 		return NATIVE_TYPES[ member.type ].size * multiplier
 	}
 	else if ( member.type in parsedDef.enums )
-		return NATIVE_TYPES.int.size * multiplier
+		return multiplier
 	else if ( member.type in parsedDef.structs )
 	{
 		let structSize = 0
 		for ( let structMember of parsedDef.structs[ member.type ] )
 			structSize += GetMemberSize( structMember, parsedDef )
 
-		return structSize * multiplier
+		structSize *= multiplier
+		return structSize
 	}
 	else
 		throw Error( `got unknown member type ${member.type}` )
@@ -314,7 +374,15 @@ function PdataToJson( pdata, pdef )
 					i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
 				}
 				else if ( member.type in pdef.enums )
-					retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					try
+					{
+						retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					}
+					catch ( ex )
+					{
+						// if we are out of the bounds of the array we just assume the data is 0
+						retArray.push( pdef.enums[ member.type ][ 0 ] )
+					}
 				else if ( member.type in pdef.structs )
 				{
 					let newStruct = {}
@@ -327,7 +395,14 @@ function PdataToJson( pdata, pdef )
 		}
 	}
 
-	recursiveReadPdata( pdef.members, ret )
+	try
+	{
+		recursiveReadPdata( pdef.members, ret )
+	}
+	catch ( ex )
+	{
+		console.log( ex )
+	}
 
 	return ret
 }
@@ -355,7 +430,15 @@ function PdataToJsonUntyped( pdata, pdef )
 					i += NATIVE_TYPES[ member.type ].size * ( member.nativeArraySize || 1 )
 				}
 				else if ( member.type in pdef.enums )
-					retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					try
+					{
+						retArray.push( pdef.enums[ member.type ][ pdata.readUInt8( i++ ) ] ) // enums are uint8s
+					}
+					catch ( ex )
+					{
+						// if we are out of the bounds of the array we just assume the data is 0
+						retArray.push( pdef.enums[ member.type ][ 0 ] )
+					}
 				else if ( member.type in pdef.structs )
 				{
 					let newStruct = {}
@@ -441,6 +524,9 @@ function PdataJsonToBuffer( json, pdef )
 			for ( let j = 0; j < arraySize; j++ )
 			{
 				let val = member.value
+				if ( typeof( val ) == "undefined" )
+					val = "NULL"
+
 				if ( Array.isArray( val ) )
 					val = member.value[ j ]
 
@@ -451,7 +537,10 @@ function PdataJsonToBuffer( json, pdef )
 				}
 				else if ( member.type in pdef.enums )
 				{
-					buf.writeUInt8( pdef.enums[ member.type ].indexOf( val ), i++ ) // enums are uint8s
+					if ( pdef.enums[ member.type ].indexOf( val ) == -1 )
+						buf.writeUInt8( 0, i++ )
+					else
+						buf.writeUInt8( pdef.enums[ member.type ].indexOf( val ), i++ ) // enums are uint8s
 				}
 				else if ( member.type in pdef.structs )
 					recursiveWritePdata( val )
@@ -459,7 +548,14 @@ function PdataJsonToBuffer( json, pdef )
 		}
 	}
 
-	recursiveWritePdata( json )
+	try
+	{
+		recursiveWritePdata( json )
+	}
+	catch ( ex )
+	{
+		console.log( ex )
+	}
 	return buf
 }
 
@@ -473,4 +569,64 @@ module.exports = {
 	PdataToJson: PdataToJson,
 	PdataToJsonUntyped: PdataToJsonUntyped,
 	PdataJsonToBuffer: PdataJsonToBuffer,
+
+	ParseModPDiffs: async function ( request )
+	{
+		let modInfo
+
+		if ( request.isMultipart() )
+		{
+			try
+			{
+				modInfo = JSON.parse( ( await ( await request.file() ).toBuffer() ).toString() )
+				modInfo.Mods.sort( ( a, b ) =>
+				{
+					if ( a.LoadPriority > b.LoadPriority )
+					{
+						return 1
+					}
+					else if ( a.LoadPriority < b.LoadPriority )
+					{
+						return -1
+					}
+					else
+					{
+						return 1
+					}
+				} )
+			}
+			catch ( ex )
+			{
+				console.log( ex )
+				return
+			}
+		}
+		else
+		{
+			return
+		}
+
+		// pdiff stuff
+		if ( modInfo && modInfo.Mods )
+		{
+			for ( let mod of modInfo.Mods )
+			{
+				if ( mod.pdiff )
+				{
+					try
+					{
+						let pdiffHash = crypto.createHash( "sha1" ).update( mod.pdiff ).digest( "hex" )
+						mod.pdiff = module.exports.ParseDefinitionDiff( mod.pdiff )
+						mod.pdiff.hash = pdiffHash
+					}
+					catch ( ex )
+					{
+						mod.pdiff = null
+					}
+				}
+			}
+		}
+
+		return modInfo
+	}
 }

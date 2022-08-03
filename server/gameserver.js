@@ -100,12 +100,14 @@ async function getGeoIp( request )
 		return ""
 	}
 
-	let json_response = JSON.parse(geoIpResonse.toString())
+	let json_response = JSON.parse( geoIpResonse.toString() )
 
-	if ( json_response.status === 'success' ) {
+	if ( json_response.status === "success" )
+	{
 		return json_response.continent
 	}
-	else {
+	else
+	{
 		// geoip request was not succesfull, return empty string
 		return ""
 	}

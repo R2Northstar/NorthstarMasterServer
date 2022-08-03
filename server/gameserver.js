@@ -82,6 +82,35 @@ async function ParseModPDiffs( request )
 	return modInfo
 }
 
+// Uses 3rd-party service to get continent of gameserver based on GeoIP
+async function getGeoIp( request )
+{
+	let geoIpResonse
+	try
+	{
+		geoIpResonse = await asyncHttp.request( {
+			method: "GET",
+			host: "ip-api.com",
+			path: "/json/" + request.ip + "?fields=status,continent"
+		} )
+	}
+	catch
+	{
+		// Something failed, return empty string
+		return ""
+	}
+
+	let json_response = JSON.parse(geoIpResonse.toString())
+
+	if ( json_response.status === 'success' ) {
+		return json_response.continent
+	}
+	else {
+		// geoip request was not succesfull, return empty string
+		return ""
+	}
+}
+
 async function SharedTryAddServer( request )
 {
 	if( !minimumVersion( request ) )
@@ -117,7 +146,8 @@ async function SharedTryAddServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo )
+	let region = await getGeoIp( request )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, request.query.port, request.query.authPort, request.query.password, modInfo, region )
 	AddGameServer( newServer )
 	// console.log(`CREATE: (${newServer.id}) - ${newServer.name}`)
 	updateServerList()
@@ -151,7 +181,8 @@ async function TryReviveServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, ghost.port, ghost.authPort, request.query.password, modInfo )
+	let region = await getGeoIp( request )
+	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, ghost.port, ghost.authPort, request.query.password, modInfo, region )
 	newServer.id = ghost.id
 	AddGameServer( newServer )
 	RemoveGhostServer( ghost.id )

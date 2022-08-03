@@ -19,7 +19,9 @@ class GameServer
 	// object modInfo
 	// object pdiff
 
-	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = { Mods: [] } )
+	// string region
+
+	constructor( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password = "", modInfo = { Mods: [] }, region )
 	{
 		if ( nameOrServer instanceof( GameServer ) ) // copy constructor
 		{
@@ -27,7 +29,7 @@ class GameServer
 
 			this.id = nameOrServer.id
 			this.serverAuthToken = nameOrServer.serverAuthToken
-			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.pdiffs )
+			this.updateValues( nameOrServer.name, nameOrServer.description, nameOrServer.playerCount, nameOrServer.maxPlayers, nameOrServer.map, nameOrServer.playlist, nameOrServer.ip, nameOrServer.port, nameOrServer.authPort, nameOrServer.password, nameOrServer.modInfo, nameOrServer.region )
 		}
 		else // normal constructor
 		{
@@ -35,11 +37,11 @@ class GameServer
 
 			this.id = crypto.randomBytes( 16 ).toString( "hex" )
 			this.serverAuthToken = crypto.randomBytes( 16 ).toString( "hex" )
-			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
+			this.updateValues( nameOrServer, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, region )
 		}
 	}
 
-	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo )
+	updateValues( name, description, playerCount, maxPlayers, map, playlist, ip, port, authPort, password, modInfo, region )
 	{
 		this.name = name
 		this.description = description
@@ -71,6 +73,7 @@ class GameServer
 		{
 			// Do nothing
 		}
+		this.region = region
 	}
 }
 

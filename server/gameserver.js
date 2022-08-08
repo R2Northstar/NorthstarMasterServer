@@ -183,7 +183,7 @@ async function TryReviveServer( request )
 
 	let name = filter.clean( request.query.name )
 	let description = request.query.description == "" ? "" : filter.clean( request.query.description )
-	let region = await getGeoIp( request )
+	let region = ghost.region // Given that we don't allow reviving ghost from different IP it also shouldn't be able to switch region
 	let newServer = new GameServer( name, description, playerCount, request.query.maxPlayers, request.query.map, request.query.playlist, request.ip, ghost.port, ghost.authPort, request.query.password, modInfo, region )
 	newServer.id = ghost.id
 	AddGameServer( newServer )

@@ -17,7 +17,10 @@ module.exports = {
 			let req = lib.request( params, reqResult =>
 			{
 				if ( reqResult.statusCode < 200 || reqResult.statusCode >= 300 )
-					return reject()
+					return reject( {
+						statusCode: reqResult.statusCode,
+						headers: reqResult.headers
+					} )
 
 				let data = []
 				reqResult.on( "data", c => data.push( c ) )

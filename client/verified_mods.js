@@ -31,7 +31,7 @@ module.exports = ( fastify, opts, done ) =>
 	// returns a list of manually-verified mods
 	fastify.get( "/client/verifiedmods",
 		{
-			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__CLIENT_MAINMENUPROMOS" ) }, // ratelimit
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__CLIENT_VERIFIEDMODS" ) }, // ratelimit
 		},
 		async ( ) =>
 		{

@@ -2,10 +2,10 @@ const path = require( "path" )
 const fs = require( "fs" )
 
 const { getRatelimit } = require( "../shared/ratelimit.js" )
-const verifiedModsPath = path.join( __dirname, "resource", "verified_mods.json" );
+const verifiedModsPath = path.join( __dirname, "resource", "verified_mods.json" )
 
 // watch the JSON file so we can update it without a masterserver restart
-fs.watch( verifiedModsPath, ( curr, prev ) =>
+fs.watch( verifiedModsPath, () =>
 {
 	try
 	{
@@ -16,10 +16,9 @@ fs.watch( verifiedModsPath, ( curr, prev ) =>
 	{
 		console.log( `Encountered error updating verified mods list: ${ ex }` )
 	}
-
 } )
 
-let verifiedModsList = [];
+let verifiedModsList = []
 if ( fs.existsSync( verifiedModsPath ) )
 	verifiedModsList = JSON.parse( fs.readFileSync( verifiedModsPath ).toString() )
 

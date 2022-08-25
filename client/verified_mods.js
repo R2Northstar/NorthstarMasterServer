@@ -1,6 +1,26 @@
 const path = require( "path" )
 const fs = require( "fs" )
 
+// Checks if a mod entry respects the mod naming convention (AuthorName-ModName-Version).
+// https://northstar.thunderstore.io/package/create/docs/ (check dependencies format)
+function checkModEntry (modName) {
+	return /^[a-zA-Z0-9\_]+-[a-zA-Z0-9\_]+-[0-9]+\.[0-9]+\.[0-9]+$/.test(modName);
+}
+
+// Remove mod entries that do not match naming convention from exposed mods list.
+function checkAllMods() {
+	for (const mod of verifiedModsList) {
+		if (!checkModEntry(mod)) {
+			console.warn(`Since "${mod}" does not respect mod naming convention, it was removed from verified mods list.`);
+			let index = verifiedModsList.indexOf(mod);
+			while (index !== -1) {
+				verifiedModsList.splice(index, 1);
+				index = verifiedModsList.indexOf(mod);
+			}
+		}
+	}
+}
+
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const verifiedModsPath = path.join( __dirname, "resource", "verified_mods.json" )
 

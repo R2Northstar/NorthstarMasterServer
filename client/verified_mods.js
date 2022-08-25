@@ -30,6 +30,7 @@ fs.watch( verifiedModsPath, () =>
 	try
 	{
 		verifiedModsList = JSON.parse( fs.readFileSync( verifiedModsPath ).toString() )
+		checkAllMods()
 		console.log( "Updated verified mods list successfully!" )
 	}
 	catch ( ex )
@@ -39,8 +40,10 @@ fs.watch( verifiedModsPath, () =>
 } )
 
 let verifiedModsList = []
-if ( fs.existsSync( verifiedModsPath ) )
+if ( fs.existsSync( verifiedModsPath ) ) {
 	verifiedModsList = JSON.parse( fs.readFileSync( verifiedModsPath ).toString() )
+	checkAllMods()
+}
 
 module.exports = ( fastify, opts, done ) =>
 {

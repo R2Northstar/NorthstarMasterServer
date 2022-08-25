@@ -9,13 +9,17 @@ function checkModEntry (modName) {
 
 // Remove mod entries that do not match naming convention from exposed mods list.
 function checkAllMods() {
-	for (const mod of verifiedModsList) {
+	for (let i=0; i<verifiedModsList.length; i++) {
+	// for (const mod of verifiedModsList) {
+		const mod = verifiedModsList[i];
+
 		if (!checkModEntry(mod)) {
 			console.warn(`Since "${mod}" does not respect mod naming convention, it was removed from verified mods list.`);
 			let index = verifiedModsList.indexOf(mod);
 			while (index !== -1) {
 				verifiedModsList.splice(index, 1);
 				index = verifiedModsList.indexOf(mod);
+				i -= 1;
 			}
 		}
 	}

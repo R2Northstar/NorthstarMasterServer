@@ -1,41 +1,43 @@
 const path = require( "path" )
 const fs = require( "fs" )
 
-// Checks if a mod entry respects the mod naming convention (AuthorName-ModName-Version).
-// https://northstar.thunderstore.io/package/create/docs/ (check dependencies format)
-function checkModEntry ( modName )
+// Checks if a mod entry is an object, has "DependencyPrefix" and "Versions" properties,
+// and also checks if both fields have correct format.
+function checkModEntry ( modContent )
 {
-	return /^[a-zA-Z0-9_]+-[a-zA-Z0-9_]+-[0-9]+\.[0-9]+\.[0-9]+$/.test( modName )
+	if ( typeof modContent !== "object" || Array.isArray( modContent ) || modContent === null )
+		return false
+	if ( !Object.prototype.hasOwnProperty.call( modContent, "DependencyPrefix" ) || !Object.prototype.hasOwnProperty.call( modContent, "Versions" ) )
+		return false
+
+	// Checking TeamName-ModName format.
+	const dependencyPrefix = modContent["DependencyPrefix"]
+	if ( !/^[a-zA-Z0-9_]+-[a-zA-Z0-9_]+$/.test( dependencyPrefix ) )
+		return false
+
+	// Checking x.y.z versions format.
+	const versions = modContent["Versions"]
+	for ( const version of versions )
+	{
+		if ( Object.prototype.toString.call( version ) !== "[object String]" || !/[0-9]+\.[0-9]+\.[0-9]$/.test( version ) )
+			return false
+	}
+
+	return true
 }
 
-// Remove mod entries that do not match naming convention from exposed mods list.
+// Remove mod entries that do not match formatting convention from exposed mods list.
 function checkAllMods()
 {
-	for ( let i=0; i<verifiedModsList.length; i++ )
+	const mods = Object.keys( verifiedMods )
+
+	for ( let i=0; i<mods.length; i++ )
 	{
-	// for (const mod of verifiedModsList) {
-		const mod = verifiedModsList[i]
-
-		if ( !checkModEntry( mod ) )
+		const mod = mods[i]
+		if ( !checkModEntry( verifiedMods[mod] ) )
 		{
-			console.warn( `Since "${mod}" does not respect mod naming convention, it was removed from verified mods list.` )
-			let index = verifiedModsList.indexOf( mod )
-			while ( index !== -1 )
-			{
-				verifiedModsList.splice( index, 1 )
-				index = verifiedModsList.indexOf( mod )
-				i -= 1
-			}
-			continue
-		}
-
-		// Remove duplicated entries
-		let entryCount = verifiedModsList.filter( entry => entry === mod ).length
-		while ( entryCount !== 1 )
-		{
-			verifiedModsList.splice( verifiedModsList.indexOf( mod, i+1 ), 1 )
-			entryCount = verifiedModsList.filter( entry => entry === mod ).length
-			console.warn( `"${mod}" entry was found several times, deleting duplicate.` )
+			console.warn( `Since "${mod}" does not have correct format, it was removed from verified mods list.` )
+			delete verifiedMods[mod]
 		}
 	}
 }
@@ -48,7 +50,7 @@ fs.watch( verifiedModsPath, () =>
 {
 	try
 	{
-		verifiedModsList = JSON.parse( fs.readFileSync( verifiedModsPath ).toString() )
+		verifiedMods = JSON.parse( fs.readFileSync( verifiedModsPath ).toString() )
 		checkAllMods()
 		console.log( "Updated verified mods list successfully!" )
 	}
@@ -58,10 +60,10 @@ fs.watch( verifiedModsPath, () =>
 	}
 } )
 
-let verifiedModsList = []
+let verifiedMods = {}
 if ( fs.existsSync( verifiedModsPath ) )
 {
-	verifiedModsList = JSON.parse( fs.readFileSync( verifiedModsPath ).toString() )
+	verifiedMods = JSON.parse( fs.readFileSync( verifiedModsPath ).toString() )
 	checkAllMods()
 }
 
@@ -77,7 +79,7 @@ module.exports = ( fastify, opts, done ) =>
 		},
 		async ( ) =>
 		{
-			return verifiedModsList
+			return verifiedMods
 		} )
 
 	done()

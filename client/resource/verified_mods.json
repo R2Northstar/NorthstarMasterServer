@@ -1,9 +1,12 @@
-[
-    "northstar-Northstar-1.9.4",
-    "EladNLG-ModSettings-1.1.2",
-    12,
-    42,
-    "EladNLG-ModSettings-1.1.2",
-    "Wrong mod name",
-    "EladNLG-ModSettings-1.1.2"
-]
+{
+    "Mod Settings":
+    {
+        "DependencyPrefix": "EladNLG-ModSettings",
+        "Versions": [ "1.0.0", "1.1.0" ]
+    },
+    "Moblin.Archon":
+    {
+        "DependencyPrefix": "GalacticMoblin-MoblinArchon",
+        "Versions": [ "1.3.0", "1.3.1" ]
+    }
+}

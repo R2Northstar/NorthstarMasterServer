@@ -17,22 +17,24 @@ body {
     padding: 20px;
     vertical-align: middle;
     width: max-content;
-    user-select: none !important;
-    pointer-events: none;
     filter: drop-shadow(0px 4px 16px rgba(0,0,0,0.75));
 }
-#centerlogo > .logo {
+#centerlogo a {
+    text-decoration: none;
+    color: #fff;
+}
+#centerlogo .logo {
     width: 100px;
     height: 100px;
     vertical-align: middle;
 }
-#centerlogo > .northstartext {
+#centerlogo .northstartext {
     font-family: Titanfall, Arial, Helvetica, sans-serif;
     font-size: 42px;
     vertical-align: middle;
     margin-right: 16px;
 }
-#centerlogo > .northstartext::before {
+#centerlogo .northstartext::before {
     content: '';
     height: 80px;
     width: 4px;
@@ -56,8 +58,9 @@ body {
     display: block;
     background: url(/assets/NorthstarPromoPoster.jpg);
     background-size: cover;
-    background-position: center, center;
+    background-position: center;
     border-radius: 10px;
+    margin-bottom: 40px;
 }
 a.post {
     text-decoration: none !important;

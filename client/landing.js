@@ -9,6 +9,18 @@ module.exports = ( fastify, opts, done ) =>
 {
 	// exported routes
 
+	// Blog
+	fastify.get( "/blog",
+		{
+			config: { rateLimit: getRatelimit( "REQ_PER_MINUTE__LANDING" ) }, // ratelimit
+		},
+		async ( request, reply ) =>
+		{
+			const stream = fs.createReadStream( path.join( __dirname, "../web/blog/index.html" ), "utf-8" )
+			reply.type( "text/html" ).send( stream )
+		}
+	)
+
 	// Dynamic blog posts
 	fastify.get( "/blog/:post",
 		{
@@ -17,6 +29,10 @@ module.exports = ( fastify, opts, done ) =>
 		async ( request, reply ) =>
 		{
 			const { post } = request.params
+			if ( !post )
+			{
+				reply.redirect( "/blog" )
+			}
 
 			const postData = readPost( post )
 

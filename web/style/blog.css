@@ -1,0 +1,88 @@
+@font-face {
+    font-family: Titanfall;
+    src: url('/assets/titanfall.ttf');
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+.title {
+    background: #141a32;
+    color: #fff;
+}
+
+#centerlogo {
+    padding: 20px;
+    vertical-align: middle;
+    width: max-content;
+    user-select: none !important;
+    pointer-events: none;
+    filter: drop-shadow(0px 4px 16px rgba(0,0,0,0.75));
+}
+#centerlogo > .logo {
+    width: 100px;
+    height: 100px;
+    vertical-align: middle;
+}
+#centerlogo > .northstartext {
+    font-family: Titanfall, Arial, Helvetica, sans-serif;
+    font-size: 42px;
+    vertical-align: middle;
+    margin-right: 16px;
+}
+#centerlogo > .northstartext::before {
+    content: '';
+    height: 80px;
+    width: 4px;
+    margin-left: 12px;
+    margin-right: 32px;
+    vertical-align: middle;
+    display: inline-block;
+    background-color: white;
+    transform: skewY(-25deg);
+    box-shadow: rgba(127,127,127,0.5) 5px 5px 0px;
+}
+
+.blog-content {
+    padding: 40px;
+    max-width: 1200px;
+    margin: auto;
+}
+
+/* BLOG LINKS */
+.post {
+    display: block;
+    background: url(/assets/NorthstarPromoPoster.jpg);
+    background-size: cover;
+    background-position: center, center;
+    border-radius: 10px;
+}
+a.post {
+    text-decoration: none !important;
+    color: #fff;
+}
+.post .overlay {
+    display: flex;
+    align-items: center;
+    padding: 20px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+}
+.post .post-content {
+    width: 80%;
+}
+.post .link-title {
+    font-size: 30px;
+}
+.post .post-read {
+    width: 20%;
+    text-align: right;
+}
+.post .post-read .link-post{
+    background: #141a32;
+    padding: 20px;
+    display: inline-block;
+    border-radius: 5px;
+}

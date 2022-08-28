@@ -10,3 +10,7 @@ https://github.com/R2Northstar/NorthstarLauncher
 
 # Northstar Game Scripts
 https://github.com/R2Northstar/NorthstarMods
+
+# Or notrify one of our developers on Discord
+Gecko#7945
+EmmaM#6474

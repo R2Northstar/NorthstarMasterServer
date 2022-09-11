@@ -75,10 +75,21 @@ body {
     box-shadow: rgba(127,127,127,0.5) 5px 5px 0px;
 }
 
+/* BLOG STYLING */
+
 .blog-content {
     padding: 40px;
     max-width: 1200px;
     margin: auto;
+    min-height: calc(58vh + 6px);
+}
+
+.breadcrumbs {
+    color: #999;
+}
+.breadcrumbs a {
+    color: #333;
+    text-decoration: none;
 }
 
 /* BLOG LINKS */
@@ -119,13 +130,13 @@ a.post {
 }
 
 /* FOOTER */
-a {
+.footer a {
     color: white
 }
-a:hover {
+.footer a:hover {
     color: #dddddd
 }
-a:active {
+.footer a:active {
     color: #bbbbbb
 }
 .pane {

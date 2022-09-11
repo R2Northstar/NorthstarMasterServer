@@ -22,6 +22,12 @@ module.exports = ( fastify, opts, done ) =>
 		async ( request, reply ) =>
 		{
 			let posts = ""
+
+			if ( postData.length === 0 )
+			{
+				posts = "No Posts"
+			}
+
 			postData.map( ( post, index ) => posts+=`
 				<a href="/blog/${post.link}" class="post" style="background-position-y: ${100*index}px">
 					<div class="overlay">

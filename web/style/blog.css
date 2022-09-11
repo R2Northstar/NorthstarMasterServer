@@ -8,10 +8,38 @@ body {
     font-family: Arial, Helvetica, sans-serif;
 }
 
+/* HEADER */
 .title {
     background: #141a32;
     color: #fff;
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
 }
+
+#links {
+    margin: 20px;
+}
+#toplinks .top-link {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 16px;
+    padding: 24px 32px;
+    white-space: nowrap;
+    display: inline-block;
+    color: #fff;
+    text-decoration: none;
+    user-select: none !important;
+    transition: 0.3s;
+}
+#toplinks .top-link:hover {
+    background-color: rgba(0,0,0,0.25);
+}
+#toplinks .top-link:active {
+    background-color: rgba(0,0,0,0.5);
+}
+
 
 #centerlogo {
     padding: 20px;
@@ -88,4 +116,30 @@ a.post {
     padding: 20px;
     display: inline-block;
     border-radius: 5px;
+}
+
+/* FOOTER */
+a {
+    color: white
+}
+a:hover {
+    color: #dddddd
+}
+a:active {
+    color: #bbbbbb
+}
+.pane {
+    background: #141a32;
+    padding: 32px;
+    max-width: 100%;
+    overflow-x: hidden;
+    overflow-wrap: break-word;
+}
+.footer {
+    display: grid;
+    grid-template-columns: 128px 128px;
+    column-gap: 16px;
+}
+.footer > a {
+    line-height: 2;
 }

@@ -60,9 +60,12 @@ module.exports = ( fastify, opts, done ) =>
 						path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString( 16 ).toUpperCase() }`
 					} )
 				}
-				catch
+				catch ( error )
 				{
-					return { success: false, error: STRYDER_RESPONSE, response: authResponse.toString() }
+					if ( authResponse !== undefined )
+						return { success: false, error: STRYDER_RESPONSE, response: authResponse.toString() }
+					else
+						return { success: false, error: STRYDER_RESPONSE, response: error }
 				}
 
 				let authJson
@@ -72,7 +75,10 @@ module.exports = ( fastify, opts, done ) =>
 				}
 				catch ( error )
 				{
-					return { success: false, error: STRYDER_PARSE, response: authResponse.toString() }
+					if ( authResponse !== undefined )
+						return { success: false, error: STRYDER_PARSE, response: authResponse.toString() }
+					else
+						return { success: false, error: STRYDER_PARSE, response: error }
 				}
 
 				// check origin auth was fine

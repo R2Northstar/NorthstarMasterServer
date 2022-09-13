@@ -21,6 +21,10 @@ const errorCodes = {
 	},
 	STRYDER_RESPONSE: {
 		enum: "STRYDER_RESPONSE",
+		msg: "Got bad response from stryder",
+	},
+	STRYDER_PARSE: {
+		enum: "STRYDER_PARSE",
 		msg: "Couldn't parse stryder response",
 	},
 	PLAYER_NOT_FOUND: {

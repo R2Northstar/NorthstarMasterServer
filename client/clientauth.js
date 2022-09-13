@@ -11,6 +11,7 @@ let shouldRequireSessionToken = process.env.REQUIRE_SESSION_TOKEN = true
 const { getRatelimit } = require( "../shared/ratelimit.js" )
 const {
 	STRYDER_RESPONSE,
+	STRYDER_PARSE,
 	UNAUTHORIZED_GAME,
 	UNAUTHORIZED_PWD,
 	PLAYER_NOT_FOUND,
@@ -61,7 +62,7 @@ module.exports = ( fastify, opts, done ) =>
 				}
 				catch
 				{
-					return { success: false, error: STRYDER_RESPONSE }
+					return { success: false, error: STRYDER_RESPONSE, response: authResponse.toString() }
 				}
 
 				let authJson
@@ -71,7 +72,7 @@ module.exports = ( fastify, opts, done ) =>
 				}
 				catch ( error )
 				{
-					return { success: false, error: STRYDER_RESPONSE }
+					return { success: false, error: STRYDER_PARSE, response: authResponse.toString() }
 				}
 
 				// check origin auth was fine

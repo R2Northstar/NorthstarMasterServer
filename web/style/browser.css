@@ -1,0 +1,522 @@
+html, body {
+    height: 100vh;
+}
+body {
+    margin: 0;
+    font-size: 0.75rem;
+    display: grid;
+    background: #141a32;
+    color: white;
+
+    grid-template-areas:
+            'header header'
+            'filters table'
+            'stats table'
+            'footer table';
+    grid-template-columns: 1fr 5fr;
+    grid-template-rows: auto 1fr auto auto;
+}
+body, input, button {
+    font-family: Arial, sans-serif;
+}
+a {
+    color: inherit;
+    text-decoration: underline;
+}
+body > svg {
+    display: none;
+}
+
+header {
+    grid-area: header;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 1rem;
+    user-select: none;
+}
+header img {
+    height: 3rem;
+}
+header div {
+    margin-left: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+header h1 {
+    font-size: 1.2rem;
+    font-weight: normal;
+    margin: 0;
+}
+header p {
+    margin: 0;
+    opacity: 0.5;
+}
+
+.textbox, .dropdown, select {
+    border: none;
+    padding: 0.5rem 0.7rem;
+    background: #37405D;
+    border-radius: 0.5rem;
+}
+.textbox, .dropdown {
+    display: flex;
+    align-items: center;
+}
+select {
+    display: block;
+    font: inherit;
+    color: inherit;
+    width: 100%;
+}
+.textbox {
+    height: 1rem;
+}
+.textbox input {
+    background: transparent;
+    border: none;
+    flex-grow: 1;
+    color: white;
+    outline: none;
+}
+
+.clear {
+    border: none;
+    background: none;
+    border-radius: 1rem;
+    padding: 0;
+    color: #aaa;
+    margin-top: -0.125rem;
+}
+.clear:hover {
+    color: white;
+}
+.clear svg {
+    height: 1.25rem;
+    display: block;
+}
+
+nav span, nav a {
+    display: block;
+    padding: 0.6rem 1rem;
+    background: #212B4E;
+}
+nav a {
+    opacity: 0.5;
+}
+
+#filters, #stats, footer {
+    background: #212B4E;
+    user-select: none;
+    padding: 1rem;
+}
+#filters {
+    grid-area: filters;
+    overflow: auto;
+}
+
+#content {
+    grid-area: table;
+    overflow: auto;
+    position: relative;
+    margin: 0 1rem 1rem 1rem;
+}
+
+.status {
+    text-align: center;
+    opacity: 0.5;
+}
+body:not(.loading-state) #loading-state {
+    display: none;
+}
+body:not(.error-state) #error-state {
+    display: none;
+}
+
+footer {
+    margin-top: 2px;
+}
+footer div {
+    opacity: 0.5;
+}
+
+@media (max-width: 1060px) {
+    body {
+        grid-template-areas:
+            'header'
+            'filters'
+            'table'
+            'stats'
+            'footer';
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr auto auto;
+    }
+    nav {
+        padding: 0 1rem;
+    }
+    #filters {
+        overflow: visible;
+    }
+    #content {
+        overflow: visible;
+        margin-top: 1rem;
+    }
+}
+#set-filters-button {
+    display: none;
+    width: 100%;
+    margin-top: 1rem;
+}
+#set-filters-button, .play-button {
+    border: none;
+    background: rgba(255, 255, 255, 0.25);
+    color: white;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    box-sizing: border-box;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 5px 5px;
+}
+#set-filters-button:hover, .play-button:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+.play-button {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    margin-bottom: 0.25rem;
+}
+
+.dropdown-header {
+    flex-grow: 1;
+}
+.dropdown-header span {
+    display: inline-block;
+}
+.dropdown-header span:not(:last-child):after {
+    display: inline-block;
+    margin: 0 0.25rem;
+    opacity: 0.5;
+}
+.dropdown-or .dropdown-header span:not(:last-child):after {
+    content: "or";
+}
+.dropdown-and .dropdown-header span:not(:last-child):after {
+    content: "and";
+}
+.dropdown-items {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+.dropdown:not(.dropdown-open) {
+    cursor: pointer;
+}
+.dropdown.dropdown-open .dropdown-header, .dropdown.dropdown-open .clear {
+    display: none;
+}
+.dropdown:not(.dropdown-open) .dropdown-items {
+    display: none;
+}
+.dropdown-items label {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    border-radius: 0.25rem;
+    padding: 0.125rem;
+}
+.dropdown-items label:hover {
+    background: rgba(255, 255, 255, 0.1);
+}
+.dropdown-items input {
+    display: inline-block;
+    margin-right: 0.3rem;
+}
+.dropdown-label {
+    display: block;
+    margin-top: 1rem;
+    margin-bottom: 0.25rem;
+    opacity: 0.5;
+}
+
+#filters .top-checkbox-label {
+    margin-top: 1rem;
+}
+#filters .checkbox-label {
+    display: block;
+    padding: 0.25rem;
+    border-radius: 0.25rem;
+}
+#filters .checkbox-label:hover {
+    background: #37405D;
+}
+#filters .checkbox-label input {
+    display: inline-block;
+    margin-right: 0.5rem;
+}
+
+.table-header-row, .table-row {
+    display: grid;
+    grid-template-columns: 2rem 40fr 5.5rem 10fr 10fr;
+}
+.table-header, .table-row > div {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.table-header-row {
+    cursor: pointer;
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+    user-select: none;
+    font-weight: bold;
+    z-index: 1;
+}
+.table-header {
+    position: relative;
+}
+.table-header svg {
+    position: absolute;
+    top: 0.5rem;
+    height: 1rem;
+}
+.table-header:first-child svg {
+    left: 0;
+    width: 100%;
+}
+.table-header:not(:first-child) svg {
+    right: 0.5rem;
+}
+.table-header:not(.sort-down):not(.sort-up) svg {
+    display: none;
+}
+.table-header.sort-up svg {
+    transform: rotate(180deg);
+}
+
+.table-row svg {
+    width: 1rem;
+    height: 1rem;
+    margin: 0 auto;
+    display: block;
+}
+
+.table-header:not(:first-child), .table-row > div:not(:first-child) {
+    padding: 0.5rem 0.8rem;
+    vertical-align: top;
+}
+.table-row > div:first-child {
+    padding: 0.5rem 0;
+    min-height: 16px;
+    text-align: center;
+}
+.table-row:not(.server-selected) > div:first-child:hover {
+    background: #4d5a83;
+}
+.table-row:not(:hover) > div:first-child svg.play, .table-row.server-selected > div:first-child svg.play {
+    display: none;
+}
+.table-row:not(.server-selected):hover > div:first-child svg:not(.play) {
+    display: none;
+}
+
+.table-row:not(.server-selected) {
+    cursor: pointer;
+    user-select: none;
+}
+.table-row:not(.server-selected) .server-details-extra {
+    display: none;
+}
+
+.table-header, .table-row:nth-child(even) {
+    background: #20263C;
+}
+.table-row:nth-child(odd) {
+    background: #2C3147;
+}
+.table-row:hover, .table-row.server-selected, .table-header:hover {
+    background: #37405D;
+}
+.table-row > div:not(:last-child), .table-header:not(:last-child) {
+    border-right: solid #141a32 2px;
+}
+
+.server-details h3 {
+    font-size: inherit;
+    font-weight: normal;
+    margin: 0;
+}
+.server-details-extra {
+    margin-top: 0.5rem;
+}
+.server-details-extra p, .server-details-extra ul {
+    opacity: 0.5;
+}
+.server-details-extra p {
+    margin: 0;
+}
+.server-details-extra ul {
+    margin: 0.25rem 0 0 0;
+    padding-left: 1.5rem;
+}
+.server-details span {
+    background: rgba(255, 255, 0, 0.2);
+    font-weight: bold;
+}
+
+#stats {
+    grid-area: stats;
+    margin-top: 2px;
+}
+#stats div {
+    opacity: 0.5;
+}
+#stats div:not(:first-child) {
+    margin-top: 0.5rem;
+}
+
+#overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 2;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#overlay > div {
+    max-width: 20rem;
+    width: 100%;
+    background: #37405D;
+    box-shadow: rgba(0, 0, 0, 0.25) 0 5px 5px;
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem 1rem 1rem;
+}
+#overlay p {
+    margin: 0 0 0.5rem 0;
+}
+#overlay form {
+    display: flex;
+}
+#overlay input, #overlay button {
+    color: inherit;
+    font: inherit;
+}
+#overlay input {
+    border: none;
+    padding: 0.5rem 0.7rem;
+    height: 1rem;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 0.5rem;
+    flex-grow: 1;
+}
+#overlay button {
+    box-sizing: border-box;
+    width: 2rem;
+    height: 2rem;
+    padding: 0.5rem 0;
+    border-radius: 0.5rem;
+    border: none;
+    background: rgba(255, 255, 255, 0.25);
+    box-shadow: rgba(0, 0, 0, 0.25) 0 5px 5px;
+    margin-left: 0.5rem;
+}
+#overlay button svg {
+    height: 1rem;
+}
+#overlay button:hover {
+    background: rgba(255, 255, 255, 0.5);
+}
+
+@media (max-width: 1060px) {
+    #set-filters-button {
+        display: block;
+    }
+    #filters .form-collapse {
+        display: none;
+    }
+}
+@media (max-width: 700px) {
+    .table-header-row {
+        display: none;
+    }
+    .table-row {
+        grid-template-columns: auto auto auto 1fr;
+        padding: 1rem;
+    }
+    .table-row > div {
+        border-right: none !important;
+        padding: 0 !important;
+    }
+    .table-row > div:nth-child(1) {
+        grid-row: 1;
+        grid-column: 1;
+    }
+    .table-row.server-private > div:nth-child(1) {
+        margin-right: 0.3rem;
+    }
+    .table-row > div:nth-child(2) {
+        grid-row: 1;
+        grid-column-start: 2;
+        grid-column-end: 5;
+        margin-bottom: 0.5rem;
+    }
+    .table-row > div:nth-child(3) {
+        grid-column-start: 1;
+        grid-column-end: 3;
+    }
+    .table-row > div:nth-child(n+3) {
+        grid-row: 2;
+        opacity: 0.5;
+        white-space: nowrap;
+    }
+    .table-row > div:nth-child(n+3):not(:last-child):after {
+        display: inline-block;
+        margin: 0 0.25rem;
+        content: " - ";
+    }
+    .table-row > div:nth-child(1) svg.play {
+        display: none !important;
+    }
+    .table-row > div:nth-child(1) svg:not(.play) {
+        display: block !important;
+    }
+    .table-row .play-button {
+        display: none;
+    }
+}
+
+.logo {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+#toplinks {
+    float: right;
+    display: flex;
+}
+.top-link {
+    margin: 0;
+    font-size: 16px;
+    font-weight: bold;
+    line-height: 16px;
+    padding: 24px 32px;
+    white-space: nowrap;
+    display: inline-block;
+    cursor: pointer;
+    color: white;
+    text-decoration: none;
+    user-select: none !important;
+}
+.top-link:hover {
+    background-color: rgba(0,0,0,0.25);
+}
+.top-link:active {
+    background-color: rgba(0,0,0,0.5);
+}

@@ -25,7 +25,7 @@ module.exports = ( fastify, opts, done ) =>
 
 			if ( postData.length === 0 )
 			{
-				posts = "No Posts"
+				posts = "<div class=\"no-posts\">No Posts Found</div>"
 			}
 
 			postData.map( ( post, index ) => posts+=`

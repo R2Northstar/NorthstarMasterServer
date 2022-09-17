@@ -91,6 +91,12 @@ body {
     color: #333;
     text-decoration: none;
 }
+.no-posts {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+}
 
 /* BLOG LINKS */
 .post {

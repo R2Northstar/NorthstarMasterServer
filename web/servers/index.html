@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Northstar Server Browser</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <style>
+        html, body {
+            height: 100vh;
+        }
+        body {
+            margin: 0;
+            font-size: 0.75rem;
+            display: grid;
+            background: #141a32;
+            color: white;
+
+            grid-template-areas:
+                    'header header'
+                    'filters table'
+                    'stats table'
+                    'footer table';
+            grid-template-columns: 1fr 5fr;
+            grid-template-rows: auto 1fr auto auto;
+        }
+        body, input, button {
+            font-family: Arial, sans-serif;
+        }
+        a {
+            color: inherit;
+            text-decoration: underline;
+        }
+        body > svg {
+            display: none;
+        }
+
+        header {
+            grid-area: header;
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            user-select: none;
+        }
+        header img {
+            height: 3rem;
+        }
+        header div {
+            margin-left: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        header h1 {
+            font-size: 1.2rem;
+            font-weight: normal;
+            margin: 0;
+        }
+        header p {
+            margin: 0;
+            opacity: 0.5;
+        }
+
+        .textbox, .dropdown, select {
+            border: none;
+            padding: 0.5rem 0.7rem;
+            background: #37405D;
+            border-radius: 0.5rem;
+        }
+        .textbox, .dropdown {
+            display: flex;
+            align-items: center;
+        }
+        select {
+            display: block;
+            font: inherit;
+            color: inherit;
+            width: 100%;
+        }
+        .textbox {
+            height: 1rem;
+        }
+        .textbox input {
+            background: transparent;
+            border: none;
+            flex-grow: 1;
+            color: white;
+            outline: none;
+        }
+
+        .clear {
+            border: none;
+            background: none;
+            border-radius: 1rem;
+            padding: 0;
+            color: #aaa;
+            margin-top: -0.125rem;
+        }
+        .clear:hover {
+            color: white;
+        }
+        .clear svg {
+            height: 1.25rem;
+            display: block;
+        }
+
+        nav span, nav a {
+            display: block;
+            padding: 0.6rem 1rem;
+            background: #212B4E;
+        }
+        nav a {
+            opacity: 0.5;
+        }
+
+        #filters, #stats, footer {
+            background: #212B4E;
+            user-select: none;
+            padding: 1rem;
+        }
+        #filters {
+            grid-area: filters;
+            overflow: auto;
+        }
+
+        #content {
+            grid-area: table;
+            overflow: auto;
+            position: relative;
+            margin: 0 1rem 1rem 1rem;
+        }
+
+        .status {
+            text-align: center;
+            opacity: 0.5;
+        }
+        body:not(.loading-state) #loading-state {
+            display: none;
+        }
+        body:not(.error-state) #error-state {
+            display: none;
+        }
+
+        footer {
+            margin-top: 2px;
+        }
+        footer div {
+            opacity: 0.5;
+        }
+
+        @media (max-width: 1060px) {
+            body {
+                grid-template-areas:
+                    'header'
+                    'filters'
+                    'table'
+                    'stats'
+                    'footer';
+                grid-template-columns: 1fr;
+                grid-template-rows: auto auto 1fr auto auto;
+            }
+            nav {
+                padding: 0 1rem;
+            }
+            #filters {
+                overflow: visible;
+            }
+            #content {
+                overflow: visible;
+                margin-top: 1rem;
+            }
+        }
+    </style>
+    <style>
+        #set-filters-button {
+            display: none;
+            width: 100%;
+            margin-top: 1rem;
+        }
+        #set-filters-button, .play-button {
+            border: none;
+            background: rgba(255, 255, 255, 0.25);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.5rem;
+            box-sizing: border-box;
+            box-shadow: rgba(0, 0, 0, 0.25) 0 5px 5px;
+        }
+        #set-filters-button:hover, .play-button:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        .play-button {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .dropdown-header {
+            flex-grow: 1;
+        }
+        .dropdown-header span {
+            display: inline-block;
+        }
+        .dropdown-header span:not(:last-child):after {
+            display: inline-block;
+            margin: 0 0.25rem;
+            opacity: 0.5;
+        }
+        .dropdown-or .dropdown-header span:not(:last-child):after {
+            content: "or";
+        }
+        .dropdown-and .dropdown-header span:not(:last-child):after {
+            content: "and";
+        }
+        .dropdown-items {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.1rem;
+        }
+        .dropdown:not(.dropdown-open) {
+            cursor: pointer;
+        }
+        .dropdown.dropdown-open .dropdown-header, .dropdown.dropdown-open .clear {
+            display: none;
+        }
+        .dropdown:not(.dropdown-open) .dropdown-items {
+            display: none;
+        }
+        .dropdown-items label {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            border-radius: 0.25rem;
+            padding: 0.125rem;
+        }
+        .dropdown-items label:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .dropdown-items input {
+            display: inline-block;
+            margin-right: 0.3rem;
+        }
+        .dropdown-label {
+            display: block;
+            margin-top: 1rem;
+            margin-bottom: 0.25rem;
+            opacity: 0.5;
+        }
+
+        #filters .top-checkbox-label {
+            margin-top: 1rem;
+        }
+        #filters .checkbox-label {
+            display: block;
+            padding: 0.25rem;
+            border-radius: 0.25rem;
+        }
+        #filters .checkbox-label:hover {
+            background: #37405D;
+        }
+        #filters .checkbox-label input {
+            display: inline-block;
+            margin-right: 0.5rem;
+        }
+
+        .table-header-row, .table-row {
+            display: grid;
+            grid-template-columns: 2rem 40fr 5.5rem 10fr 10fr;
+        }
+        .table-header, .table-row > div {
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .table-header-row {
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            white-space: nowrap;
+            user-select: none;
+            font-weight: bold;
+            z-index: 1;
+        }
+        .table-header {
+            position: relative;
+        }
+        .table-header svg {
+            position: absolute;
+            top: 0.5rem;
+            height: 1rem;
+        }
+        .table-header:first-child svg {
+            left: 0;
+            width: 100%;
+        }
+        .table-header:not(:first-child) svg {
+            right: 0.5rem;
+        }
+        .table-header:not(.sort-down):not(.sort-up) svg {
+            display: none;
+        }
+        .table-header.sort-up svg {
+            transform: rotate(180deg);
+        }
+
+        .table-row svg {
+            width: 1rem;
+            height: 1rem;
+            margin: 0 auto;
+            display: block;
+        }
+
+        .table-header:not(:first-child), .table-row > div:not(:first-child) {
+            padding: 0.5rem 0.8rem;
+            vertical-align: top;
+        }
+        .table-row > div:first-child {
+            padding: 0.5rem 0;
+            min-height: 16px;
+            text-align: center;
+        }
+        .table-row:not(.server-selected) > div:first-child:hover {
+            background: #4d5a83;
+        }
+        .table-row:not(:hover) > div:first-child svg.play, .table-row.server-selected > div:first-child svg.play {
+            display: none;
+        }
+        .table-row:not(.server-selected):hover > div:first-child svg:not(.play) {
+            display: none;
+        }
+
+        .table-row:not(.server-selected) {
+            cursor: pointer;
+            user-select: none;
+        }
+        .table-row:not(.server-selected) .server-details-extra {
+            display: none;
+        }
+
+        .table-header, .table-row:nth-child(even) {
+            background: #20263C;
+        }
+        .table-row:nth-child(odd) {
+            background: #2C3147;
+        }
+        .table-row:hover, .table-row.server-selected, .table-header:hover {
+            background: #37405D;
+        }
+        .table-row > div:not(:last-child), .table-header:not(:last-child) {
+            border-right: solid #141a32 2px;
+        }
+
+        .server-details h3 {
+            font-size: inherit;
+            font-weight: normal;
+            margin: 0;
+        }
+        .server-details-extra {
+            margin-top: 0.5rem;
+        }
+        .server-details-extra p, .server-details-extra ul {
+            opacity: 0.5;
+        }
+        .server-details-extra p {
+            margin: 0;
+        }
+        .server-details-extra ul {
+            margin: 0.25rem 0 0 0;
+            padding-left: 1.5rem;
+        }
+        .server-details span {
+            background: rgba(255, 255, 0, 0.2);
+            font-weight: bold;
+        }
+
+        #stats {
+            grid-area: stats;
+            margin-top: 2px;
+        }
+        #stats div {
+            opacity: 0.5;
+        }
+        #stats div:not(:first-child) {
+            margin-top: 0.5rem;
+        }
+
+        #overlay {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.3);
+            z-index: 2;
+
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        #overlay > div {
+            max-width: 20rem;
+            width: 100%;
+            background: #37405D;
+            box-shadow: rgba(0, 0, 0, 0.25) 0 5px 5px;
+            border-radius: 0.75rem;
+            padding: 0.75rem 1rem 1rem 1rem;
+        }
+        #overlay p {
+            margin: 0 0 0.5rem 0;
+        }
+        #overlay form {
+            display: flex;
+        }
+        #overlay input, #overlay button {
+            color: inherit;
+            font: inherit;
+        }
+        #overlay input {
+            border: none;
+            padding: 0.5rem 0.7rem;
+            height: 1rem;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 0.5rem;
+            flex-grow: 1;
+        }
+        #overlay button {
+            box-sizing: border-box;
+            width: 2rem;
+            height: 2rem;
+            padding: 0.5rem 0;
+            border-radius: 0.5rem;
+            border: none;
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: rgba(0, 0, 0, 0.25) 0 5px 5px;
+            margin-left: 0.5rem;
+        }
+        #overlay button svg {
+            height: 1rem;
+        }
+        #overlay button:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+
+        @media (max-width: 1060px) {
+            #set-filters-button {
+                display: block;
+            }
+            #filters .form-collapse {
+                display: none;
+            }
+        }
+        @media (max-width: 700px) {
+            .table-header-row {
+                display: none;
+            }
+            .table-row {
+                grid-template-columns: auto auto auto 1fr;
+                padding: 1rem;
+            }
+            .table-row > div {
+                border-right: none !important;
+                padding: 0 !important;
+            }
+            .table-row > div:nth-child(1) {
+                grid-row: 1;
+                grid-column: 1;
+            }
+            .table-row.server-private > div:nth-child(1) {
+                margin-right: 0.3rem;
+            }
+            .table-row > div:nth-child(2) {
+                grid-row: 1;
+                grid-column-start: 2;
+                grid-column-end: 5;
+                margin-bottom: 0.5rem;
+            }
+            .table-row > div:nth-child(3) {
+                grid-column-start: 1;
+                grid-column-end: 3;
+            }
+            .table-row > div:nth-child(n+3) {
+                grid-row: 2;
+                opacity: 0.5;
+                white-space: nowrap;
+            }
+            .table-row > div:nth-child(n+3):not(:last-child):after {
+                display: inline-block;
+                margin: 0 0.25rem;
+                content: " - ";
+            }
+            .table-row > div:nth-child(1) svg.play {
+                display: none !important;
+            }
+            .table-row > div:nth-child(1) svg:not(.play) {
+                display: block !important;
+            }
+            .table-row .play-button {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body class="loading-state">
+
+<svg width="0" height="0">
+    <defs>
+        <path id="lock-icon" d="M12 2a4 4 0 0 1 4 4v2h2.5A1.5 1.5 0 0 1 20 9.5v11a1.5 1.5 0 0 1-1.5 1.5h-13A1.5 1.5 0 0 1 4 20.5v-11A1.5 1.5 0 0 1 5.5 8H8V6a4 4 0 0 1 4-4Zm0 11.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3ZM12 4a2 2 0 0 0-2 2v2h4V6a2 2 0 0 0-2-2Z" fill="currentColor" />
+        <path id="arrow-down-icon" d="M11.883 4.01 12 4.003a1 1 0 0 1 .993.884l.007.116v11.584l2.293-2.294a1 1 0 0 1 1.32-.084l.094.084a1 1 0 0 1 .084 1.32l-.084.094-3.996 4a1 1 0 0 1-1.32.084l-.094-.084-4.004-4a1 1 0 0 1 1.32-1.498l.094.084L11 16.582V5.003a1 1 0 0 1 .883-.993L12 4.003l-.117.007Z" fill="currentColor" />
+        <path id="clear-icon" d="M12 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2Zm3.53 6.47-.084-.073a.75.75 0 0 0-.882-.007l-.094.08L12 10.939l-2.47-2.47-.084-.072a.75.75 0 0 0-.882-.007l-.094.08-.073.084a.75.75 0 0 0-.007.882l.08.094L10.939 12l-2.47 2.47-.072.084a.75.75 0 0 0-.007.882l.08.094.084.073a.75.75 0 0 0 .882.007l.094-.08L12 13.061l2.47 2.47.084.072a.75.75 0 0 0 .882.007l.094-.08.073-.084a.75.75 0 0 0 .007-.882l-.08-.094L13.061 12l2.47-2.47.072-.084a.75.75 0 0 0 .007-.882l-.08-.094-.084-.073.084.073Z" fill="currentColor" />
+        <path id="play-icon" d="M5 5.274c0-1.707 1.826-2.792 3.325-1.977l12.362 6.726c1.566.853 1.566 3.101 0 3.953L8.325 20.702C6.826 21.518 5 20.432 5 18.726V5.274Z" fill="currentColor" />
+        <path id="arrow-right-icon" d="M13.704 4.284a1 1 0 1 0-1.403 1.424L17.67 11H4a1 1 0 1 0 0 2h13.665L12.3 18.285a1 1 0 0 0 1.403 1.424l6.925-6.822a1.25 1.25 0 0 0 0-1.78l-6.925-6.823Z" fill="currentColor" />
+    </defs>
+</svg>
+
+<header>
+    <img width="48" height="48" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAGAAAABgCAYAAADimHc4AAAEsGlUWHRYTUw6Y29tLmFkb2JlLnhtcAAAAAAAPD94cGFja2V0IGJlZ2luPSLvu78iIGlkPSJXNU0wTXBDZWhpSHpyZVN6TlRjemtjOWQiPz4KPHg6eG1wbWV0YSB4bWxuczp4PSJhZG9iZTpuczptZXRhLyIgeDp4bXB0az0iWE1QIENvcmUgNS41LjAiPgogPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4KICA8cmRmOkRlc2NyaXB0aW9uIHJkZjphYm91dD0iIgogICAgeG1sbnM6dGlmZj0iaHR0cDovL25zLmFkb2JlLmNvbS90aWZmLzEuMC8iCiAgICB4bWxuczpleGlmPSJodHRwOi8vbnMuYWRvYmUuY29tL2V4aWYvMS4wLyIKICAgIHhtbG5zOnBob3Rvc2hvcD0iaHR0cDovL25zLmFkb2JlLmNvbS9waG90b3Nob3AvMS4wLyIKICAgIHhtbG5zOnhtcD0iaHR0cDovL25zLmFkb2JlLmNvbS94YXAvMS4wLyIKICAgIHhtbG5zOnhtcE1NPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvbW0vIgogICAgeG1sbnM6c3RFdnQ9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9zVHlwZS9SZXNvdXJjZUV2ZW50IyIKICAgdGlmZjpJbWFnZUxlbmd0aD0iOTYiCiAgIHRpZmY6SW1hZ2VXaWR0aD0iOTYiCiAgIHRpZmY6UmVzb2x1dGlvblVuaXQ9IjIiCiAgIHRpZmY6WFJlc29sdXRpb249IjcyLjAiCiAgIHRpZmY6WVJlc29sdXRpb249IjcyLjAiCiAgIGV4aWY6UGl4ZWxYRGltZW5zaW9uPSI5NiIKICAgZXhpZjpQaXhlbFlEaW1lbnNpb249Ijk2IgogICBleGlmOkNvbG9yU3BhY2U9IjEiCiAgIHBob3Rvc2hvcDpDb2xvck1vZGU9IjMiCiAgIHBob3Rvc2hvcDpJQ0NQcm9maWxlPSJzUkdCIElFQzYxOTY2LTIuMSIKICAgeG1wOk1vZGlmeURhdGU9IjIwMjItMDEtMTJUMjA6Mzc6MjArMTA6MDAiCiAgIHhtcDpNZXRhZGF0YURhdGU9IjIwMjItMDEtMTJUMjA6Mzc6MjArMTA6MDAiPgogICA8eG1wTU06SGlzdG9yeT4KICAgIDxyZGY6U2VxPgogICAgIDxyZGY6bGkKICAgICAgc3RFdnQ6YWN0aW9uPSJwcm9kdWNlZCIKICAgICAgc3RFdnQ6c29mdHdhcmVBZ2VudD0iQWZmaW5pdHkgUGhvdG8gMS4xMC4xIgogICAgICBzdEV2dDp3aGVuPSIyMDIyLTAxLTEyVDIwOjM3OjIwKzEwOjAwIi8+CiAgICA8L3JkZjpTZXE+CiAgIDwveG1wTU06SGlzdG9yeT4KICA8L3JkZjpEZXNjcmlwdGlvbj4KIDwvcmRmOlJERj4KPC94OnhtcG1ldGE+Cjw/eHBhY2tldCBlbmQ9InIiPz48MvpQAAABgWlDQ1BzUkdCIElFQzYxOTY2LTIuMQAAKJF1kc8rRFEUxz8G0RhRLCwsJg02RmPUxMZixFBYzDxlsJl580vNj9d7I8lW2U5RYuPXgr+ArbJWikjJUtbEBj3nzUzNJHNu99zP/d5zTveeCzYlrWaMBg9ksnk9GPA7F8KLzqYX6nBgx0V/RDW02dCkQk37vJdosVu3Vat23L/WEosbKtQ1C4+pmp4XnhKeWctrFu8Id6qpSEz4THhAlwsK31l6tMSvFidL/G2xrgTHwdYu7ExWcbSK1ZSeEZaX48qkV9XyfayXOOLZ+ZCsPTK7MQgSwI+TaSYYx8cQo+J9uPEyKDtq5HuK+XPkJFcVr7GOzgpJUuQZEHVVqsdlTYgel5Fm3er/374aiWFvqbrDD43PpvneC03b8FMwza8j0/w5hvonuMxW8nOHMPIheqGiuQ6gbRPOrypadBcutqDrUYvokaJUL9OWSMDbKbSGoeMG7EulnpXPOXkAZUO+6hr29qFP4tuWfwFrXWforjgM/AAAAAlwSFlzAAALEwAACxMBAJqcGAAAIABJREFUeJzVnXmcZFlV57/nvvdiy4jMrMzKrfa9q6uqu6urV7FBoAVEaKQFFBiUkXEUlUUGBWZGEQWRQQRURETFYVQ2WRRQUJZma4QGeqmufc1asnJfImOP996988db4kVmVnVVVtLVnPpkRcSLt9x7zj3n/M65594QfgTpvR/6rCXCkIg8E8Bo8x/GmNHf/G8/41/rtl0pybVuwJXSe/7mnwvAPSLyWhG51QDG6O8bbf7UGD73+l+5t3St23gl9CMlgD/54KevB35LRJ4jIgMAgQAMxphxrfW/Gm3e9cZff9Hha9vSy6cfCQG88wOfTAnyYoTfE9gIWBAwHwMm+A9ttG+MOaO1+X2t9cd+97UvbV7Thl8GPaEF8Id//lGllFonIm8S5JdESSbiugnPCUc/xoAxGq1Ba13XRv+d63nv8Fz//Dv/9y/ra9iNS9ITVgB/8N5/7BWRZymlXi8i+xY21GDQOmC+iKCNwWiNNsFxrTWe7z/oef6faF//+3ve8srpa9KRx6AnnADe/Cf/T4nIjYi8Roncq0S6EVnQUEOlUuXE8SOAsHnrdrLZLFprjDb4WqPDV9/357TWn/G1+TOt9f73/+Grn1DaYF/rBiwk39cvUUr+QEQ2aMTWAkkBGGOYnJjgkQe/w3xxAiWK0ZEz7L7xNnp6ezEJDQj/un1f/4LW+ie01m8G/vEadm8RPSE04PVv/aCtlNqolHqrUvKSgOeCEkkw39BsNjl96gSHH/0elqXJZnMYDPV6Ha0ttu28mXXrN2HZNkYbtIk0wQ80w9cYoz/qa/27Ruszf/eeN3rXtuchmriW9Lrf/0A38GKBdwNPNwaBwKkSOljXdRkfH2X/ww9w5vQhspkUmUwGZVkoEWzLBqOZGD3L3Nwstp3CSWUAAj8RaoTBoI3ZjTFPNcbUb7rj7tOPfPcr9WvZ/2sqgNe8+f23gPlDQV4JbCbUSGMCjGMw1Go1jh09yIkj+6lXi+SyWRzHQYmFhP8ALGVhKUW1XGRqagK36ZLtKKCUipFSKFAxxgwCdxljdt54+9OH9z/w1dFrxIJrY4J+43felxX4JRF5o4isExEVmR0RCD7BzPQMBx7+Lo3qPOmUg+04WEqFZkmI4GjAYI3xDb7ReK6H63mkc11s37WXQqEzOCdESYGf0BijtTGcN1r/HwN/949/8bu1x5sXj6sAfvVN77VEZJOIvEWJ/LyIOCJBM2Kbj6HZaHL2zGlOH3uUlKNIpdJYlhUKaAlAqhPxABrf1/i+j+u6aCOs37KTgaF12I4TCyuCsMZojDauMebjxui3GGOGP/qB33/cckqPmwn6lTe8exBjfk5E3ifwdIOx2sFl4CSnpyY5fvgAE+eHSaccUqkUltgIyZEfXQEYCYOwxEETClQpMFCcmaRaKWM7aVLpdFJ3oltZGG4E80ygesOtTx098P2vl3/oTOFx0IBf/q13KRG5HeG1gjxXRPKRqYlGvgjU6w1Ghk8xPnoO7TZIpRyUslBKBY1MQtH47qaViiAZFbf+fD+Ao77vY6cz9PavYWDNepxIGwjP1YE2gCkbw+eNMX8KPPCxv/qDH2rc8EPVgFe87p2C8OvGmD8T4Q4gs/gsw+zMLEcPPMTs5CiWkGC+AAuDsOiq1v+REKKURPyVIRa0UoL2PMpzs8wX50jn8qTT6ZY04wslBVwPPNsYU9+978nfP/jgN1eCHUvSD0UD/utvvsMRYbuIvBPkOQGcV4lRH7z6nsvY6AXOnjyKQuPYDkqpxKhf3Nh49JukCCKUE5mllnPGEI/0KDjzfR/EYs3GrfQODGBbdmDG0CFSiq41GPhXjHmDgeOf+Ou3uSvNqxXXgJe/5u19Ar8I8m6QOwMLE3EyYL7v+czMTDF87AgT54dJ2TYpJ41t2VjKRpRCiYLEdTGZBW/jEZyUVghQlQrvFb4PnbgAxvjMTU9QKZWxbBsnlYo1Ln5iMFK2I/wk4O/a9+ThQw9+s7qS/FoxDXj5q98uBnMXwutE1NNF6BIEJISXwRvqtRoXzp5mdnIM7XuknBSZTJZt2zZRnK8wN1dCG43RPtr3A5Ri2hxmHCcE74m/MyboUcTCgOmBKUul0+zYuoGjx09RnCvi+y6+7+NrjW2n6OrtZ2DdetLpTBwAtrQLjDFFjPkq8B5tzLc++bdvTwyF5dOKCOBlr3prXpDfEOE1iAwJIiIh80OOGAPTk5OcPX4I321gWRa2nSKdTnPbrXt52UvuIZVyOHL8LNOlMseOnebAgaM0KxW09hcwPfSLsdlOfDSBwC3Lpq9vNXc9aR9dq7rYvHEtg/09HDx0gvf95T9QKhXxvGZglnwfA9ipDGs2b6ent5eo0S1TFngZDKMG82cY/uKf/vbtV42UrkoAL/21t9gisk1E/ZGI3INgLRz1BkOjVuf8mVNMXjiLY1lYto1l2Ti2w6bNG3n9a1/B0ODqtnvXmy7/95+/zAMPHcQtlTDNJj2FPI16g3K5EmiJIUhFOA6dnQWKxRK+1qhUiqH1a3nVL72ADev628yW5/l84d+/wUc//lnK5RK+74VxQaBpvjb0Dq1jcO2GALKKtGtEIAgfw+eMMf/TYE586kPvWHZOaVk+4MW/+ntyw21PXSciLxOR9wN3Aqqd+eB5HlPjY5w5cZjS9AS2ZWFZVuhoLSzb4kl33sKdt9+IZbU3xbYsdm/dwGSxymSpjtPRyStf8ULWDvRx7MR5AJSysJ0U27Zu5uUvez4nh0eppzMMbljHS55/Nzs2r12EoUQEDRw6fIJisdhKU8TfQ7U8T3m+iCiLVCYTxBMJdySIAnYi3CPQvH7vXRcOP/yt+eXw8ooF8PO/8mZLhB8XkbeKyK8Bq2PnFkEXY5gvFjl38jgT54fxmnVsO8T0SoWIKBDCXLFCttDFmqHVOHZ7cxzbZv1gHyMTJequsGvbelZ3FyhXGgwN9bN2zSBrhvrZsGEda9cMcPDwMCqV4+4n38IdN2zHthZ3b3Ryjs9++QGOnz6LW6titCbB/yAVYsBtNigXZ6nXqjjpNE4qFQqzTaDdIE8Ddlx/849fuH7vXSOHH77/inzDlc8HCFngF4F7jDGWSAscGiMY4zN+YYTRs6cDW68slLJjpicwBto3FOua+75zmE0b1rJj8+Cix61eVWDvzm10dU4x2NvFmr4uNm8cagvMRAme63PbLbvZf+Q8e7ZvIuUs3bUvffNRHj04jG8cVLqA780iEkTTobUBEZQYjPYpTo1Tnp+jf+1G+gYGEaUW3jKLcI8Ypgw8BFyRX7hyARijEMmR0J5Ijeu1GudOn6Q4NYGlFJZyQs2IVDgaQQqwsLPdKCtHuVRnbq6C1iaEgu20eX0/t+7ZwKrObNBoO7uwUZCB5/30k9i29TzKLO3a6g2Xycl5mnUXtMJOFcAIzeociB9y3yBiMCZQBQH8psvIqWOUinOs3bCJdCaIJyMfF/BCcmAWSeexaDkzYoLBMpjQQUGj2WBmcpKJkfO4jRq25bRwd5RuCGFoYEFtnGwXtpMHLZSLNf7tyw9jWTaD/d10FTJ05FKICLYlbFnbvUAwpv1dQul3bl+H1q3sgedr5oo15ks17n/gGEePnsd4BjEKBThOAbJCszaP1l7AUgMiYYJJgptbopifnqJWLtM3tJbu3l5SqVSSL9ZFgvZL0rKmJA1YQTAT2Pqx8+eozBcRA7adjkd97BMkEeAoi1S2ByedC3L6RmE8zflzk3zi09+hv7+H/r5utm0e4KbdQ+SyNoHWt7B+lBA1S1hbEbAshdYwfG6Wg0dGGRmdZnJ6jrGxKdx6A7SgsDAojNKkUp0IFvXaHMb3Y6YH49vEyTvLsvCbLmPnzlEqFukbWkO+Mx9F6MsCNMucEzbKc33GRkaYGh0NsbeNsgLzIiESSqYdAuYosh192E4GIXTEKDBBnmZmeo5Kuc7YaJEz5+Y5dabEi563E8du1+ylGL/w+wcfHefbD5xmbHySarlEo1Gj0aijfYMYQYwFaKKEYCpVQIlNtTINIcRFQCItiFRNWRhjKBfnqZTK9A4M0D80iGVZV2x+4Aqldt2enxa32Rz0PO9FI8Nnt8xNTiESJc4swArsffQqEqSREZRyyOVXYzuZ4HOYalhopgxCoZDj9n1b2LKpl/7VOawl/MJjke8berqzzM9XGRufxnObaO2jjR/jejBtyEZZNpaVxvdcAo4LhP2ARH+izwaq8yUq5QqIjMyMT30plx0szkyduux2XrYAdt7w3IKI/GS1XHlbcWb2bq/piWUFyTMRCyRifmD7EYVgAQrLSpHNdeOEzI8nVkJTpZTCshzS6Sy2k2Z17yru/onruG5b77KYLwJdnWnWDBYYHStx9txMgHS0ScDOkMFE5iYgpSws5YTRN+19ioSQGDyIhdtoUpqd21SvVHcjaqa3b/vYzOSJy6rKe0wBXHfD86Rv4LrtIG9E+F+CukmUJUpslLIQZYXMDmGmUvFnEJTlkM12Br6BiOmRj5CY+b29PTz/ubfS39dLtW7YvXOQzkL6ipm/kE4Oz+K6wt1PvR7XM8zMljFaE2VQ21N4AQUa7QTVFMbEbQ361XqNjwVCEkFtReTpIqq/t3/7yZ6+bbMzkycu2b7HFEDfwM6fBvkbRP2UYHW1ElwqGPW0AiskGPHByBeUsunId2NZqdgnkDQ5EsQI+XyB5z57H3c9KSiwGp+qs21zD4V86jFa99h09nyFdCbDU560hRv2rOPQ4XEqlRpa+23oKdKIyGUpZeHYaTzPDcxVYpDFoCIWSDRTpxBReUT2gfwkyPDM5PHjl2rfkvp93Z57bYQ1YN4kyCuRcCY2ASejdEPwXyLXHx6zLJtcrhCjoTYYGo58pWwy2RxPuWsPz3/uzWQzDlobZuYaZNIW+Q7nangPwMiFCqtWpcllA7wxfG6aD/z1VxgfnwyTcT4QVNQFRb6tnA8EtUXVaimYQ4DYGUdmLCoMbl3bNgdhMOYDIO8wcOHEoc8tyhkt0oAde+7tEnghIu8GdY+IqEDqkfRb9rBlH5O2H2wrRTaTCx1zOyKK1FmUhW07bNo4xItfcDudhUx8bi5rk0qtzFRFZyGF47QASiGfIZVyOHFyjKbbfAxIFQwa23KCrGmoCe0jf4FfSB4PvrgFeApItafvujMzk0cbyScsAUPl6Qb+SJC1ydSBJEYvLAEzJZC646TIpHMoK2pk+H3iT8TCslI4qRw33bCZnlUdy+PuMsiyFFu39DM4uJpqrYGP4GsfQk2IcllRLAAGy1Jksnnq9Squ64UDzcRxcDJ4MxjEGIwEx8Eog7lVjPkjgykDn0m2Zynsep+IerOIOhfDMJIjvXUsRgYEuRTHyZDNdmJZDiJ28EfwqpQVHnOwrDSbNq7l2c+6DaQ9rbB06cnKktYK2+5g29bNdK9ajW2lUcpBiYMoO8xdhW3HDgaMSpHLdpJy0qHSLNT+xGvEs5bfOIfIm0HuW9iWRXo+PXG4Pj1x6KHVA3v+DZFNggwhkk6mE9odT/CXTmXIZfMho63YMbf+gmOWZZPOdPC859zM5k3r2LS+k3w+sPXGQKMhWNaKTDbF5PmCr4UoVEqlLKZmPJ50x3buvG0TD3z/DL7WwbRm3L/IpAbmRELNdZwUxuhAa2i3Ci2PKkEqAykhfAn4heMHP/Plmcmji8ogLxq9Hdn/iaMgPwvyWkG+LUi99ZTkH6RSGbKZAko5CJEAgtgAaX1WykYph1WrOhno7yabcRgcaGnAidMVXK817301mpC8VtCcG6nQaAQ5olzWYe+NQyhl09WZxXYy4Vx0pKVW4i/8rOywDw7ZbIFUKhvfPRZESyB1UN8GeS3Izx478KmjF2vnJT3d1PgB3T90436Qb4lQAtmNSC7yCwZDJt1BNhOM/NgZxU46xPuJGMGyHDZuGODO27fQ25PCsoK7zc42+MJXTlLocOhbnUMEzl2ooxSkU1cW5Xue4cJ4jUzGxrKE4nyDb9x/FsuyGOgLGNdZSIHYZNLC/d85TaPRSEzMRGhOEgguZHEIJGwrBcbgeW4LlgaXTgF/isjbBL569NFPXLLK7jFzQYce/ogGju6++WVvBz4NvAd4qjGGbDZPJt0R1nIuNVqDY0GKvQU/+/oKdHensUPma2146NEJTp26wMj5cXZeN0QmazN8vsJzn7mFQkfXYzWz9UQR6g2X7/5ghHKlztrBHPsPjjA8PMvIhSLbttxCNmPh2IqhfovivE9HLs18sV2rg9ZHqbioF2GfBJRSZDIFQKg1yiHq4WvA60COHHnko5dVdX3ZybiDD/1DHXh4975feDbw+my24w2ZdEenqKRPIO5AeylK67tUKsXQYFfMfIB6Q1OtebjNJnOzFc6NTJHNpcjkOnDdDTRdQ73hY1uQTlmx1kRkDDRdH8/T1JtCyjYU58s8evA8D3yvTr1eo15rUsjnmJhqsnFdZD4MllJ0FbKMjbZyUa0EBUSZUEFhwhS1hPhGBDKZPILM1xrlPzbwrsMPXx7jr1gAER188O/rdz3ttx9AKAnS2bJ/UYsjgUQdSDo1heOkWN2Tb7tnLmsx2J9DKcHzBddv4PgK33M5fnKa8YkaR0/OkkpZ3HrTEHt2rmq7vlR2+c6DY5w4NUNPd5YN6zqYna3i+z6e76G1j+83qVRqdHUumHu2Fb29+dD+e4iREEIGqTrCNWgBvAQTzoEETjYQUyZbKKUz+e9+++vvvuK1BstKR4soG7DbSk+imECSIz8ZAQdIKJVO0dOTa7uf62nOnS/iuhpRDps2dLHvpnV0deX4wf4JpqbP4fs+nYUO9uzsX9QeYwy1apPRsVnOnpvg2MkMu3f2se+mQY4cG+fQkRF8z2d2dpajx+e445bWPSxL0duTDwCEuAGC1AYjkfEJsX4YG0QaYUyIdASMNraIWRYvlysAH/CToz0ZdAVyiFQgOEeFk/CZdIae7vYS0WKxydh4CctKc+OeAf7Lz91IR87BshSb1vfy9594mPmSR1chxU27exa1p7PgsHNHD48cHMHzYPfOfp599xYyaZs7blnP/oNr+Pinv8/ohSkePTjB7fv643Fi20Jvbwe25eCJhRgBCZJ1GBYJItCIVpCGAVHGN8Ysq6R9WZMIIB6i/EXheAL5ECMgiSshlLIpdObo6Ggl2ZpNzfC5ecYnSignzc/es4vurgyOE1S0rV2T57Z968lksqTTqUWTMxAIO+VYZNJpenu6uOOWteSyDkoJuazDjbvWcP2ONTgph1Onxxg+W0JrE1/b1Zklm0uHAVgSubVigFYGNJGWaQWjvohaVm3QsgQgAfP9hdnApeaA46AsrI7YtH5Vy0oB9393nM9+/jClUp2N67oZGmz3D46t2HVdH3tvWMOWTb0XbVNHLsV1O/q56YY1rBloT23kcg5bt/SRy2UYG5/i8184weh4azFMZ2eGVd3JILI99SLSEkKg4dEAi+G2D7IsDVjmlKT4CF4S/SRzQiSE0hKOwrZTbNvaYqLvGx7eP8r8fBnLdth53WLzArB2sIPVd29asmIiot6eNM94ynqUkqUrKzb2kMtlmCjNMXJhhpELJYYGsigl9K7K0NfXyfnzU4j4RIs3ghIu4sXg0RxO4BMChxzmgbxACFdOyzRBBBrQRrLkp1ZAo3BSKbZu7o7PmZisMzVVQmsPrWHjusKSD7OsIEOaSV88brTUpc8Z6MuTTtmAplQuM3wmcPoAHR0p1g514aTCao4Y1bX1In6/ULwh8x9fAVzJAyMnvHaouy3Hf/xUkXqjjtYG1/dZopANCHC+7xs87+KLVXwdfB/Z9oWkYt+kqdUqnB6eod4IuiACGzd2k8mEtaCLOHyRh7Z88bIFsNyV8p7B+O1jIamfC84WUJbFjm3t5ufEyRk8twkYPK/ZVqOZpOJ8gwNHJimV62zZ2E3KaR83vjaMjVeoVF02buhh57ZVi28SB7mGZrPO9EyJs+fL3LArMHsb1nbSWchRLM7HAVncrwXNWtRKwcewLCe8XAH4ED4wWagTk4kjyshpWZbDtq0txszONZmcnA+DJR9NCP0WPkgbjp+a4Uv3HWNmtkihw8ZegIS0NlSqHkYs9uxaz5qBjiDXc7HG+y6VaoUDh6ZiARQKKTas7+HChUn8SAuWHBBLDpLH2wnjY/CjQbLUoG9RIKDOziwD/S10MjpWoVypYYwfLKRbumP4nubM+RmmpmeoVUsUZ924pMSYMNJW4RxuKsPZsxkmpyuLBRDeXgBfuzQbdY6fmKJS3UpHzkIE9uwa4Hs/OIW4jXDFTTIp0SIBksbQGDx4XOOAhTbPLNHMqMcBXBscKMTTjMbAyGiZer0JhrAExFvyLlobarUGbrOO2wxem40azUYNt1mj2Qzfuw1ct0m9XqfRuIg1MFGAaHC9JuVyhWMnivHXO7avIp1Oh3FLog9L9+wS/Lh8Wq4GVIHjvvbWat9bF0XC8XSlEmwrHUyfIliWRUdHBpEA0jUawcZKmUyGZrOJaTaD9QELavUBmq6mWGygfR/f9/D9qLgqGoMhThdBaw/P9SjON/B93QZHdZRKUIpUKhUATQOnh0vctCeITTJpi0Khg1KpSIytw8Xcvu+GNaftCwAtyz6vRB03AU+umJZbmjgG8rZSafKU5zXeHFv70Ac7dprOzv54Uj6TTrFt8yocW9BaY9lw68199K1Oc/DwJI8eGqbebGIMbYW1ALYNhbwV7niiMSZ8DasQIqFHS41A01mwETFtiCha1uQ4DnY2x0BfD3tv3MQNu1aF69CC826/dS2f+/w4XpiIC+7tUSpPhYAhrlIFY7CdzIc6CwMfCXhy5bQsAXz9y29rAEd37X3pcHQsDlQAX1uxOREBZSnyeSfWAO0bOgs2e2/o5fod3dxxWz+f/cIhomKpJAVM1yHTdRwkRRpgQhDQ2oJAE21F0H6f4HMhn+fZz9jD3huGKBQypBzV9syurlSQGY0zQAEFZY0t0xZd02xWhr/xlbdddMbrseiqNmxqmzKUFihtLdoIHGXKUWQyVtzo6ZkGX/raCIUOYeeOQhAHuC7/+b1zrF/b1Xbf1sYaJrplfF+IItTEincT1vgsWEl5+PgElUqNfEeWm28cwrKE4ycnGR3T3HlbPx25wB1uXJcn8aBW9+KsLhGuiGuAroZWZscsacWOQIAgwkUSxmjq9Qazc1UajU4cJ1hFU5wr8r3vjfJPnxll1aoc9brPufMzvPB5u9oEEGxDptuWqyaXrQZpgtajtYl3ymo1xxgOHLrA/HyFWrXKhz/ybWbnqgyfmWLP7j3cdnMPWtsoy6LecMPlsZGmtYtDwu4FB5YI2q6QrlIAF3l6NFDCTpQrNb5y33FGRso89ckbsCzBsYVSaY56bZ5Jr4ZtpzAotNbtAogZvxQtAYAN4cZ97b7E81xct06j5vHgQyUQwfd8SqU5LBtqdY9DRyZ49MD5MCjUiWcs3dur5D2wEhpwyVYEJsHzXM6cGWd8vERnweHO29eSzztUa/OARmsP3xc8t7FIAEYbLDta3BeHsyxkfgBaVLg0ShYJwPdcfM/D95pxhjOVTrFpQx7Hhu9+f5Qv/sdR5orFcOlqy4wFTzXxE5eODpZHy40D2mixDFr2H6KNknwajRoP/OBsOLtlI7jhljIa7Xs0m3UefPgMI6PFcH83g20Lu64bpHdVIUwXywJBECf7LMvmuu0DrF1TiBlYqzU5cOgCY+Mz+F4zMFHGRwRs2+HGPUNUq02OHB1nbq4YFuP6S2pdy7O19/RqaEUEsKgRiQMtIRi09pmeLnHy9Axr12Tp6m5tKaa1j+81ef/f3sfnv7ifWr0ZYH6t2bppFbfcvCEIkuI9JCLoG5a5WzZrhlbxnGddj21JsA2B73Pm/Azv++B9HD5yDq09TLiBnzFgWRbr1nQxOlZi5MJMMPLb1g8k+7Byoz5JVy+AS7Yq1ITwvTGaWq3GkaMTDA3m6ezMxUFNAB09PLfO5OQcMzPl2JlalnDnrRsYGlqFsqJZK4icoBKLXEeWZz9jF4V8KrllJUePjdJs1vB9L4aogX3XrO7NkU4rTp+ZZmq6HB5vH+MLhXGFDHhMukoBXPzhbRqcgImu63H4yAW++rXDzM3N4XtuzBQTbtJRrtSoVOrxKPZ9n67ODM955i5s205oQZjqsyxu2buBrZt78DwvcZ3H+EQRHVZGGOOHQvDxPJdsRijNV3no4ZNhYVa7w1/E/MvOzV0+rQAMNQEuk8hFXaRFQeYMY3zOnB3nwOHDiCSRRnCt1kK+wyaXs1s1+SFt27KaO2/bzNe/dajtuoG+Tm7dux7HVouc77o1nSHzW7FEsLGry8OPnOChh0+AEfIdq3CcVgJv6ZGfSLlfvKdXRCviAyARnieOLPRjwaYjBter43uNeFS2NCAKpIJNlTzPW/R32771bQjFGEP/6jx9vbklzzfohOmJNDHQgkAzXDyvges2uBSZtjcr5w1WaOviYGQsjB0jIbRgZcC4ZrMBhM7OEEfRkRA9P0iqeV57VrNScfnq14+0AiWjQcG5kWkOHxvj+h0Di+aD3WYC1UQrWCB8H7YJTdOtkzUdCGrRYGr/vAhhXBVdlQaYpT4YQNoTy0m7qo3GdWvxycGASiwPMoaRCzOcGh7Hdd220dxoNvjBQ8NoHcwTaKPxfY/RsTlGR+cXnV+t1vnGt44GzjXxjJYgApMkCK5bT+SPFjB5CT4vlTpfDl2lBiRnvhJHl1LT8KPveXheE9uxEsKKNCBYddJouFSqDVzXbQvKKpUanmfIZjqp1+dx3SADnEopwMZ1PbRund90PeaKlfDOC0Z00qYIeG4T3/NQbZXYK8Xmi9PV+YC2npiFPVvoETBArVZOmInWNbGWGEM6bZMPi7eMCSbbXU/zwA9GyGU6yWay8TWRYz09PE+97lGv+/HxlGPR3Z1rWYqkFiQhsgGlhFq9faOTxcxvGa2VksyKxAEWR7lZAAAIGElEQVRLsjwA+AvGkKFeL8ep65gFC2S40LROTFY5P1Jiatonk822MqMRCczO1ahWPR56dMG+SaH5iW1+JPD4bfBORKjHAjALnhE5/CU6f23jgKgdS8G11ttICK7ronUjrk5owblIFOGraUdQ1ZpmatqlWm1tKUMi5Y0xNBoe07MNxsba0YzWCWYvGPVtDxHQponruovRW6JLrQGzGPcth1ZAABfDCIuFUKuVFmx4ZFpMSGrBgoDIUjZgodv5lfgQIDDP04sKNDzfjzXgYtoaaYKIUKslfwXLsMjcXGKsLYdWLhJuQxmLvzcG6o3I/CxwbrGWBPfwPJ96o1UnVCg4wYROMqCipVkSPqDR8Nm0qRDfx/U01aob/nZAYvSaxcwHwtU1laSBCo+3fEayXyuAQq8Shsa8XjCKk9+HJiPYrcRroZo2/xCOztD0NBsec3NV/HAmrGeVjec1aDa9Voo4EVsEU5I+p4aL3LQ7F1upSsVDSQFjJNgfIgrEiERkWGSGtIsXmiGTENZCzUmatKuhFXDCrbRzeGCRdTQGGo1qPI1nEgIzyfMNYDSOY5Hv6EgAXEO53AxxejDZ4utWkKZ1MMpn5+ptpsu2FUNDfRTyqwHVhobaedcyNSJBW5MnJABaq2crMfy5ehPU5CL1QS2hhA7Yq0enLLgFsUkKNEBY3TvA4OCqGK56nqFcbmUzK9VZGo1yLJ5Go0KlMkO16lKptprTkbPo7k6RzXbQkeuJf2dgYQPaxg+m1dYl2tt+Lr4JeLBsuloNuB/4MJiRliIsdqye18T33daBhM2PKNgsQ5HPryadzrcV4tq20NnpgBgqlTmq1bmECQomY6r1eWy7RkeuVeEbmDMNImRzBTryq8Go4Fc0krqYHCwSlC56ntvezsQccfhhxGA+LIb7r4aBVyWAw498bBh4DfAqMF/EGDfqSmxsTLCWVvuRyWh1KPIRWhsEm0K+j3xHF75WjI038Lx2+FGtzFGrF+MZsejbYKtiC6XaB+PIaI35so9tOygRstkO8vleBDuoajEJxtKSg9ZeMDMW+6a2oeICXzSGV2HktYf3f3z4anh41VuSTI0fcPsG9xwD/g04ZzBPspSdTafywbZkEpiIpltpG7UtHBmsoinkV5PJ5vix2zewb+8Qg/0d5DvsGFY2m00OHD6L6yYFSTgbZmFZDrfcvJktm5JbICsGBvKsX9vJbLFGpdrEthyUZeM2awGD43a0uKy1j22lSTkZouxpo1nB971ZEX4b5K3AI0f2f+zSKdTLoBXJhh5+5GMamAH+8robXvR5pez3As8zGNtoTbNZX1BBbYjLVhAKHT3hruVCR97B1xbZrCLYvxMQ2LxxFfv2buRr3zyU8DSh39Cateu6uf2WjW02vpBXTE6pcPOlqMzQkE5lMR09lMrT4SqYBYZehGazRjaTD+IWg6eU9Vmj/d88cuCT51aCZxGt+O8HTE8cmt9+3bNOKpHtiKzT2rcqlVmiJawxrjEg4lDo6CWTaS1b1Voz0J+lWg1qicYnZpieLjM9U0bEcOjwuTYBRDfbvLGXXCbF9GyZqekSU9MlJqfm0VoxO1vh1PAMzWbkoA225WBZKZpuDWOCSoxkXOFrn0y6gBLVROQb6VTH7z30wAePrDS/fjg/ZWjYb4TXYMwztO8/0xhvvaD2YMJdeAwolSKf7yGVyiQmVzRnzs4wNj6PMYZqZSYI3sJlQ3HBlbQ/zAAHDp3j2IkLJIqS0FqTTufJZLppNpPRdfCaTmeA1ZQr02jtJiuijTH+Aa29c8qy/gP4EsZccuux5dJK1BZdlO566pvsplsvFOdHe5WSVwG/agwZJQ75/GpSqdZ64WS1jzGGSnWGesLhRibsUg2OnTItGGyMIZMp0JHrbS+lTCCyplunVJ7CGA8R6sbwV8aY93V3Dk3bTqZ0/9eWvz39Y9EPVQALaeeNL/4xUH9eyPfvS6cyi58tQcRarc1Rrc0mloq2nbREbVarkrlFkVYFQujIriKb7Y6FsPDsRqNmSuWJB0X0q4/s//h/Xm1fL5ce158ynBo/cH77jp96yLadzcAAEM6Ch0zRhlptlmptLhz0CdQUvVu0HCqilsNOBlURuV4wC2dbS/yQE5Rty/5GJp3/Hw9/76+/u5y+LZce95+zFSXfN5j/DtyL4dXAFiQYpdXqDLVaAucnbXY86pcSQDSfBlxklSRApTqD1ppcbhXRjifAKRH+HPiMKHV2RTp5BfS4mqAk/dhT3pASGDKY3zXGvLxanbHrjSJR1VtceHUxSiT1RITFKYaIktE3YDSZTBe5XI8nIh8OML0Z/c9v/PE1+f35ayaAiO588m/bWntb5+cv3Ky191uIXA8S49KkRWlZn4ubofjdkvIwVeCwEutdnZ1rHlLKPvmdb/7xNf1N4WsugCTt2P3CLoRXAC8GbgIW7F18Oc1dkvMN4BHgY8CHjh34ZHGpk64FPaEEALB99wsskJ1gXgi8Elj8uybA0k1fkvljwAeATwJHjh/81OP2S6mXQ084AUS0ffcLMsAmMG/DcC/x/sgx9lyajImrHA18RkR+Bxg+fvBT1/SXsy9GT1gBRLRt170OyAuBNwA7gNxjXFIFjgHvBD554tCnV/z3H1eSnvACiGjbrnuHgBcBPwPcArRvpWgoIvwA+Bfgn04c+sw1+5nyK6EfGQFEtPX6528Anga8FGOeBoDIfcBHgPtOHv7nxx3LXw39yAkAYOvOn7GALoN5clDZyTeB4skj//KEcrCXQ/8fzjftSYygQsIAAAAASUVORK5CYII=" alt="Northstar Logo" />
+    <div>
+        <h1>Northstar Server Browser</h1>
+        <p>
+            Useful links:
+            <a href="https://github.com/R2Northstar/Northstar" target="_blank">Northstar repo</a>,
+            <a href="https://r2northstar.gitbook.io/r2northstar-wiki/" target="_blank">Northstar wiki</a>,
+            <a href="https://northstar.tf/discord" target="_blank">Northstar Discord</a>
+        </p>
+    </div>
+</header>
+
+<!--<nav>
+    <span>Browser</span>
+    <a href="stats/" title="Switch to server stats">Server stats</a>
+</nav>-->
+
+<div id="filters">
+    <form id="form">
+        <div class="textbox"><input type="text" id="filter" placeholder="Search servers..." size="10" aria-label="Server search" /></div>
+        <div id="extra-filters" class="form-collapse">
+            <label class="dropdown-label" id="regions-label">Regions:</label>
+            <div class="dropdown dropdown-or" id="regions" aria-labelledby="regions-label"></div>
+            <label class="dropdown-label" id="gamemodes-label">Gamemodes:</label>
+            <div class="dropdown dropdown-or" id="gamemodes" aria-labelledby="gamemodes-label"></div>
+            <label class="dropdown-label" id="maps-label">Maps:</label>
+            <div class="dropdown dropdown-or" id="maps" aria-labelledby="maps-label"></div>
+            <label class="dropdown-label" id="mods-label">Mods:</label>
+            <div class="dropdown dropdown-and" id="mods" aria-labelledby="mods-label"></div>
+            <label class="checkbox-label top-checkbox-label"><input type="checkbox" id="include-full" />Include full</label>
+            <label class="checkbox-label"><input type="checkbox" id="include-empty" />Include empty</label>
+            <label class="checkbox-label"><input type="checkbox" id="include-private" />Include private</label>
+        </div>
+        <button id="set-filters-button">Set filters...</button>
+    </form>
+</div>
+
+<div id="stats">
+    <div>Last updated <span id="last-updated-stat"></span></div>
+    <div>
+        <span id="servers-listed-stat"></span> servers listed, <span id="servers-online-stat"></span> total
+    </div>
+    <div>
+        <span id="players-listed-stat"></span> players listed, <span id="players-online-stat"></span> total
+    </div>
+</div>
+
+<div id="content">
+    <div class="table-header-row">
+        <div class="table-header" aria-label="Privacy" role="button" id="privacy-header" data-by="hasPassword"></div>
+        <div class="table-header" role="button" id="name-header" data-by="name">Name</div>
+        <div class="table-header" role="button" id="players-header" data-by="playerCount">Players</div>
+        <div class="table-header" role="button" id="gamemode-header" data-by="playlist">Gamemode</div>
+        <div class="table-header" role="button" id="map-header" data-by="map">Map</div>
+    </div>
+    <div id="servers"></div>
+    <p class="status" id="loading-state">Loading, hold on...</p>
+    <p class="status" id="error-state">Couldn't refresh the server list, try again later?</p>
+</div>
+
+<footer>
+    <div>
+        <a href="https://github.com/cpdt/r2browser" target="_blank">Built by cpdt</a> just for you xox
+    </div>
+</footer>
+
+<script>
+
+function clearNode($node) {
+    $node.textContent = '';
+}
+
+function $useSvg(href, width, height) {
+    const $svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    $svg.setAttributeNS(null, 'width', width);
+    $svg.setAttributeNS(null, 'height', height);
+    $svg.setAttributeNS(null, 'viewBox', `0 0 ${width} ${height}`);
+
+    const $use = document.createElementNS('http://www.w3.org/2000/svg', 'use');
+    $use.setAttributeNS('http://www.w3.org/1999/xlink', 'xlink:href', `#${href}`);
+    $svg.appendChild($use);
+
+    return $svg;
+}
+
+function textboxMount($textbox) {
+    const $input = $textbox.getElementsByTagName('input')[0];
+    const $clear = document.createElement('button');
+    $clear.className = 'clear';
+    $clear.onclick = () => {
+        $input.value = '';
+        $input.dispatchEvent(new Event('input'));
+        $input.dispatchEvent(new Event('change'));
+    };
+    $clear.appendChild($useSvg('clear-icon', 24, 24));
+    $textbox.appendChild($clear);
+}
+
+</script>
+
+<script>
+
+const REFETCH_WAIT_MS = 30000; // 30 seconds
+const REGION_REGEX = /^\[(.+?)\]/;
+const DEFAULT_QUERY = {
+    filter: '',
+    regions: [],
+    gamemodes: [],
+    maps: [],
+    mods: [],
+    includeFull: true,
+    includeEmpty: true,
+    includePrivate: true,
+};
+const KNOWN_GAMEMODES = {
+    private_match: 'Private Match',
+    aitdm: 'Attrition',
+    at: 'Bounty Hunt',
+    coliseum: 'Coliseum',
+    cp: 'Amped Hardpoint',
+    ctf: 'Capture the Flag',
+    fd_easy: 'Frontier Defense (Easy)',
+    fd_hard: 'Frontier Defense (Hard)',
+    fd_insane: 'Frontier Defense (Insane)',
+    fd_master: 'Frontier Defense (Master)',
+    fd_normal: 'Frontier Defense (Regular)',
+    lf: 'Live Fire',
+    lts: 'Last Titan Standing',
+    mfd: 'Marked for Death',
+    ps: 'Pilots vs. Pilots',
+    solo: 'Campaign',
+    tdm: 'Skirmish',
+    ttdm: 'Titan Brawl',
+
+    alts: 'Aegis Last Titan Standing',
+    attdm: 'Aegis Titan Brawl',
+    ffa: 'Free For All',
+    fra: 'Free Agents',
+    holopilot_lf: 'The Great Bamboozle',
+    rocket_lf: 'Rocket Arena',
+    turbo_lts: 'Turbo Last Titan Standing',
+    turbo_ttdm: 'Turbo Titan Brawl',
+
+    chamber: 'One in the Chamber',
+    ctf_comp: 'Competitive CTF',
+    fastball: 'Fastball',
+    gg: 'Gun Game',
+    hidden: 'The Hidden',
+    hs: 'Hide and Seek',
+    inf: 'Infection',
+    kr: 'Amped Killrace',
+    sbox: 'Sandbox',
+    sns: 'Sticks and Stones',
+    tffa: 'Titan FFA',
+    tt: 'Titan Tag',
+
+    sp_coop: 'Campaign Coop',
+};
+const KNOWN_MAPS = {
+    mp_angel_city: 'Angel City',
+    mp_black_water_canal: 'Black Water Canal',
+    mp_box: 'Box',
+    mp_coliseum: 'Coliseum',
+    mp_coliseum_column: 'Pillars',
+    mp_colony02: 'Colony',
+    mp_complex3: 'Complex',
+    mp_crashsite3: 'Crash Site',
+    mp_drydock: 'Drydock',
+    mp_eden: 'Eden',
+    mp_forwardbase_kodai: 'Forwardbase Kodai',
+    mp_glitch: 'Glitch',
+    mp_grave: 'Boomtown',
+    mp_homestead: 'Homestead',
+    mp_lf_deck: 'Deck',
+    mp_lf_meadow: 'Meadow',
+    mp_lf_stacks: 'Stacks',
+    mp_lf_township: 'Township',
+    mp_lf_traffic: 'Traffic',
+    mp_lf_uma: 'UMA',
+    mp_lobby: 'Lobby',
+    mp_relic02: 'Relic',
+    mp_rise: 'Rise',
+    mp_thaw: 'Exoplanet',
+    mp_wargames: 'War Games',
+};
+
+const $filterInput = document.getElementById('filter');
+const $setFiltersButton = document.getElementById('set-filters-button');
+const $extraFilters = document.getElementById('extra-filters');
+const $regionsInput = document.getElementById('regions');
+const $gamemodesInput = document.getElementById('gamemodes');
+const $mapsInput = document.getElementById('maps');
+const $modsInput = document.getElementById('mods');
+const $includeFullInput = document.getElementById('include-full');
+const $includeEmptyInput = document.getElementById('include-empty');
+const $includePrivateInput = document.getElementById('include-private');
+const $serversTable = document.getElementById('servers');
+const $lastUpdatedStat = document.getElementById('last-updated-stat');
+const $serversListedStat = document.getElementById('servers-listed-stat');
+const $serversOnlineStat = document.getElementById('servers-online-stat');
+const $playersListedStat = document.getElementById('players-listed-stat');
+const $playersOnlineStat = document.getElementById('players-online-stat');
+
+function serializeQuery(searchParams, query) {
+    if (query.filter !== '') searchParams.set('filter', query.filter);
+    else searchParams.delete('filter');
+    if (query.regions.length > 0) searchParams.set('regions', query.regions.join(','));
+    else searchParams.delete('regions');
+    if (query.gamemodes.length > 0) searchParams.set('gamemodes', query.gamemodes.join(','));
+    else searchParams.delete('gamemodes');
+    if (query.maps.length > 0) searchParams.set('maps', query.maps.join(','));
+    else searchParams.delete('maps');
+    if (query.mods.length > 0) searchParams.set('mods', query.mods.join(','));
+    else searchParams.delete('mods');
+    if (!query.includeFull) searchParams.set('full', 'exclude');
+    else searchParams.delete('full');
+    if (!query.includeEmpty) searchParams.set('empty', 'exclude');
+    else searchParams.delete('empty');
+    if (!query.includePrivate) searchParams.set('private', 'exclude');
+    else searchParams.delete('private');
+}
+
+function deserializeQuery(searchParams) {
+    const query = {...DEFAULT_QUERY};
+    if (searchParams.has('filter')) query.filter = searchParams.get('filter');
+    if (searchParams.has('regions')) query.regions = searchParams.get('regions').split(',');
+    if (searchParams.has('gamemodes')) query.gamemodes = searchParams.get('gamemodes').split(',');
+    if (searchParams.has('maps')) query.maps = searchParams.get('maps').split(',');
+    if (searchParams.has('mods')) query.mods = searchParams.get('mods').split(',');
+    if (searchParams.get('full') === 'exclude') query.includeFull = false;
+    if (searchParams.get('empty') === 'exclude') query.includeEmpty = false;
+    if (searchParams.get('private') === 'exclude') query.includePrivate = false;
+    return query;
+}
+
+let isMounting = true;
+let uiState = {
+    state: 'loading',
+};
+let currentQuery = deserializeQuery(new URL(window.location).searchParams);
+const currentSort = {
+    sortBy: '',
+    sortInverted: false,
+};
+let currentServerId = undefined;
+
+let overlayState = {
+    state: 'none',
+};
+
+function setQueryParam(param, value) {
+    if (isMounting || value === currentQuery[param]) return;
+    setCurrentQuery({
+        ...currentQuery,
+        [param]: value,
+    });
+}
+
+function setCurrentQuery(newQuery) {
+    currentQuery = newQuery;
+    uiQueueRender();
+
+    const url = new URL(window.location);
+    serializeQuery(url.searchParams, currentQuery);
+    if (url.toString() !== window.location.toString()) {
+        window.history.replaceState({}, '', url);
+    }
+}
+
+function simplifyRegion(region) {
+    return region.toUpperCase().replace(/ /g, "-");
+}
+
+function displayGamemode(gamemode) {
+    return KNOWN_GAMEMODES[gamemode] || gamemode;
+}
+
+function displayMap(map) {
+    return KNOWN_MAPS[map] || map;
+}
+
+function displayMod(mod) {
+    return `${mod.Name} ${mod.Version}`;
+}
+
+function getServerDisplayProp(server, prop) {
+    switch (prop) {
+        case 'playlist': return displayGamemode(server.playlist);
+        case 'map': return displayMap(server.map);
+        default: return server[prop];
+    }
+}
+
+function getServerJoinUrl(server, password) {
+    const baseUrl = `northstar://server@${server.id}`;
+    if (password) {
+        return `${baseUrl}:${btoa(password)}`;
+    } else {
+        return baseUrl;
+    }
+}
+
+function createMenu(openByDefault, openCb, closeCb) {
+    let isOpen = false;
+
+    const open = e => {
+        if (isOpen) {
+            e.stopPropagation();
+            return;
+        }
+        isOpen = true;
+
+        setTimeout(() => {
+            const clickHandler = () => {
+                isOpen = false;
+                document.body.removeEventListener('click', clickHandler);
+                closeCb();
+            };
+            document.body.addEventListener('click', clickHandler);
+        });
+        openCb();
+    };
+    if (openByDefault) open();
+    return open;
+}
+
+function uiJoinServer(server) {
+    if (!server.hasPassword) {
+        window.location = getServerJoinUrl(server, '');
+        return;
+    }
+
+    overlayState = {
+        state: 'passwordPrompt',
+        server,
+    };
+    uiRenderOverlay();
+}
+
+function uiGetServerList() {
+    switch (uiState.state) {
+        case 'loading':
+        case 'error':
+            return [];
+        case 'ready':
+            return uiState.servers;
+        default: throw new Error(`Unknown UI state ${uiState.state}`);
+    }
+}
+
+function uiUpdateSelectors() {
+    const serverList = uiGetServerList();
+
+    const regionsSet = new Set();
+    const modsSet = new Set();
+
+    for (const server of serverList) {
+        const regionMatch = server.name.match(REGION_REGEX);
+        if (regionMatch !== null) {
+            regionsSet.add(simplifyRegion(regionMatch[1]));
+        }
+
+        for (const mod of server.modInfo.Mods) {
+            modsSet.add(displayMod(mod));
+        }
+    }
+
+    const regions = Array.from(regionsSet);
+    regions.sort();
+    const mods = Array.from(modsSet);
+    mods.sort();
+
+    dropdownSetEntries($regionsInput, regions.map(region => [region, region]));
+    dropdownSetEntries($modsInput, mods.map(mod => [mod, mod]));
+}
+
+let uiIsRenderQueued = false;
+function uiQueueRender() {
+    if (uiIsRenderQueued) return;
+    uiIsRenderQueued = true;
+    queueMicrotask(() => {
+        uiIsRenderQueued = false;
+        uiRender();
+    });
+}
+
+function uiRender() {
+    const serverList = uiGetServerList();
+    const filteredServerList = serverList.filter(server => {
+        if (currentQuery.filter !== '' && server.name.toLowerCase().indexOf(currentQuery.filter.toLowerCase()) === -1) {
+            return false;
+        }
+        if (currentQuery.regions.length > 0) {
+            const simplifiedName = simplifyRegion(server.name);
+            if (!currentQuery.regions.some(region => simplifiedName.startsWith(`[${region}]`))) {
+                return false;
+            }
+        }
+        if (currentQuery.gamemodes.length > 0 && currentQuery.gamemodes.indexOf(server.playlist) === -1) {
+            return false;
+        }
+        if (currentQuery.maps.length > 0 && currentQuery.maps.indexOf(server.map) === -1) {
+            return false;
+        }
+        if (!currentQuery.mods.every(modName => server.modInfo.Mods.some(mod => displayMod(mod) === modName))) {
+            return false;
+        }
+        if (!currentQuery.includeFull && server.playerCount === server.maxPlayers) {
+            return false;
+        }
+        if (!currentQuery.includeEmpty && server.playerCount === 0) {
+            return false;
+        }
+        if (!currentQuery.includePrivate && server.hasPassword) {
+            return false;
+        }
+
+        return true;
+    });
+
+    if (currentSort.sortBy) {
+        filteredServerList.sort((a, b) => {
+            let isABeforeB;
+            const aVal = getServerDisplayProp(a, currentSort.sortBy);
+            const bVal = getServerDisplayProp(b, currentSort.sortBy);
+            if (typeof aVal === 'string') {
+                isABeforeB = aVal.localeCompare(bVal) > 0;
+            } else {
+                isABeforeB = aVal < bVal;
+            }
+
+            if (currentSort.sortInverted) isABeforeB = !isABeforeB;
+            return isABeforeB ? 1 : -1;
+        });
+    }
+
+    clearNode($serversTable);
+    for (const server of filteredServerList) {
+        const $row = document.createElement('div');
+        $row.classList.add('table-row');
+        if (server.hasPassword) {
+            $row.classList.add('server-private');
+        }
+
+        const playTitle = 'Join this server on Northstar';
+        const $actionCell = document.createElement('div');
+        $actionCell.title = playTitle;
+        if (server.hasPassword) {
+            $actionCell.appendChild($useSvg('lock-icon', 24, 24));
+        }
+        const $playButton = $useSvg('play-icon', 24, 24);
+        $playButton.classList.add('play');
+        $actionCell.appendChild($playButton);
+        $actionCell.onclick = e => {
+            if (currentServerId !== server.id) {
+                e.stopPropagation();
+                uiJoinServer(server);
+            }
+        };
+        $row.appendChild($actionCell);
+
+        const $detailsCell = document.createElement('div');
+        $detailsCell.classList.add('server-details');
+        const $serverName = document.createElement('h3');
+        if (currentQuery.filter !== '') {
+            const filterIndex = server.name.toLowerCase().indexOf(currentQuery.filter.toLowerCase());
+            $serverName.append(server.name.substring(0, filterIndex));
+
+            const $highlight = document.createElement('span');
+            $highlight.textContent = server.name.substring(filterIndex, filterIndex + currentQuery.filter.length);
+            $serverName.appendChild($highlight);
+
+            $serverName.append(server.name.substring(filterIndex + currentQuery.filter.length));
+        } else {
+            $serverName.textContent = server.name;
+        }
+        $detailsCell.appendChild($serverName);
+
+        const $details = document.createElement('div');
+        $details.classList.add('server-details-extra');
+
+        const $description = document.createElement('p');
+        $description.textContent = server.description;
+        $details.appendChild($description);
+
+        const $mods = document.createElement('ul');
+        for (const mod of server.modInfo.Mods) {
+            const $mod = document.createElement('li');
+            $mod.textContent = `${mod.Name} ${mod.Version}`;
+            $mods.appendChild($mod);
+        }
+        $details.append($mods);
+
+        const $longJoinButton = document.createElement('button');
+        $longJoinButton.classList.add('play-button');
+        $longJoinButton.appendChild($useSvg('play-icon', 24, 24));
+        $longJoinButton.append('Join server');
+        $longJoinButton.onclick = () => uiJoinServer(server);
+        $details.appendChild($longJoinButton);
+
+        $detailsCell.appendChild($details);
+        $row.appendChild($detailsCell);
+
+        const $playersCell = document.createElement('div');
+        $playersCell.textContent = `${server.playerCount}/${server.maxPlayers}`;
+        $row.appendChild($playersCell);
+
+        const $gamemodeCell = document.createElement('div');
+        $gamemodeCell.textContent = displayGamemode(server.playlist);
+        $row.appendChild($gamemodeCell);
+
+        const $mapCell = document.createElement('div');
+        $mapCell.textContent = displayMap(server.map);
+        $row.appendChild($mapCell);
+
+        $row.onclick = createMenu(
+            currentServerId === server.id,
+            () => {
+                currentServerId = server.id;
+                $row.classList.add('server-selected');
+                $actionCell.title = '';
+            },
+            () => {
+                if (currentServerId === server.id) currentServerId = undefined;
+                $row.classList.remove('server-selected');
+                $actionCell.title = playTitle;
+            }
+        );
+
+        $serversTable.appendChild($row);
+    }
+
+    if (uiState.state === 'loading') {
+        $lastUpdatedStat.textContent = 'never';
+    } else if (uiState.state === 'ready') {
+        $lastUpdatedStat.textContent = uiState.updated.toLocaleTimeString();
+    }
+
+    $serversListedStat.textContent = filteredServerList.length.toString();
+    $serversOnlineStat.textContent = serverList.length.toString();
+    $playersListedStat.textContent = `${filteredServerList.reduce((sum, server) => sum + server.playerCount, 0)} / ${filteredServerList.reduce((sum, server) => sum + server.maxPlayers, 0)}`;
+    $playersOnlineStat.textContent = `${serverList.reduce((sum, server) => sum + server.playerCount, 0)} / ${serverList.reduce((sum, server) => sum + server.maxPlayers, 0)}`;
+}
+
+function uiCloseOverlay() {
+    overlayState = { state: 'none' };
+    uiRenderOverlay();
+}
+
+function uiOverlayHandleEsc(e) {
+    if (e.key === 'Escape') {
+        uiCloseOverlay();
+    }
+}
+
+function uiRenderOverlay() {
+    const currentState = overlayState;
+
+    const $overlay = document.getElementById('overlay');
+    if ($overlay) {
+        $overlay.remove();
+    }
+
+    document.body.removeEventListener('keydown', uiOverlayHandleEsc);
+    if (currentState.state !== 'none') {
+        document.body.addEventListener('keydown', uiOverlayHandleEsc);
+    }
+
+    if (currentState.state === 'passwordPrompt') {
+        const $overlay = document.createElement('div');
+        $overlay.id = 'overlay';
+
+        const $dialog = document.createElement('div');
+
+        const $body = document.createElement('p');
+        $body.textContent = currentState.server.name;
+        $dialog.appendChild($body);
+
+        const $form = document.createElement('form');
+
+        const $input = document.createElement('input');
+        $input.type = 'password';
+        $input.placeholder = 'Server password';
+        $form.appendChild($input);
+        const $continue = document.createElement('button');
+        $continue.appendChild($useSvg('arrow-right-icon', 24, 24));
+        $form.appendChild($continue);
+
+        $dialog.appendChild($form);
+        $overlay.appendChild($dialog);
+
+        document.body.appendChild($overlay);
+
+        setTimeout(() => $input.focus(), 0);
+        $overlay.onclick = e => {
+            e.stopPropagation();
+            uiCloseOverlay();
+        }
+        $dialog.onclick = e => e.stopPropagation();
+        $form.onsubmit = e => {
+            e.preventDefault();
+            window.location = getServerJoinUrl(currentState.server, $input.value);
+            uiCloseOverlay();
+        };
+    }
+}
+
+function dropdownMount($dropdown) {
+    clearNode($dropdown);
+
+    $dropdown.onclick = createMenu(
+        false,
+        () => $dropdown.classList.add('dropdown-open'),
+        () => $dropdown.classList.remove('dropdown-open'),
+    );
+
+    const $header = document.createElement('div');
+    $header.className = 'dropdown-header';
+    $dropdown.appendChild($header);
+
+    const $clear = document.createElement('button');
+    $clear.className = 'clear';
+    $clear.onclick = e => {
+        e.stopPropagation();
+        dropdownSetSelectedEntries($dropdown, []);
+    };
+    $clear.appendChild($useSvg('clear-icon', 24, 24));
+    $dropdown.appendChild($clear);
+
+    const $items = document.createElement('div');
+    $items.className = 'dropdown-items';
+    $dropdown.appendChild($items);
+    $items.onclick = e => e.stopPropagation();
+
+    dropdownUpdate($dropdown);
+}
+
+let dropdownIgnoreUpdates = false;
+function dropdownUpdate($dropdown) {
+    if (dropdownIgnoreUpdates) return;
+
+    const $items = $dropdown.getElementsByClassName('dropdown-items')[0];
+    const checkboxes = $items.getElementsByTagName('input');
+
+    const selectedEntries = [];
+    for (const $checkbox of checkboxes) {
+        if ($checkbox.checked) {
+            selectedEntries.push([
+                $checkbox.value,
+                $checkbox.dataset.name,
+            ]);
+        }
+    }
+
+    dropdownForceSetSelectedEntries($dropdown, selectedEntries);
+}
+
+function dropdownForceSetSelectedEntries($dropdown, selectedEntries) {
+    const $header = $dropdown.getElementsByClassName('dropdown-header')[0];
+
+    if (selectedEntries.length === 0) {
+        $header.innerHTML = $dropdown.classList.contains('dropdown-and') ? '<span>Any</span>' : '<span>All</span>';
+    } else {
+        clearNode($header);
+        for (const [, name] of selectedEntries) {
+            const $span = document.createElement('span');
+            $span.textContent = name;
+            $header.appendChild($span);
+        }
+    }
+
+    setQueryParam($dropdown.id, selectedEntries.map(([value]) => value));
+}
+
+function dropdownSetEntries($dropdown, entries) {
+    const $items = $dropdown.getElementsByClassName('dropdown-items')[0];
+    const selectedValues = currentQuery[$dropdown.id];
+    clearNode($items);
+    for (const [entryValue, entryName] of entries) {
+        const $label = document.createElement('label');
+        const $input = document.createElement('input');
+        $input.type = 'checkbox';
+        $input.value = entryValue;
+        $input.dataset.name = entryName;
+        $input.checked = selectedValues.indexOf(entryValue) !== -1;
+        $input.onchange = () => dropdownUpdate($dropdown);
+        $label.appendChild($input);
+        $label.append(entryName);
+        $items.appendChild($label);
+    }
+    dropdownUpdate($dropdown);
+}
+
+function dropdownSetSelectedEntries($dropdown, selectedEntries) {
+    const $items = $dropdown.getElementsByClassName('dropdown-items')[0];
+    const checkboxes = $items.getElementsByTagName('input');
+    const selectedValues = new Set(selectedEntries.map(([value]) => value));
+
+    dropdownIgnoreUpdates = true;
+    for (const $checkbox of checkboxes) {
+        $checkbox.checked = selectedValues.has($checkbox.value);
+    }
+    dropdownIgnoreUpdates = false;
+    dropdownForceSetSelectedEntries($dropdown, selectedEntries);
+}
+
+function sortRemoveClasses() {
+    for (const currentSortDown of document.getElementsByClassName('sort-down')) {
+        currentSortDown.classList.remove('sort-down');
+    }
+    for (const currentSortUp of document.getElementsByClassName('sort-up')) {
+        currentSortUp.classList.remove('sort-up');
+    }
+}
+
+function sortClear() {
+    sortRemoveClasses();
+    currentSort.sortBy = '';
+    uiQueueRender();
+}
+
+function sortSetTo($header, isInverted) {
+    sortRemoveClasses();
+
+    if (isInverted) {
+        $header.classList.add('sort-up');
+    } else {
+        $header.classList.add('sort-down');
+    }
+    currentSort.sortBy = $header.dataset.by;
+    currentSort.sortInverted = isInverted;
+    uiQueueRender();
+}
+
+function sortToggle($header) {
+    if ($header.classList.contains('sort-down')) {
+        sortSetTo($header, true);
+    } else if ($header.classList.contains('sort-up')) {
+        sortClear();
+    } else {
+        sortSetTo($header, false);
+    }
+}
+
+async function fetchServerList() {
+    try {
+        document.body.classList.remove('error-state');
+        if (uiState.state !== 'ready') {
+            document.body.classList.add('loading-state');
+        }
+        const res = await fetch('https://northstar.tf/client/servers');
+        const servers = await res.json();
+        uiState = {
+            state: 'ready',
+            servers,
+            updated: new Date(),
+        };
+        document.body.classList.remove('loading-state');
+    } catch (err) {
+        console.error('Failed to fetch server list:', err);
+        uiState = { state: 'error' };
+        document.body.classList.remove('loading-state');
+        document.body.classList.add('error-state');
+    }
+
+    uiUpdateSelectors();
+    uiQueueRender();
+}
+
+let nextRefetchTimeout = 0;
+async function refetchLoopTrigger() {
+    clearTimeout(nextRefetchTimeout);
+    await fetchServerList();
+    nextRefetchTimeout = setTimeout(refetchLoopTrigger, REFETCH_WAIT_MS);
+}
+
+document.getElementById('form').onsubmit = e => e.preventDefault();
+
+for (const $dropdown of document.getElementsByClassName('dropdown')) {
+    dropdownMount($dropdown);
+}
+for (const $textbox of document.getElementsByClassName('textbox')) {
+    textboxMount($textbox);
+}
+for (const $header of document.getElementsByClassName('table-header')) {
+    $header.onclick = () => sortToggle($header);
+    $header.appendChild($useSvg('arrow-down-icon', 24, 24));
+}
+
+dropdownSetEntries($gamemodesInput, Object.entries(KNOWN_GAMEMODES));
+dropdownSetEntries($mapsInput, Object.entries(KNOWN_MAPS));
+
+$filterInput.oninput = () => setQueryParam('filter', $filterInput.value);
+$includeFullInput.onchange = () => setQueryParam('includeFull', $includeFullInput.checked);
+$includeEmptyInput.onchange = () => setQueryParam('includeEmpty', $includeEmptyInput.checked);
+$includePrivateInput.onchange = () => setQueryParam('includePrivate', $includePrivateInput.checked);
+
+sortSetTo(document.getElementById('players-header'), false);
+
+let areFiltersOpen = false;
+$setFiltersButton.onclick = () => {
+    if (areFiltersOpen) {
+        areFiltersOpen = false;
+        $extraFilters.classList.add('form-collapse');
+        $setFiltersButton.textContent = 'Set filters...';
+    } else {
+        areFiltersOpen = true;
+        $extraFilters.classList.remove('form-collapse');
+        $setFiltersButton.textContent = 'Close';
+    }
+};
+
+// Update fields to match the current query
+$filterInput.value = currentQuery.filter;
+dropdownSetSelectedEntries($regionsInput, currentQuery.regions.map(region => [region, region]));
+dropdownSetSelectedEntries($gamemodesInput, currentQuery.gamemodes.map(gamemode => [gamemode, displayGamemode(gamemode)]));
+dropdownSetSelectedEntries($mapsInput, currentQuery.maps.map(map => [map, displayMap(map)]));
+dropdownSetSelectedEntries($modsInput, currentQuery.mods.map(mod => [mod, mod]));
+$includeFullInput.checked = currentQuery.includeFull;
+$includeEmptyInput.checked = currentQuery.includeEmpty;
+$includePrivateInput.checked = currentQuery.includePrivate;
+
+isMounting = false;
+
+refetchLoopTrigger();
+
+</script>
+
+</body>
+</html>

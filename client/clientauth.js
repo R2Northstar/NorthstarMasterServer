@@ -46,9 +46,14 @@ module.exports = ( fastify, opts, done ) =>
 			// only do this if we're in an environment that actually requires session tokens
 			if ( shouldRequireSessionToken )
 			{
-			// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
-				if ( request.query.token.includes( "&" ) )
-					return { success: false } // TODO add an error code here
+				// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
+
+				// Prevent any potential query parameter injection through the origin token. 
+				let regexMatch = new RegExp("/^[a-zA-Z0-9-_]+$/");
+				if (!regexMatch.test(request.query.token))
+				{
+					return { success: false }
+				}
 
 				let authResponse
 				try

@@ -49,7 +49,7 @@ module.exports = ( fastify, opts, done ) =>
 				// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
 
 				// Prevent any potential query parameter injection through the origin token. 
-				if ( !/^[a-zA-Z0-9-_]+$/.test(request.query.token) )
+				if ( !/^[a-zA-Z0-9-_]+$/.test( request.query.token ) )
 				{
 					console.log( Date.now() + " - invalid origin token passed for origin auth." )
 					return { success: false }

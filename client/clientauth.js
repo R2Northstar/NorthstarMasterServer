@@ -50,7 +50,7 @@ module.exports = ( fastify, opts, done ) =>
 
 				// Prevent any potential query parameter injection through the origin token. 
 				let regexMatch = new RegExp( "^[a-zA-Z0-9-_]+$" );
-				if (!regexMatch.test( request.query.token ))
+				if ( !regexMatch.test( request.query.token ) )
 				{
 					console.log( Date.now() + " - invalid origin token passed for origin auth." )
 					return { success: false }

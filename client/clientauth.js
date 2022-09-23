@@ -61,7 +61,7 @@ module.exports = ( fastify, opts, done ) =>
 				}
 				catch ( error )
 				{
-						return { success: false, error: STRYDER_RESPONSE, response: error }
+					return { success: false, error: STRYDER_RESPONSE, response: error }
 				}
 
 				let authJson

@@ -65,21 +65,37 @@ module.exports = ( fastify, opts, done ) =>
 				}
 
 				let authJson
+
+				// dumb stupid code to fix respawn's invalid json
+				// example of the invalid json stryder sends:
+				// {"success": false, "status": "400", "error": "{"error":"invalid_request","error_description":"code is not issued to this environment","code":100119}"}
+				//                                               ^
+				// note that the "error" is an object but is also a string, so it dies
+
+				// convert to a string so i can replace things easier
+				authResponse = authResponse.toString()
+				authResponse.replace( "\"{", "{" )
+				authResponse.replace( "}\"", "}" )
+
 				try
 				{
-					authJson = JSON.parse( authResponse.toString() )
+					authJson = JSON.parse( authResponse )
+					// convert the status to a number, before checking it
+					let status = Number( authJson.status )
+					if ( status < 200 || status >= 300 )
+						return { success: false, error: STRYDER_RESPONSE, response: authJson }
 				}
 				catch ( error )
 				{
 					if ( authResponse !== undefined )
-						return { success: false, error: STRYDER_PARSE, response: authResponse.toString() }
+						return { success: false, error: STRYDER_PARSE, response: authResponse }
 					else
 						return { success: false, error: STRYDER_PARSE, response: error }
 				}
 
 				// check origin auth was fine
 				// unsure if we can check the exact value of storeUri? doing an includes check just in case
-				if ( !authResponse.length || authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || authJson.storeUri !== undefined || !authJson.storeUri.includes( "titanfall-2" ) )
+				if ( !authResponse.length || authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || authJson.storeUri === undefined || !authJson.storeUri.includes( "titanfall-2" ) )
 					return { success: false, error: UNAUTHORIZED_GAME }
 			}
 

@@ -57,13 +57,10 @@ module.exports = ( fastify, opts, done ) =>
 						host: "https://r2-pc.stryder.respawn.com",
 						port: 443,
 						path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString( 16 ).toUpperCase() }`
-					} ).catch( reason => authResponse = JSON.stringify( reason ) ) // convert this to a string because the rest of the code expects authResponse to be a string
+					} )
 				}
 				catch ( error )
 				{
-					if ( authResponse !== undefined )
-						return { success: false, error: STRYDER_RESPONSE, response: authResponse.toString() }
-					else
 						return { success: false, error: STRYDER_RESPONSE, response: error }
 				}
 
@@ -79,10 +76,6 @@ module.exports = ( fastify, opts, done ) =>
 					else
 						return { success: false, error: STRYDER_PARSE, response: error }
 				}
-
-				// return for bad status codes
-				if ( authJson.statusCode < 200 || authJson.statusCode >= 300 )
-					return { success: false, error: STRYDER_RESPONSE, response: authJson }
 
 				// check origin auth was fine
 				// unsure if we can check the exact value of storeUri? doing an includes check just in case

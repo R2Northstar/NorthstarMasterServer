@@ -81,8 +81,9 @@ module.exports = ( fastify, opts, done ) =>
 				{
 					authJson = JSON.parse( authResponse )
 					// convert the status to a number, before checking it
+					// annoyingly, stryder only gives a status like this *sometimes* (on fail afaik), so status becomes NaN, and I am forced to assume that it's fine
 					let status = Number( authJson.status )
-					if ( status < 200 || status >= 300 )
+					if ( !isNaN( status ) && ( status < 200 || status >= 300 ) )
 						return { success: false, error: STRYDER_RESPONSE, response: authJson }
 				}
 				catch ( error )

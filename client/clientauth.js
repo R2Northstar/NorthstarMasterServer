@@ -46,10 +46,9 @@ module.exports = ( fastify, opts, done ) =>
 			// only do this if we're in an environment that actually requires session tokens
 			if ( shouldRequireSessionToken )
 			{
-			// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
+				// todo: we should find origin endpoints that can verify game tokens so we don't have to rely on stryder for this in case of a ratelimit
 				if ( request.query.token.includes( "&" ) )
 					return { success: false } // TODO add an error code here
-
 				let authResponse
 				try
 				{
@@ -60,24 +59,44 @@ module.exports = ( fastify, opts, done ) =>
 						path: `/nucleus-oauth.php?qt=origin-requesttoken&type=server_token&code=${ request.query.token }&forceTrial=0&proto=0&json=1&&env=production&userId=${ parseInt( request.query.id ).toString( 16 ).toUpperCase() }`
 					} )
 				}
-				catch
+				catch ( error )
 				{
-					return { success: false, error: STRYDER_RESPONSE, response: authResponse.toString() }
+					return { success: false, error: STRYDER_RESPONSE, response: error }
 				}
 
 				let authJson
+
+				// dumb stupid code to fix respawn's invalid json
+				// example of the invalid json stryder sends:
+				// {"success": false, "status": "400", "error": "{"error":"invalid_request","error_description":"code is not issued to this environment","code":100119}"}
+				//                                               ^
+				// note that the "error" is an object but is also a string, so it dies
+
+				// convert to a string so i can replace things easier
+				authResponse = authResponse.toString()
+				authResponse.replace( "\"{", "{" )
+				authResponse.replace( "}\"", "}" )
+
 				try
 				{
-					authJson = JSON.parse( authResponse.toString() )
+					authJson = JSON.parse( authResponse )
+					// convert the status to a number, before checking it
+					// annoyingly, stryder only gives a status like this *sometimes* (on fail afaik), so status becomes NaN, and I am forced to assume that it's fine
+					let status = Number( authJson.status )
+					if ( !isNaN( status ) && ( status < 200 || status >= 300 ) )
+						return { success: false, error: STRYDER_RESPONSE, response: authJson }
 				}
 				catch ( error )
 				{
-					return { success: false, error: STRYDER_PARSE, response: authResponse.toString() }
+					if ( authResponse !== undefined )
+						return { success: false, error: STRYDER_PARSE, response: authResponse }
+					else
+						return { success: false, error: STRYDER_PARSE, response: error }
 				}
 
 				// check origin auth was fine
 				// unsure if we can check the exact value of storeUri? doing an includes check just in case
-				if ( !authResponse.length || authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || !authJson.storeUri.includes( "titanfall-2" ) )
+				if ( !authResponse.length || authJson.hasOnlineAccess != "1" /* this is actually a string of either "1" or "0" */ || authJson.storeUri === undefined || !authJson.storeUri.includes( "titanfall-2" ) )
 					return { success: false, error: UNAUTHORIZED_GAME }
 			}
 

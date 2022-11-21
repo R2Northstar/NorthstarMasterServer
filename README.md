@@ -1,3 +1,7 @@
+# Deprecation Notice
+
+NorthstarMasterServer has been deprecated, and has been by replaced by [Atlas](https://github.com/R2Northstar/Atlas).
+
 # NorthstarMasterServer
 
 The master server is responsible for centralizing game servers created by players, it also verifies that connecting players own an Origin account with Titanfall 2.
